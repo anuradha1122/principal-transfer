@@ -30,11 +30,15 @@ class AuthenticatedSessionController extends Controller
      * Handle an incoming authentication request.
      */
     public function store(
-        LoginRequest $request
+    LoginRequest $request
     ): RedirectResponse {
         $request->authenticate();
 
         $request->session()->regenerate();
+
+        $request->user()->forceFill([
+            'last_login_at' => now(),
+        ])->save();
 
         return redirect()->intended(
             route('dashboard', absolute: false)

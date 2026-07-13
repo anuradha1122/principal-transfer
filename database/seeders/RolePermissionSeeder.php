@@ -158,6 +158,7 @@ class RolePermissionSeeder extends Seeder
 
         $dataEntryOfficer->syncPermissions([
             'view admin dashboard',
+            'view users',
             'view zones',
             'view divisions',
             'view schools',

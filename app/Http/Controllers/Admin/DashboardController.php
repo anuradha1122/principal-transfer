@@ -4,6 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\Division;
+use App\Models\School;
+use App\Models\Zone;
 use Inertia\Inertia;
 use Inertia\Response;
 use Spatie\Permission\Models\Permission;
@@ -27,6 +30,9 @@ class DashboardController extends Controller
                 'roles' => Role::query()->count(),
                 'permissions' => Permission::query()->count(),
                 'principals' => User::role('Principal')->count(),
+                'zones' => Zone::query()->count(),
+                'divisions' => Division::query()->count(),
+                'schools' => School::query()->count(),
             ],
         ]);
     }

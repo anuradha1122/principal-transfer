@@ -1,6 +1,12 @@
 <?php
 
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\PermissionController;
+use App\Http\Controllers\Admin\RoleController;
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\DivisionController;
+use App\Http\Controllers\Admin\SchoolController;
+use App\Http\Controllers\Admin\ZoneController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
@@ -45,6 +51,48 @@ Route::middleware([
             )
                 ->middleware('can:view admin dashboard')
                 ->name('dashboard');
+
+            Route::resource('users', UserController::class);
+
+            Route::put(
+                'users/{user}/reset-password',
+                [UserController::class, 'resetPassword']
+            )->name('users.reset-password');
+
+            Route::resource(
+                'roles',
+                RoleController::class
+            )->except('show');
+
+            Route::get(
+                'permissions',
+                [PermissionController::class, 'index']
+            )->name('permissions.index');
+
+            Route::post(
+                'permissions',
+                [PermissionController::class, 'store']
+            )->name('permissions.store');
+
+            Route::delete(
+                'permissions/{permission}',
+                [PermissionController::class, 'destroy']
+            )->name('permissions.destroy');
+
+            Route::resource(
+                'zones',
+                ZoneController::class
+            );
+
+            Route::resource(
+                'divisions',
+                DivisionController::class
+            );
+
+            Route::resource(
+                'schools',
+                SchoolController::class
+            );
         });
 
     Route::get('/principal/dashboard', function () {
@@ -90,6 +138,8 @@ Route::middleware([
             'dashboardTitle' => 'Transfer Board Dashboard',
         ]);
     })->name('transfer-board.dashboard');
+
+
 });
 
 require __DIR__.'/auth.php';

@@ -1,0 +1,37 @@
+<?php
+
+namespace App\Http\Requests\Admin;
+
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+
+class StorePermissionRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return $this->user()
+            ?->can('manage roles and permissions') ?? false;
+    }
+
+    public function rules(): array
+    {
+        return [
+            'name' => [
+                'required',
+                'string',
+                'max:150',
+                'regex:/^[a-z0-9 ]+$/',
+                Rule::unique('permissions', 'name')
+                    ->where('guard_name', 'web'),
+            ],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'name.regex' =>
+                'Permission names may contain lowercase letters, numbers and spaces only.',
+        ];
+    }
+}
