@@ -2,13 +2,14 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\Facades\Vite;
+use App\Models\User;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
     /**
-     * Register any application services.
+     * Register application services.
      */
     public function register(): void
     {
@@ -16,10 +17,16 @@ class AppServiceProvider extends ServiceProvider
     }
 
     /**
-     * Bootstrap any application services.
+     * Bootstrap application services.
      */
     public function boot(): void
     {
-        Vite::prefetch(concurrency: 3);
+        Gate::before(
+            function (User $user, string $ability): ?bool {
+                return $user->hasRole('Super Admin')
+                    ? true
+                    : null;
+            }
+        );
     }
 }

@@ -1,27 +1,95 @@
 <?php
 
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
-use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
         'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
     ]);
+})->name('home');
+
+Route::middleware('auth')->group(function (): void {
+    Route::get('/profile', [
+        ProfileController::class,
+        'edit',
+    ])->name('profile.edit');
+
+    Route::patch('/profile', [
+        ProfileController::class,
+        'update',
+    ])->name('profile.update');
+
+    Route::delete('/profile', [
+        ProfileController::class,
+        'destroy',
+    ])->name('profile.destroy');
 });
 
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::middleware([
+    'auth',
+    'verified',
+])->group(function (): void {
+    Route::get('/dashboard', DashboardController::class)
+        ->name('dashboard');
 
-Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::prefix('admin')
+        ->name('admin.')
+        ->group(function (): void {
+            Route::get(
+                '/dashboard',
+                [AdminDashboardController::class, 'index']
+            )
+                ->middleware('can:view admin dashboard')
+                ->name('dashboard');
+        });
+
+    Route::get('/principal/dashboard', function () {
+        abort_unless(
+            request()->user()->can('view principal dashboard'),
+            403
+        );
+
+        return Inertia::render('Principal/Dashboard/Index');
+    })->name('principal.dashboard');
+
+    Route::get('/zonal/dashboard', function () {
+        abort_unless(
+            request()->user()->can('view zonal dashboard'),
+            403
+        );
+
+        return Inertia::render('Dashboard', [
+            'dashboardTitle' => 'Zonal Director Dashboard',
+        ]);
+    })->name('zonal.dashboard');
+
+    Route::get('/provincial/dashboard', function () {
+        abort_unless(
+            request()->user()->can('view provincial dashboard'),
+            403
+        );
+
+        return Inertia::render('Dashboard', [
+            'dashboardTitle' => 'Provincial Director Dashboard',
+        ]);
+    })->name('provincial.dashboard');
+
+    Route::get('/transfer-board/dashboard', function () {
+        abort_unless(
+            request()->user()->can(
+                'view transfer board dashboard'
+            ),
+            403
+        );
+
+        return Inertia::render('Dashboard', [
+            'dashboardTitle' => 'Transfer Board Dashboard',
+        ]);
+    })->name('transfer-board.dashboard');
 });
 
 require __DIR__.'/auth.php';
