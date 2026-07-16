@@ -49,22 +49,28 @@ Roles, Permissions and User Management
 
 Zones, Divisions and Schools Management
 
+### Module 04
+
+Principal Registry and NIC-Controlled Self-Registration
+
 Completed:
 
-- Seven education zones
-- Education division management
-- School management
-- Hierarchical relationships
-- Zone, division and school filters
-- School classification details
-- School population information
-- Active and inactive statuses
-- Safe deletion restrictions
-- Organization structure tests
+- Principal Registry CRUD
+- NIC normalization
+- NIC validation
+- CSV registry import
+- CSV template download
+- Controlled self-registration
+- Registration token and expiry
+- Principal role assignment
+- Registry-to-user linking
+- Duplicate registration protection
+- Email verification flow
+- Automated tests
 
 ## Next Exact Step
 
-Module 04: Principal Registry and NIC-Controlled Self-Registration
+Module 05: Principal Profile and Current Appointment Management
 
 ## Mandatory Rules
 

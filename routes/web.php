@@ -1,12 +1,14 @@
 <?php
 
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
-use App\Http\Controllers\Admin\PermissionController;
-use App\Http\Controllers\Admin\RoleController;
-use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\DivisionController;
+use App\Http\Controllers\Admin\PermissionController;
+use App\Http\Controllers\Admin\PrincipalRegistryController;
+use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\SchoolController;
+use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\ZoneController;
+use App\Http\Controllers\Auth\PrincipalRegistrationController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
@@ -17,6 +19,48 @@ Route::get('/', function () {
         'canLogin' => Route::has('login'),
     ]);
 })->name('home');
+
+Route::middleware('guest')->group(function (): void {
+    Route::get(
+        '/principal-registration',
+        [
+            PrincipalRegistrationController::class,
+            'verifyPage',
+        ]
+    )->name(
+        'principal-registration.verify-page'
+    );
+
+    Route::post(
+        '/principal-registration/verify-nic',
+        [
+            PrincipalRegistrationController::class,
+            'verify',
+        ]
+    )->name(
+        'principal-registration.verify'
+    );
+
+    Route::get(
+        '/principal-registration/create',
+        [
+            PrincipalRegistrationController::class,
+            'create',
+        ]
+    )->name(
+        'principal-registration.create'
+    );
+
+    Route::post(
+        '/principal-registration',
+        [
+            PrincipalRegistrationController::class,
+            'store',
+        ]
+    )->name(
+        'principal-registration.store'
+    );
+});
 
 Route::middleware('auth')->group(function (): void {
     Route::get('/profile', [
@@ -93,6 +137,37 @@ Route::middleware([
                 'schools',
                 SchoolController::class
             );
+
+            Route::get(
+                'principal-registry/import',
+                [
+                    PrincipalRegistryController::class,
+                    'importPage',
+                ]
+            )->name('principal-registry.import-page');
+
+            Route::post(
+                'principal-registry/import',
+                [
+                    PrincipalRegistryController::class,
+                    'import',
+                ]
+            )->name('principal-registry.import');
+
+            Route::get(
+                'principal-registry/template',
+                [
+                    PrincipalRegistryController::class,
+                    'template',
+                ]
+            )->name('principal-registry.template');
+
+            Route::resource(
+                'principal-registry',
+                PrincipalRegistryController::class
+            )->parameters([
+                'principal-registry' => 'principal_registry',
+            ]);
         });
 
     Route::get('/principal/dashboard', function () {
@@ -138,7 +213,6 @@ Route::middleware([
             'dashboardTitle' => 'Transfer Board Dashboard',
         ]);
     })->name('transfer-board.dashboard');
-
 
 });
 

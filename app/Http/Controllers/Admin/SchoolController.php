@@ -83,36 +83,31 @@ class SchoolController extends Controller
                 function ($query, $zoneId): void {
                     $query->whereHas(
                         'division',
-                        fn ($query) =>
-                            $query->where(
-                                'zone_id',
-                                $zoneId
-                            )
+                        fn ($query) => $query->where(
+                            'zone_id',
+                            $zoneId
+                        )
                     );
                 }
             )
             ->when(
                 $filters['division_id'] ?? null,
-                fn ($query, $divisionId) =>
-                    $query->where(
-                        'division_id',
-                        $divisionId
-                    )
+                fn ($query, $divisionId) => $query->where(
+                    'division_id',
+                    $divisionId
+                )
             )
             ->when(
                 $filters['school_type'] ?? null,
-                fn ($query, string $type) =>
-                    $query->where('school_type', $type)
+                fn ($query, string $type) => $query->where('school_type', $type)
             )
             ->when(
                 ($filters['status'] ?? null) === 'active',
-                fn ($query) =>
-                    $query->where('is_active', true)
+                fn ($query) => $query->where('is_active', true)
             )
             ->when(
                 ($filters['status'] ?? null) === 'inactive',
-                fn ($query) =>
-                    $query->where('is_active', false)
+                fn ($query) => $query->where('is_active', false)
             )
             ->orderBy('name')
             ->paginate(25)

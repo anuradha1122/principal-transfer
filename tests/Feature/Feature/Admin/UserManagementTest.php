@@ -62,8 +62,7 @@ class UserManagementTest extends TestCase
                 'name' => 'Zonal Director',
                 'email' => 'zonal@example.com',
                 'password' => 'Password123',
-                'password_confirmation' =>
-                    'Password123',
+                'password_confirmation' => 'Password123',
                 'role' => 'Zonal Director',
                 'is_active' => true,
                 'email_verified' => true,

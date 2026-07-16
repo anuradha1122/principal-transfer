@@ -5,7 +5,11 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { GraduationCap, LockKeyhole } from 'lucide-react';
+import {
+    GraduationCap,
+    LockKeyhole,
+    UserPlus,
+} from 'lucide-react';
 
 export default function Login({
     status,
@@ -76,7 +80,10 @@ export default function Login({
                         autoComplete="username"
                         isFocused
                         onChange={(event) =>
-                            setData('email', event.target.value)
+                            setData(
+                                'email',
+                                event.target.value,
+                            )
                         }
                     />
 
@@ -100,7 +107,10 @@ export default function Login({
                         className="mt-1 block w-full"
                         autoComplete="current-password"
                         onChange={(event) =>
-                            setData('password', event.target.value)
+                            setData(
+                                'password',
+                                event.target.value,
+                            )
                         }
                     />
 
@@ -130,7 +140,9 @@ export default function Login({
 
                     {canResetPassword && (
                         <Link
-                            href={route('password.request')}
+                            href={route(
+                                'password.request',
+                            )}
                             className="text-sm font-medium text-blue-600 transition hover:text-blue-800 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                         >
                             Forgot password?
@@ -150,15 +162,26 @@ export default function Login({
                 </PrimaryButton>
             </form>
 
-            <div className="mt-8 border-t border-slate-200 pt-5 text-center">
+            <div className="mt-6 border-t border-slate-200 pt-5 text-center">
+                <p className="text-sm text-slate-600">
+                    Eligible principal without an account?
+                </p>
+
+                <Link
+                    href={route(
+                        'principal-registration.verify-page',
+                    )}
+                    className="mt-3 inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-blue-600 transition hover:bg-blue-50 hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                >
+                    <UserPlus className="h-4 w-4" />
+                    Register using NIC
+                </Link>
+            </div>
+
+            <div className="mt-5 text-center">
                 <p className="text-xs leading-5 text-slate-500">
                     Access is restricted to authorized officers and
                     registered principals.
-                </p>
-
-                <p className="mt-1 text-xs text-slate-400">
-                    Principal registration will be available through
-                    NIC verification.
                 </p>
             </div>
         </GuestLayout>

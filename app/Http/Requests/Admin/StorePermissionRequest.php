@@ -30,8 +30,7 @@ class StorePermissionRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.regex' =>
-                'Permission names may contain lowercase letters, numbers and spaces only.',
+            'name.regex' => 'Permission names may contain lowercase letters, numbers and spaces only.',
         ];
     }
 }

@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use App\Models\Division;
 use App\Models\School;
+use App\Models\User;
 use App\Models\Zone;
 use Inertia\Inertia;
 use Inertia\Response;

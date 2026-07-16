@@ -40,8 +40,7 @@ class HandleInertiaRequests extends Middleware
                         'id' => $user->id,
                         'name' => $user->name,
                         'email' => $user->email,
-                        'email_verified_at' =>
-                            $user->email_verified_at,
+                        'email_verified_at' => $user->email_verified_at,
                     ]
                     : null,
 
@@ -58,14 +57,11 @@ class HandleInertiaRequests extends Middleware
             ],
 
             'flash' => [
-                'success' => fn () =>
-                    $request->session()->get('success'),
+                'success' => fn () => $request->session()->get('success'),
 
-                'error' => fn () =>
-                    $request->session()->get('error'),
+                'error' => fn () => $request->session()->get('error'),
 
-                'warning' => fn () =>
-                    $request->session()->get('warning'),
+                'warning' => fn () => $request->session()->get('warning'),
             ],
         ];
     }

@@ -126,8 +126,7 @@ class OrganizationStructureTest extends TestCase
                 'name' => 'Test College',
                 'school_type' => '1AB',
                 'gender_type' => 'Mixed',
-                'school_level' =>
-                    'Primary and Secondary',
+                'school_level' => 'Primary and Secondary',
                 'mediums' => [
                     'Sinhala',
                     'English',

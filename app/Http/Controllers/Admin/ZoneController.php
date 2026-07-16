@@ -63,18 +63,15 @@ class ZoneController extends Controller
             )
             ->when(
                 $filters['district'] ?? null,
-                fn ($query, string $district) =>
-                    $query->where('district', $district)
+                fn ($query, string $district) => $query->where('district', $district)
             )
             ->when(
                 ($filters['status'] ?? null) === 'active',
-                fn ($query) =>
-                    $query->where('is_active', true)
+                fn ($query) => $query->where('is_active', true)
             )
             ->when(
                 ($filters['status'] ?? null) === 'inactive',
-                fn ($query) =>
-                    $query->where('is_active', false)
+                fn ($query) => $query->where('is_active', false)
             )
             ->orderBy('sort_order')
             ->orderBy('name')
@@ -120,11 +117,10 @@ class ZoneController extends Controller
         );
 
         $zone->load([
-            'divisions' => fn ($query) =>
-                $query
-                    ->withCount('schools')
-                    ->orderBy('sort_order')
-                    ->orderBy('name'),
+            'divisions' => fn ($query) => $query
+                ->withCount('schools')
+                ->orderBy('sort_order')
+                ->orderBy('name'),
         ]);
 
         $zone->loadCount([

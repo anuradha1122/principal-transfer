@@ -66,3 +66,24 @@ NIC-controlled registration will be implemented in Module 04.
 - GET /admin/schools/{school}/edit
 - PUT/PATCH /admin/schools/{school}
 - DELETE /admin/schools/{school}
+
+
+## Principal Registry Administration
+
+- GET /admin/principal-registry
+- GET /admin/principal-registry/create
+- POST /admin/principal-registry
+- GET /admin/principal-registry/{principal_registry}
+- GET /admin/principal-registry/{principal_registry}/edit
+- PUT/PATCH /admin/principal-registry/{principal_registry}
+- DELETE /admin/principal-registry/{principal_registry}
+- GET /admin/principal-registry/import
+- POST /admin/principal-registry/import
+- GET /admin/principal-registry/template
+
+## Principal Registration
+
+- GET /principal-registration
+- POST /principal-registration/verify-nic
+- GET /principal-registration/create
+- POST /principal-registration

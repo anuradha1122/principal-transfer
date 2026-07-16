@@ -73,7 +73,6 @@ export default function AdminSidebar({
             href: '/admin/principal-registry',
             icon: UserRoundCheck,
             visible: can('view principal registry'),
-            disabled: true,
         },
         {
             label: 'Principal Profiles',

@@ -65,3 +65,26 @@ Implemented:
 - Safe parent-record deletion restrictions
 - Sidebar navigation
 - Organization structure feature tests
+
+
+## Module 04: Principal Registry and NIC-Controlled Self-Registration
+
+Status: Completed
+
+Implemented:
+
+- Principal Registry database
+- NIC normalization service
+- Old and new NIC format validation
+- Registry administration
+- Registry search and filtering
+- CSV import
+- CSV template
+- Controlled NIC verification
+- Time-limited registration session
+- Principal account creation
+- Principal role assignment
+- Registry-to-user linking
+- Duplicate registration prevention
+- Email verification redirect
+- Registration tests

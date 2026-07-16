@@ -38,3 +38,17 @@
 - Added school type, level, gender and medium fields.
 - Added hierarchical deletion protection.
 - Enabled Zones, Divisions and Schools navigation.
+
+
+## Module 04
+
+- Added principal_registries table.
+- Added NIC normalization and validation.
+- Added registry CRUD pages.
+- Added registry CSV import.
+- Added controlled principal registration.
+- Added duplicate NIC protection.
+- Added registration session expiry.
+- Added Principal role assignment.
+- Enabled Principal Registry navigation.
+- Added NIC registration link to login.

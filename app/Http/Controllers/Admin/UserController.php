@@ -61,18 +61,15 @@ class UserController extends Controller
             )
             ->when(
                 $filters['role'] ?? null,
-                fn ($query, string $role) =>
-                    $query->role($role)
+                fn ($query, string $role) => $query->role($role)
             )
             ->when(
                 ($filters['status'] ?? null) === 'active',
-                fn ($query) =>
-                    $query->where('is_active', true)
+                fn ($query) => $query->where('is_active', true)
             )
             ->when(
                 ($filters['status'] ?? null) === 'inactive',
-                fn ($query) =>
-                    $query->where('is_active', false)
+                fn ($query) => $query->where('is_active', false)
             )
             ->latest()
             ->paginate(15)
@@ -82,12 +79,9 @@ class UserController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'is_active' => $user->is_active,
-                'email_verified_at' =>
-                    $user->email_verified_at?->toDateTimeString(),
-                'last_login_at' =>
-                    $user->last_login_at?->toDateTimeString(),
-                'created_at' =>
-                    $user->created_at?->toDateTimeString(),
+                'email_verified_at' => $user->email_verified_at?->toDateTimeString(),
+                'last_login_at' => $user->last_login_at?->toDateTimeString(),
+                'created_at' => $user->created_at?->toDateTimeString(),
                 'roles' => $user->roles
                     ->pluck('name')
                     ->values(),
@@ -135,8 +129,7 @@ class UserController extends Controller
                 'email' => $validated['email'],
                 'password' => $validated['password'],
                 'is_active' => $validated['is_active'],
-                'email_verified_at' =>
-                    $validated['email_verified']
+                'email_verified_at' => $validated['email_verified']
                         ? now()
                         : null,
                 'created_by' => $request->user()->id,
@@ -176,12 +169,9 @@ class UserController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'is_active' => $user->is_active,
-                'email_verified_at' =>
-                    $user->email_verified_at?->toDateTimeString(),
-                'last_login_at' =>
-                    $user->last_login_at?->toDateTimeString(),
-                'created_at' =>
-                    $user->created_at?->toDateTimeString(),
+                'email_verified_at' => $user->email_verified_at?->toDateTimeString(),
+                'last_login_at' => $user->last_login_at?->toDateTimeString(),
+                'created_at' => $user->created_at?->toDateTimeString(),
                 'roles' => $user->roles
                     ->pluck('name')
                     ->values(),
@@ -218,8 +208,7 @@ class UserController extends Controller
                 'email' => $user->email,
                 'role' => $user->roles->first()?->name,
                 'is_active' => $user->is_active,
-                'email_verified' =>
-                    $user->email_verified_at !== null,
+                'email_verified' => $user->email_verified_at !== null,
             ],
             'roles' => Role::query()
                 ->where('guard_name', 'web')
@@ -249,8 +238,7 @@ class UserController extends Controller
                 'name' => $validated['name'],
                 'email' => $validated['email'],
                 'is_active' => $validated['is_active'],
-                'email_verified_at' =>
-                    $validated['email_verified']
+                'email_verified_at' => $validated['email_verified']
                         ? ($user->email_verified_at ?? now())
                         : null,
             ]);

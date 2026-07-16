@@ -25,11 +25,10 @@ class StoreDivisionRequest extends FormRequest
                 'max:150',
                 Rule::unique('divisions', 'name')
                     ->where(
-                        fn ($query) =>
-                            $query->where(
-                                'zone_id',
-                                $this->input('zone_id')
-                            )
+                        fn ($query) => $query->where(
+                            'zone_id',
+                            $this->input('zone_id')
+                        )
                     ),
             ],
             'code' => [

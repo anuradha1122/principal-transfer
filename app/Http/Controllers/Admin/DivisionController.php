@@ -63,18 +63,15 @@ class DivisionController extends Controller
             )
             ->when(
                 $filters['zone_id'] ?? null,
-                fn ($query, $zoneId) =>
-                    $query->where('zone_id', $zoneId)
+                fn ($query, $zoneId) => $query->where('zone_id', $zoneId)
             )
             ->when(
                 ($filters['status'] ?? null) === 'active',
-                fn ($query) =>
-                    $query->where('is_active', true)
+                fn ($query) => $query->where('is_active', true)
             )
             ->when(
                 ($filters['status'] ?? null) === 'inactive',
-                fn ($query) =>
-                    $query->where('is_active', false)
+                fn ($query) => $query->where('is_active', false)
             )
             ->orderBy('zone_id')
             ->orderBy('sort_order')
@@ -125,10 +122,9 @@ class DivisionController extends Controller
 
         $division->load([
             'zone:id,name,code,district',
-            'schools' => fn ($query) =>
-                $query
-                    ->orderBy('name')
-                    ->limit(100),
+            'schools' => fn ($query) => $query
+                ->orderBy('name')
+                ->limit(100),
         ]);
 
         $division->loadCount('schools');

@@ -61,3 +61,29 @@ Key fields:
 - Division has many Schools.
 - School belongs to Division.
 - School belongs to a Zone through its Division.
+
+
+## principal_registries
+
+Stores NIC numbers approved for principal self-registration.
+
+Key fields:
+
+- nic
+- normalized_nic
+- full_name
+- name_with_initials
+- school_id
+- designation
+- employee_number
+- registration_status
+- registered_user_id
+- is_active
+- registered_at
+
+## Relationships
+
+- PrincipalRegistry belongs to School.
+- PrincipalRegistry belongs to its registered User.
+- User has one PrincipalRegistry.
+- School has many PrincipalRegistry records.

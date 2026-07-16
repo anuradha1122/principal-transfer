@@ -34,8 +34,7 @@ class RoleController extends Controller
                 'id' => $role->id,
                 'name' => $role->name,
                 'users_count' => $role->users_count,
-                'permissions_count' =>
-                    $role->permissions_count,
+                'permissions_count' => $role->permissions_count,
                 'is_system' => in_array(
                     $role->name,
                     $this->systemRoles(),
@@ -57,8 +56,7 @@ class RoleController extends Controller
         );
 
         return Inertia::render('Admin/Roles/Create', [
-            'permissionGroups' =>
-                $this->permissionGroups(),
+            'permissionGroups' => $this->permissionGroups(),
         ]);
     }
 
@@ -110,8 +108,7 @@ class RoleController extends Controller
                     true
                 ),
             ],
-            'permissionGroups' =>
-                $this->permissionGroups(),
+            'permissionGroups' => $this->permissionGroups(),
         ]);
     }
 
@@ -203,42 +200,34 @@ class RoleController extends Controller
                 $name = $permission->name;
 
                 return match (true) {
-                    str_contains($name, 'dashboard') =>
-                        'Dashboards',
+                    str_contains($name, 'dashboard') => 'Dashboards',
 
                     str_contains($name, 'user') ||
-                    str_contains($name, 'role') =>
-                        'Users and Access',
+                    str_contains($name, 'role') => 'Users and Access',
 
                     str_contains($name, 'zone') ||
                     str_contains($name, 'division') ||
-                    str_contains($name, 'school') =>
-                        'Organization',
+                    str_contains($name, 'school') => 'Organization',
 
-                    str_contains($name, 'principal') =>
-                        'Principals',
+                    str_contains($name, 'principal') => 'Principals',
 
                     str_contains($name, 'transfer') ||
-                    str_contains($name, 'board') =>
-                        'Transfer Workflow',
+                    str_contains($name, 'board') => 'Transfer Workflow',
 
                     str_contains($name, 'report') ||
                     str_contains($name, 'export') ||
-                    str_contains($name, 'download') =>
-                        'Reports and Exports',
+                    str_contains($name, 'download') => 'Reports and Exports',
 
                     str_contains($name, 'setting') ||
-                    str_contains($name, 'audit') =>
-                        'System',
+                    str_contains($name, 'audit') => 'System',
 
                     default => 'Other',
                 };
             })
             ->map(
-                fn ($permissions) =>
-                    $permissions
-                        ->pluck('name')
-                        ->values()
+                fn ($permissions) => $permissions
+                    ->pluck('name')
+                    ->values()
             )
             ->toArray();
     }
