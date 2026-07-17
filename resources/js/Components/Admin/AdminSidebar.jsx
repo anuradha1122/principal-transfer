@@ -20,9 +20,16 @@ export default function AdminSidebar({
     onClose,
 }) {
     const page = usePage();
-    const permissions = page.props.auth?.permissions ?? [];
-    const roles = page.props.auth?.roles ?? [];
-    const currentUrl = page.url ?? window.location.pathname;
+
+    const permissions =
+        page.props.auth?.permissions ?? [];
+
+    const roles =
+        page.props.auth?.roles ?? [];
+
+    const currentUrl =
+        page.url ??
+        window.location.pathname;
 
     const can = (permission) => {
         return (
@@ -36,7 +43,9 @@ export default function AdminSidebar({
             label: 'Dashboard',
             href: '/admin/dashboard',
             icon: LayoutDashboard,
-            visible: can('view admin dashboard'),
+            visible: can(
+                'view admin dashboard',
+            ),
         },
         {
             label: 'Users',
@@ -48,7 +57,9 @@ export default function AdminSidebar({
             label: 'Roles & Permissions',
             href: '/admin/roles',
             icon: ShieldCheck,
-            visible: can('manage roles and permissions'),
+            visible: can(
+                'manage roles and permissions',
+            ),
         },
         {
             label: 'Zones',
@@ -72,30 +83,41 @@ export default function AdminSidebar({
             label: 'Principal Registry',
             href: '/admin/principal-registry',
             icon: UserRoundCheck,
-            visible: can('view principal registry'),
+            visible: can(
+                'view principal registry',
+            ),
         },
         {
             label: 'Principal Profiles',
-            href: '/admin/principals',
+            href: '/admin/principal-profiles',
             icon: GraduationCap,
-            visible: can('view principal profiles'),
-            disabled: true,
+            visible: can(
+                'view principal profiles',
+            ),
         },
         {
             label: 'Transfer Applications',
             href: '/admin/transfer-applications',
             icon: FileText,
             visible:
-                can('view zonal transfer applications') ||
-                can('view provincial transfer applications') ||
-                can('view board transfer applications'),
+                can(
+                    'view zonal transfer applications',
+                ) ||
+                can(
+                    'view provincial transfer applications',
+                ) ||
+                can(
+                    'view board transfer applications',
+                ),
             disabled: true,
         },
         {
             label: 'Transfer Board',
             href: '/admin/transfer-board',
             icon: ClipboardCheck,
-            visible: can('view board transfer applications'),
+            visible: can(
+                'view board transfer applications',
+            ),
             disabled: true,
         },
         {
@@ -109,14 +131,41 @@ export default function AdminSidebar({
             label: 'System Settings',
             href: '/admin/settings',
             icon: Settings,
-            visible: can('manage system settings'),
+            visible: can(
+                'manage system settings',
+            ),
             disabled: true,
         },
     ];
 
+    const normalizePath = (value) => {
+        if (!value) {
+            return '/';
+        }
+
+        const path =
+            value.split('?')[0].split('#')[0];
+
+        if (path.length > 1) {
+            return path.replace(/\/+$/, '');
+        }
+
+        return path;
+    };
+
     const isActive = (href) => {
-        return currentUrl === href ||
-            currentUrl.startsWith(`${href}/`);
+        const currentPath =
+            normalizePath(currentUrl);
+
+        const menuPath =
+            normalizePath(href);
+
+        return (
+            currentPath === menuPath ||
+            currentPath.startsWith(
+                `${menuPath}/`,
+            )
+        );
     };
 
     const sidebarContent = (
@@ -124,6 +173,7 @@ export default function AdminSidebar({
             <div className="flex h-20 items-center justify-between border-b border-white/10 px-5">
                 <Link
                     href="/admin/dashboard"
+                    onClick={onClose}
                     className="flex items-center gap-3"
                 >
                     <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-600">
@@ -134,6 +184,7 @@ export default function AdminSidebar({
                         <p className="text-sm font-bold">
                             Principal Transfer
                         </p>
+
                         <p className="text-xs text-slate-400">
                             Sabaragamuwa Province
                         </p>
@@ -143,7 +194,8 @@ export default function AdminSidebar({
                 <button
                     type="button"
                     onClick={onClose}
-                    className="rounded-lg p-2 text-slate-400 hover:bg-white/10 hover:text-white lg:hidden"
+                    aria-label="Close sidebar"
+                    className="rounded-lg p-2 text-slate-400 transition hover:bg-white/10 hover:text-white lg:hidden"
                 >
                     <X className="h-5 w-5" />
                 </button>
@@ -151,38 +203,74 @@ export default function AdminSidebar({
 
             <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-5">
                 {menuItems
-                    .filter((item) => item.visible)
+                    .filter(
+                        (item) =>
+                            item.visible,
+                    )
                     .map((item) => {
-                        const Icon = item.icon;
-                        const active = isActive(item.href);
+                        const Icon =
+                            item.icon;
+
+                        const active =
+                            isActive(
+                                item.href,
+                            );
 
                         if (item.disabled) {
                             return (
                                 <div
-                                    key={item.label}
-                                    className="flex cursor-not-allowed items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-600"
+                                    key={
+                                        item.label
+                                    }
                                     title="Available in a later module"
+                                    className="flex cursor-not-allowed items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-600"
                                 >
-                                    <Icon className="h-5 w-5" />
-                                    <span>{item.label}</span>
+                                    <Icon className="h-5 w-5 shrink-0" />
+
+                                    <span>
+                                        {
+                                            item.label
+                                        }
+                                    </span>
+
+                                    <span className="ml-auto rounded-full bg-white/5 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600">
+                                        Soon
+                                    </span>
                                 </div>
                             );
                         }
 
                         return (
                             <Link
-                                key={item.label}
-                                href={item.href}
-                                onClick={onClose}
+                                key={
+                                    item.label
+                                }
+                                href={
+                                    item.href
+                                }
+                                onClick={
+                                    onClose
+                                }
                                 className={[
                                     'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition',
                                     active
                                         ? 'bg-blue-600 text-white shadow-lg shadow-blue-950/30'
                                         : 'text-slate-300 hover:bg-white/10 hover:text-white',
-                                ].join(' ')}
+                                ].join(
+                                    ' ',
+                                )}
                             >
-                                <Icon className="h-5 w-5" />
-                                <span>{item.label}</span>
+                                <Icon className="h-5 w-5 shrink-0" />
+
+                                <span>
+                                    {
+                                        item.label
+                                    }
+                                </span>
+
+                                {active && (
+                                    <span className="ml-auto h-2 w-2 rounded-full bg-white" />
+                                )}
                             </Link>
                         );
                     })}
@@ -190,8 +278,10 @@ export default function AdminSidebar({
 
             <div className="border-t border-white/10 px-5 py-4">
                 <p className="text-xs leading-5 text-slate-500">
-                    Provincial Department of Education
+                    Provincial Department of
+                    Education
                 </p>
+
                 <p className="text-xs leading-5 text-slate-500">
                     Sabaragamuwa Province
                 </p>
@@ -202,8 +292,11 @@ export default function AdminSidebar({
     return (
         <>
             <div
+                role="button"
+                tabIndex={-1}
+                aria-label="Close sidebar overlay"
                 className={[
-                    'fixed inset-0 z-40 bg-slate-950/60 transition lg:hidden',
+                    'fixed inset-0 z-40 bg-slate-950/60 transition-opacity duration-200 lg:hidden',
                     open
                         ? 'opacity-100'
                         : 'pointer-events-none opacity-0',
@@ -213,7 +306,7 @@ export default function AdminSidebar({
 
             <aside
                 className={[
-                    'fixed inset-y-0 left-0 z-50 w-72 transform transition duration-200 lg:translate-x-0',
+                    'fixed inset-y-0 left-0 z-50 w-72 transform transition-transform duration-200 lg:translate-x-0',
                     open
                         ? 'translate-x-0'
                         : '-translate-x-full',

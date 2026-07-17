@@ -88,3 +88,22 @@ Implemented:
 - Duplicate registration prevention
 - Email verification redirect
 - Registration tests
+
+
+## Module 05: Principal Profile and Current Appointment Management
+
+Status: Completed
+
+Implemented:
+
+- Principal personal profile
+- Service information
+- Contact information
+- Employment status
+- Principal account and registry relationships
+- Appointment history
+- Current appointment management
+- Automatic closure of previous appointments
+- Principal self-service profile
+- Admin profile search and filters
+- Authorization tests

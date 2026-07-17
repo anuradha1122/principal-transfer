@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\RegisterPrincipalRequest;
 use App\Http\Requests\Auth\VerifyPrincipalNicRequest;
+use App\Models\PrincipalProfile;
 use App\Models\PrincipalRegistry;
 use App\Models\User;
 use App\Services\NicService;
@@ -80,7 +81,10 @@ class PrincipalRegistrationController extends Controller
             [
                 'registry_id' => $registry->id,
                 'normalized_nic' => $normalizedNic,
-                'token_hash' => hash('sha256', $verificationToken),
+                'token_hash' => hash(
+                    'sha256',
+                    $verificationToken
+                ),
                 'verified_at' => now()->timestamp,
             ]
         );
@@ -146,18 +150,25 @@ class PrincipalRegistrationController extends Controller
                 'token' => $token,
                 'registry' => [
                     'nic' => $registry->nic,
-                    'full_name' => $registry->full_name,
-                    'name_with_initials' => $registry->name_with_initials,
-                    'designation' => $registry->designation,
-                    'employee_number' => $registry->employee_number,
+                    'full_name' =>
+                        $registry->full_name,
+                    'name_with_initials' =>
+                        $registry->name_with_initials,
+                    'designation' =>
+                        $registry->designation,
+                    'employee_number' =>
+                        $registry->employee_number,
                     'school' => $registry->school
                         ? [
-                            'name' => $registry->school->name,
-                            'division' => $registry->school
-                                ->division?->name,
-                            'zone' => $registry->school
-                                ->division
-                                ?->zone?->name,
+                            'name' =>
+                                $registry->school->name,
+                            'division' =>
+                                $registry->school
+                                    ->division?->name,
+                            'zone' =>
+                                $registry->school
+                                    ->division
+                                    ?->zone?->name,
                         ]
                         : null,
                 ],
@@ -217,11 +228,35 @@ class PrincipalRegistrationController extends Controller
                 $user->assignRole('Principal');
 
                 $registry->update([
-                    'full_name' => $registry->full_name
+                    'full_name' =>
+                        $registry->full_name
                             ?: $validated['name'],
-                    'registered_user_id' => $user->id,
-                    'registration_status' => 'registered',
+                    'registered_user_id' =>
+                        $user->id,
+                    'registration_status' =>
+                        'registered',
                     'registered_at' => now(),
+                ]);
+
+                PrincipalProfile::create([
+                    'user_id' => $user->id,
+                    'principal_registry_id' =>
+                        $registry->id,
+                    'nic' =>
+                        $registry->normalized_nic,
+                    'employee_number' =>
+                        $registry->employee_number,
+                    'full_name' =>
+                        $registry->full_name
+                            ?: $validated['name'],
+                    'name_with_initials' =>
+                        $registry->name_with_initials,
+                    'service_category' =>
+                        'Sri Lanka Principals Service',
+                    'employment_status' =>
+                        'Active',
+                    'profile_completed' =>
+                        false,
                 ]);
 
                 return $user;
@@ -262,10 +297,12 @@ class PrincipalRegistrationController extends Controller
         ];
 
         foreach ($requiredKeys as $key) {
-            if (! array_key_exists(
-                $key,
-                $registration
-            )) {
+            if (
+                ! array_key_exists(
+                    $key,
+                    $registration
+                )
+            ) {
                 return false;
             }
         }

@@ -57,4 +57,9 @@ class User extends Authenticatable implements MustVerifyEmail
             'registered_user_id'
         );
     }
+
+    public function principalProfile(): HasOne
+    {
+        return $this->hasOne(PrincipalProfile::class);
+    }
 }

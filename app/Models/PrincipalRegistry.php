@@ -6,6 +6,7 @@ use App\Services\NicService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class PrincipalRegistry extends Model
 {
@@ -95,5 +96,13 @@ class PrincipalRegistry extends Model
         return $this->is_active
             && $this->registration_status === 'unregistered'
             && $this->registered_user_id === null;
+    }
+
+    public function principalProfile(): HasOne
+    {
+        return $this->hasOne(
+            PrincipalProfile::class,
+            'principal_registry_id'
+        );
     }
 }

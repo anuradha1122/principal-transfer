@@ -38,39 +38,35 @@ DB_PASSWORD=root
 ## Completed Modules
 
 ### Module 01
-
 Project Foundation, Authentication, Roles and Admin Layout
 
 ### Module 02
-
 Roles, Permissions and User Management
 
 ### Module 03
-
 Zones, Divisions and Schools Management
 
 ### Module 04
-
 Principal Registry and NIC-Controlled Self-Registration
+
+### Module 05
+Principal Profile and Current Appointment Management
 
 Completed:
 
-- Principal Registry CRUD
-- NIC normalization
-- NIC validation
-- CSV registry import
-- CSV template download
-- Controlled self-registration
-- Registration token and expiry
-- Principal role assignment
-- Registry-to-user linking
-- Duplicate registration protection
-- Email verification flow
-- Automated tests
+- Principal personal and service profiles
+- User and registry linking
+- Current school appointment
+- Appointment history
+- Acting, temporary and permanent appointments
+- Automatic closure of previous current appointment
+- Principal self-service profile
+- Admin profile management
+- Profile and appointment tests
 
 ## Next Exact Step
 
-Module 05: Principal Profile and Current Appointment Management
+Module 06: Transfer Cycles and Transfer Application Management
 
 ## Mandatory Rules
 

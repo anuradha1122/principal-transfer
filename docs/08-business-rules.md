@@ -29,3 +29,18 @@
 - Successful registration changes the registry status to registered.
 - Registered registry records cannot be deleted.
 - Registered NIC numbers cannot be reused.
+
+
+## Principal Profile Rules
+
+- Each principal user has at most one principal profile.
+- Each registry record has at most one principal profile.
+- NIC numbers must be unique among principal profiles.
+- Employee numbers must be unique when provided.
+- A principal may have many appointment records.
+- Only one appointment should be current.
+- Creating a new current appointment closes the previous current appointment.
+- The previous appointment end date becomes one day before the new start date.
+- Principals may update contact and limited personal details.
+- Principals cannot change controlled service or appointment information.
+- Appointment history must remain available for transfer evaluation.

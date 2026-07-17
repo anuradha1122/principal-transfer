@@ -87,3 +87,33 @@ Key fields:
 - PrincipalRegistry belongs to its registered User.
 - User has one PrincipalRegistry.
 - School has many PrincipalRegistry records.
+
+
+## principal_profiles
+
+Stores personal, contact and service information for principals.
+
+Key relationships:
+
+- Belongs to User
+- Belongs to PrincipalRegistry
+- Has many PrincipalAppointments
+- Has one current PrincipalAppointment
+
+## principal_appointments
+
+Stores complete school appointment history.
+
+Key fields:
+
+- principal_profile_id
+- school_id
+- designation
+- appointment_type
+- appointment_number
+- appointment_date
+- start_date
+- end_date
+- is_current
+- reason_for_end
+- remarks
