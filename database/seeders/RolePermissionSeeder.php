@@ -66,6 +66,12 @@ class RolePermissionSeeder extends Seeder
             'submit transfer applications',
             'withdraw transfer applications',
 
+            // transfer cycles
+            'view transfer cycles',
+            'manage transfer cycles',
+            'view transfer applications',
+            'create transfer applications',
+
             // Zonal review
             'view zonal transfer applications',
             'approve zonal transfer applications',

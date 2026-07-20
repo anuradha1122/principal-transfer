@@ -26,12 +26,16 @@ export default function Edit({
             appointment.appointment_type ?? 'Permanent',
         appointment_number:
             appointment.appointment_number ?? '',
-        appointment_date: dateValue(
-            appointment.appointment_date,
-        ),
-        start_date: dateValue(
-            appointment.start_date,
-        ),
+        appointment_date:
+            dateValue(
+                appointment.appointment_date,
+            ),
+
+        start_date:
+            dateValue(
+                appointment.appointment_date ??
+                    appointment.start_date,
+            ),
         end_date: dateValue(
             appointment.end_date,
         ),
@@ -80,6 +84,7 @@ export default function Edit({
                     schools={schools}
                     options={options}
                     editing
+                    cancelRoute="admin.principal-profiles.show"
                     onSubmit={submit}
                 />
             </div>

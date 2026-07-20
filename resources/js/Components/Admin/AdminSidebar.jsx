@@ -1,6 +1,7 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
     Building2,
+    CalendarRange,
     ClipboardCheck,
     FileText,
     Gauge,
@@ -96,20 +97,16 @@ export default function AdminSidebar({
             ),
         },
         {
+            label: 'Transfer Cycles',
+            href: '/admin/transfer-cycles',
+            icon: CalendarRange,
+            visible: can('view transfer cycles'),
+        },
+        {
             label: 'Transfer Applications',
             href: '/admin/transfer-applications',
             icon: FileText,
-            visible:
-                can(
-                    'view zonal transfer applications',
-                ) ||
-                can(
-                    'view provincial transfer applications',
-                ) ||
-                can(
-                    'view board transfer applications',
-                ),
-            disabled: true,
+            visible: can('view transfer applications'),
         },
         {
             label: 'Transfer Board',

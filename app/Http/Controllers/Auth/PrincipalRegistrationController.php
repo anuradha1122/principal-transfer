@@ -150,25 +150,18 @@ class PrincipalRegistrationController extends Controller
                 'token' => $token,
                 'registry' => [
                     'nic' => $registry->nic,
-                    'full_name' =>
-                        $registry->full_name,
-                    'name_with_initials' =>
-                        $registry->name_with_initials,
-                    'designation' =>
-                        $registry->designation,
-                    'employee_number' =>
-                        $registry->employee_number,
+                    'full_name' => $registry->full_name,
+                    'name_with_initials' => $registry->name_with_initials,
+                    'designation' => $registry->designation,
+                    'employee_number' => $registry->employee_number,
                     'school' => $registry->school
                         ? [
-                            'name' =>
-                                $registry->school->name,
-                            'division' =>
-                                $registry->school
-                                    ->division?->name,
-                            'zone' =>
-                                $registry->school
-                                    ->division
-                                    ?->zone?->name,
+                            'name' => $registry->school->name,
+                            'division' => $registry->school
+                                ->division?->name,
+                            'zone' => $registry->school
+                                ->division
+                                ?->zone?->name,
                         ]
                         : null,
                 ],
@@ -228,35 +221,24 @@ class PrincipalRegistrationController extends Controller
                 $user->assignRole('Principal');
 
                 $registry->update([
-                    'full_name' =>
-                        $registry->full_name
+                    'full_name' => $registry->full_name
                             ?: $validated['name'],
-                    'registered_user_id' =>
-                        $user->id,
-                    'registration_status' =>
-                        'registered',
+                    'registered_user_id' => $user->id,
+                    'registration_status' => 'registered',
                     'registered_at' => now(),
                 ]);
 
                 PrincipalProfile::create([
                     'user_id' => $user->id,
-                    'principal_registry_id' =>
-                        $registry->id,
-                    'nic' =>
-                        $registry->normalized_nic,
-                    'employee_number' =>
-                        $registry->employee_number,
-                    'full_name' =>
-                        $registry->full_name
+                    'principal_registry_id' => $registry->id,
+                    'nic' => $registry->normalized_nic,
+                    'employee_number' => $registry->employee_number,
+                    'full_name' => $registry->full_name
                             ?: $validated['name'],
-                    'name_with_initials' =>
-                        $registry->name_with_initials,
-                    'service_category' =>
-                        'Sri Lanka Principals Service',
-                    'employment_status' =>
-                        'Active',
-                    'profile_completed' =>
-                        false,
+                    'name_with_initials' => $registry->name_with_initials,
+                    'service_category' => 'Sri Lanka Principals Service',
+                    'employment_status' => 'Active',
+                    'profile_completed' => false,
                 ]);
 
                 return $user;

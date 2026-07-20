@@ -117,3 +117,37 @@ Key fields:
 - is_current
 - reason_for_end
 - remarks
+
+
+## transfer_cycles
+
+Stores transfer application periods and rules.
+
+Key fields:
+
+- name
+- code
+- transfer_type
+- transfer_year
+- application_open_date
+- application_close_date
+- effective_from_date
+- minimum_service_years
+- maximum_preferences
+- status
+
+## transfer_applications
+
+Stores principal transfer requests and a snapshot of the principal's current appointment.
+
+Key relationships:
+
+- Belongs to TransferCycle
+- Belongs to PrincipalProfile
+- Belongs to current PrincipalAppointment
+- Belongs to current School
+- Has many TransferPreferences
+
+## transfer_preferences
+
+Stores ranked preferred schools for each transfer application.

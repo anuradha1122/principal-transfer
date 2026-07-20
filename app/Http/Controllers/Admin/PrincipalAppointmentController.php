@@ -33,8 +33,7 @@ class PrincipalAppointmentController extends Controller
             [
                 'profile' => [
                     'id' => $principalProfile->id,
-                    'full_name' =>
-                        $principalProfile->full_name,
+                    'full_name' => $principalProfile->full_name,
                     'nic' => $principalProfile->nic,
                 ],
                 'schools' => $this->schools(),
@@ -64,12 +63,9 @@ class PrincipalAppointmentController extends Controller
 
                 PrincipalAppointment::create([
                     ...$validated,
-                    'principal_profile_id' =>
-                        $principalProfile->id,
-                    'created_by' =>
-                        $request->user()->id,
-                    'updated_by' =>
-                        $request->user()->id,
+                    'principal_profile_id' => $principalProfile->id,
+                    'created_by' => $request->user()->id,
+                    'updated_by' => $request->user()->id,
                 ]);
             }
         );
@@ -103,11 +99,9 @@ class PrincipalAppointmentController extends Controller
         return Inertia::render(
             'Admin/PrincipalAppointments/Edit',
             [
-                'appointment' =>
-                    $principalAppointment,
-                'profile' =>
-                    $principalAppointment
-                        ->principalProfile,
+                'appointment' => $principalAppointment,
+                'profile' => $principalAppointment
+                    ->principalProfile,
                 'schools' => $this->schools(),
                 'options' => $this->options(),
             ]
@@ -137,8 +131,7 @@ class PrincipalAppointmentController extends Controller
 
                 $principalAppointment->update([
                     ...$validated,
-                    'updated_by' =>
-                        $request->user()->id,
+                    'updated_by' => $request->user()->id,
                 ]);
             }
         );

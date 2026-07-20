@@ -107,3 +107,24 @@ Implemented:
 - Principal self-service profile
 - Admin profile search and filters
 - Authorization tests
+
+
+## Module 06: Transfer Cycles and Transfer Application Management
+
+Status: Completed
+
+Implemented:
+
+- Transfer cycle CRUD
+- Application opening and closing dates
+- Configurable service eligibility
+- Transfer application drafts
+- Transfer reason capture
+- Ranked school preferences
+- Current appointment snapshots
+- Final submission
+- Application number generation
+- Principal application history
+- Withdrawal workflow
+- Admin application viewing
+- Automated tests

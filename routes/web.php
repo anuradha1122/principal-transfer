@@ -8,11 +8,15 @@ use App\Http\Controllers\Admin\PrincipalProfileController;
 use App\Http\Controllers\Admin\PrincipalRegistryController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\SchoolController;
+use App\Http\Controllers\Admin\TransferApplicationController as AdminTransferApplicationController;
+use App\Http\Controllers\Admin\TransferCycleController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\ZoneController;
 use App\Http\Controllers\Auth\PrincipalRegistrationController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Principal\AppointmentController as PrincipalSelfAppointmentController;
 use App\Http\Controllers\Principal\ProfileController as PrincipalProfileSelfController;
+use App\Http\Controllers\Principal\TransferApplicationController as PrincipalTransferApplicationController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -86,9 +90,9 @@ Route::middleware('guest')->group(function (): void {
 | Account Profile Routes
 |--------------------------------------------------------------------------
 |
-| These are the standard Breeze account settings routes. They manage
-| account information such as login name, email and password-related
-| profile settings. They are separate from the official principal profile.
+| These are Breeze account settings routes. They manage login name,
+| account email and password-related settings. They are separate from
+| the official principal service profile.
 |
 */
 
@@ -247,7 +251,8 @@ Route::middleware([
             |--------------------------------------------------------------------------
             |
             | Import and template routes must appear before the resource route.
-            | Otherwise "import" may be interpreted as a registry route parameter.
+            | Otherwise "import" may be interpreted as a registry parameter,
+            | because routes enjoy converting ordinary words into model IDs.
             |
             */
 
@@ -285,8 +290,7 @@ Route::middleware([
                 'principal-registry',
                 PrincipalRegistryController::class
             )->parameters([
-                'principal-registry' =>
-                    'principal_registry',
+                'principal-registry' => 'principal_registry',
             ]);
 
             /*
@@ -299,13 +303,12 @@ Route::middleware([
                 'principal-profiles',
                 PrincipalProfileController::class
             )->parameters([
-                'principal-profiles' =>
-                    'principal_profile',
+                'principal-profiles' => 'principal_profile',
             ]);
 
             /*
             |--------------------------------------------------------------------------
-            | Principal Appointment History
+            | Admin Principal Appointment History
             |--------------------------------------------------------------------------
             */
 
@@ -358,6 +361,57 @@ Route::middleware([
             )->name(
                 'principal-appointments.destroy'
             );
+
+            /*
+            |--------------------------------------------------------------------------
+            | Transfer Cycles
+            |--------------------------------------------------------------------------
+            */
+
+            Route::resource(
+                'transfer-cycles',
+                TransferCycleController::class
+            );
+
+            /*
+            |--------------------------------------------------------------------------
+            | Admin Transfer Applications
+            |--------------------------------------------------------------------------
+            */
+
+            Route::get(
+                'transfer-applications',
+                [
+                    AdminTransferApplicationController::class,
+                    'index',
+                ]
+            )->name(
+                'transfer-applications.index'
+            );
+
+            Route::get(
+                'transfer-applications/{transferApplication}/pdf',
+                [
+                    AdminTransferApplicationController::class,
+                    'downloadPdf',
+                ]
+            )
+                ->middleware(
+                    'can:view transfer applications'
+                )
+                ->name(
+                    'transfer-applications.pdf'
+                );
+
+            Route::get(
+                'transfer-applications/{transferApplication}',
+                [
+                    AdminTransferApplicationController::class,
+                    'show',
+                ]
+            )->name(
+                'transfer-applications.show'
+            );
         });
 
     /*
@@ -370,6 +424,12 @@ Route::middleware([
         ->name('principal.')
         ->middleware('role:Principal')
         ->group(function (): void {
+            /*
+            |--------------------------------------------------------------------------
+            | Principal Dashboard
+            |--------------------------------------------------------------------------
+            */
+
             Route::get(
                 '/dashboard',
                 function () {
@@ -417,6 +477,178 @@ Route::middleware([
                     'update',
                 ]
             )->name('profile.update');
+
+            /*
+            |--------------------------------------------------------------------------
+            | Principal Self-Service Appointments
+            |--------------------------------------------------------------------------
+            |
+            | Principals may add and update their own appointment records.
+            | Ownership validation remains inside the controller.
+            |
+            */
+
+            Route::get(
+                '/appointments/create',
+                [
+                    PrincipalSelfAppointmentController::class,
+                    'create',
+                ]
+            )->name(
+                'appointments.create'
+            );
+
+            Route::post(
+                '/appointments',
+                [
+                    PrincipalSelfAppointmentController::class,
+                    'store',
+                ]
+            )->name(
+                'appointments.store'
+            );
+
+            Route::get(
+                '/appointments/{principalAppointment}/edit',
+                [
+                    PrincipalSelfAppointmentController::class,
+                    'edit',
+                ]
+            )->name(
+                'appointments.edit'
+            );
+
+            Route::put(
+                '/appointments/{principalAppointment}',
+                [
+                    PrincipalSelfAppointmentController::class,
+                    'update',
+                ]
+            )->name(
+                'appointments.update'
+            );
+
+            Route::delete(
+                '/appointments/{principalAppointment}',
+                [
+                    PrincipalSelfAppointmentController::class,
+                    'destroy',
+                ]
+            )->name(
+                'appointments.destroy'
+            );
+
+            /*
+            |--------------------------------------------------------------------------
+            | Principal Transfer Applications
+            |--------------------------------------------------------------------------
+            */
+
+            Route::get(
+                '/transfer-applications',
+                [
+                    PrincipalTransferApplicationController::class,
+                    'index',
+                ]
+            )->name(
+                'transfer-applications.index'
+            );
+
+            /*
+             * Keep /create before /{transferApplication}.
+             */
+            Route::get(
+                '/transfer-applications/create',
+                [
+                    PrincipalTransferApplicationController::class,
+                    'create',
+                ]
+            )->name(
+                'transfer-applications.create'
+            );
+
+            Route::post(
+                '/transfer-applications',
+                [
+                    PrincipalTransferApplicationController::class,
+                    'store',
+                ]
+            )->name(
+                'transfer-applications.store'
+            );
+
+            Route::get(
+                '/transfer-applications/{transferApplication}/edit',
+                [
+                    PrincipalTransferApplicationController::class,
+                    'edit',
+                ]
+            )->name(
+                'transfer-applications.edit'
+            );
+
+            Route::put(
+                '/transfer-applications/{transferApplication}',
+                [
+                    PrincipalTransferApplicationController::class,
+                    'update',
+                ]
+            )->name(
+                'transfer-applications.update'
+            );
+
+            Route::post(
+                '/transfer-applications/{transferApplication}/submit',
+                [
+                    PrincipalTransferApplicationController::class,
+                    'submit',
+                ]
+            )->name(
+                'transfer-applications.submit'
+            );
+
+            Route::post(
+                '/transfer-applications/{transferApplication}/withdraw',
+                [
+                    PrincipalTransferApplicationController::class,
+                    'withdraw',
+                ]
+            )->name(
+                'transfer-applications.withdraw'
+            );
+
+            Route::delete(
+                '/transfer-applications/{transferApplication}',
+                [
+                    PrincipalTransferApplicationController::class,
+                    'destroy',
+                ]
+            )->name(
+                'transfer-applications.destroy'
+            );
+
+            /*
+             * General show route stays after the more specific routes.
+             */
+
+            Route::get(
+                '/transfer-applications/{transferApplication}/pdf',
+                [
+                    PrincipalTransferApplicationController::class,
+                    'downloadPdf',
+                ]
+            )->name(
+                'transfer-applications.pdf'
+            );
+            Route::get(
+                '/transfer-applications/{transferApplication}',
+                [
+                    PrincipalTransferApplicationController::class,
+                    'show',
+                ]
+            )->name(
+                'transfer-applications.show'
+            );
         });
 
     /*
@@ -440,8 +672,7 @@ Route::middleware([
             return Inertia::render(
                 'Dashboard',
                 [
-                    'dashboardTitle' =>
-                        'Zonal Director Dashboard',
+                    'dashboardTitle' => 'Zonal Director Dashboard',
                 ]
             );
         }
@@ -468,8 +699,7 @@ Route::middleware([
             return Inertia::render(
                 'Dashboard',
                 [
-                    'dashboardTitle' =>
-                        'Provincial Director Dashboard',
+                    'dashboardTitle' => 'Provincial Director Dashboard',
                 ]
             );
         }
@@ -496,8 +726,7 @@ Route::middleware([
             return Inertia::render(
                 'Dashboard',
                 [
-                    'dashboardTitle' =>
-                        'Transfer Board Dashboard',
+                    'dashboardTitle' => 'Transfer Board Dashboard',
                 ]
             );
         }

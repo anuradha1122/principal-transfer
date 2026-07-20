@@ -56,4 +56,19 @@ class School extends Model
     {
         return $this->hasMany(PrincipalRegistry::class);
     }
+
+    public function transferPreferences(): HasMany
+    {
+        return $this->hasMany(
+            TransferPreference::class
+        );
+    }
+
+    public function transferApplicationsAsCurrentSchool(): HasMany
+    {
+        return $this->hasMany(
+            TransferApplication::class,
+            'current_school_id'
+        );
+    }
 }

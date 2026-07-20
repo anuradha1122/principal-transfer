@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Principal;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Principal\UpdateOwnProfileRequest;
-use App\Models\PrincipalProfile;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -12,15 +11,24 @@ use Inertia\Response;
 
 class ProfileController extends Controller
 {
-    public function show(Request $request): Response
-    {
-        $profile = $this->profile($request);
+    public function show(
+        Request $request
+    ): Response {
+        $profile = $request
+            ->user()
+            ->principalProfile;
+
+        abort_unless(
+            $profile,
+            404,
+            'Your principal profile has not been created.'
+        );
 
         $profile->load([
-            'appointments' => fn ($query) =>
-                $query
-                    ->with('school.division.zone')
-                    ->orderByDesc('start_date'),
+            'user:id,name,email,email_verified_at',
+            'registry',
+            'appointments.school.division.zone',
+            'currentAppointment.school.division.zone',
         ]);
 
         return Inertia::render(
@@ -31,18 +39,50 @@ class ProfileController extends Controller
         );
     }
 
-    public function edit(Request $request): Response
-    {
-        $profile = $this->profile($request);
+    public function edit(
+        Request $request
+    ): Response {
+        $profile = $request
+            ->user()
+            ->principalProfile;
+
+        abort_unless(
+            $profile,
+            404,
+            'Your principal profile has not been created.'
+        );
+
+        $profile->load([
+            'currentAppointment.school.division.zone',
+        ]);
 
         return Inertia::render(
             'Principal/Profile/Edit',
             [
                 'profile' => $profile,
-                'genders' => [
-                    'Male',
-                    'Female',
-                    'Other',
+
+                'options' => [
+                    'genders' => [
+                        'Male',
+                        'Female',
+                        'Other',
+                    ],
+
+                    'employmentStatuses' => [
+                        'Active',
+                        'Retired',
+                        'Resigned',
+                        'Deceased',
+                        'Suspended',
+                        'Other',
+                    ],
+
+                    'serviceGrades' => [
+                        'SLPS I',
+                        'SLPS II',
+                        'SLPS III',
+                        'Other',
+                    ],
                 ],
             ]
         );
@@ -51,23 +91,6 @@ class ProfileController extends Controller
     public function update(
         UpdateOwnProfileRequest $request
     ): RedirectResponse {
-        $profile = $this->profile($request);
-
-        $profile->update(
-            $request->validated()
-        );
-
-        return redirect()
-            ->route('principal.profile.show')
-            ->with(
-                'success',
-                'Your profile was updated successfully.'
-            );
-    }
-
-    private function profile(
-        Request $request
-    ): PrincipalProfile {
         $profile = $request
             ->user()
             ->principalProfile;
@@ -75,9 +98,24 @@ class ProfileController extends Controller
         abort_unless(
             $profile,
             404,
-            'Your principal profile has not been created yet.'
+            'Your principal profile has not been created.'
         );
 
-        return $profile;
+        /*
+         * NIC is not included in validated data,
+         * therefore it cannot be changed here.
+         */
+        $profile->update(
+            $request->validated()
+        );
+
+        return redirect()
+            ->route(
+                'principal.profile.show'
+            )
+            ->with(
+                'success',
+                'Your profile was updated successfully.'
+            );
     }
 }

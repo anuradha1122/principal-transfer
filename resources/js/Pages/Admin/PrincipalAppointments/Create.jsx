@@ -21,8 +21,8 @@ export default function Create({
         appointment_date: '',
         start_date: '',
         end_date: '',
-        is_current: true,
         reason_for_end: '',
+        is_current: true,
         remarks: '',
     });
 
@@ -61,6 +61,7 @@ export default function Create({
                     processing={processing}
                     schools={schools}
                     options={options}
+                    cancelRoute="principal.profile.show"
                     onSubmit={submit}
                 />
             </div>

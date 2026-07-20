@@ -52,21 +52,27 @@ Principal Registry and NIC-Controlled Self-Registration
 ### Module 05
 Principal Profile and Current Appointment Management
 
+### Module 06
+
+Transfer Cycles and Transfer Application Management
+
 Completed:
 
-- Principal personal and service profiles
-- User and registry linking
-- Current school appointment
-- Appointment history
-- Acting, temporary and permanent appointments
-- Automatic closure of previous current appointment
-- Principal self-service profile
-- Admin profile management
-- Profile and appointment tests
+- Transfer cycle management
+- Published application windows
+- Principal transfer application drafts
+- Ranked school preferences
+- Current appointment snapshots
+- Eligibility validation
+- Final application submission
+- Application locking
+- Withdrawal workflow
+- Admin application list and view
+- Transfer application tests
 
 ## Next Exact Step
 
-Module 06: Transfer Cycles and Transfer Application Management
+Module 07: Zonal Director Transfer Review and Recommendation
 
 ## Mandatory Rules
 

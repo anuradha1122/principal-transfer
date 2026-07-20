@@ -7,7 +7,9 @@ use App\Http\Requests\Admin\StorePrincipalProfileRequest;
 use App\Http\Requests\Admin\UpdatePrincipalProfileRequest;
 use App\Models\PrincipalProfile;
 use App\Models\PrincipalRegistry;
+use App\Models\School;
 use App\Models\User;
+use App\Models\Zone;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -90,42 +92,37 @@ class PrincipalProfileController extends Controller
             )
             ->when(
                 $filters['status'] ?? null,
-                fn ($query, string $status) =>
-                    $query->where(
-                        'employment_status',
-                        $status
-                    )
+                fn ($query, string $status) => $query->where(
+                    'employment_status',
+                    $status
+                )
             )
             ->when(
                 $filters['service_grade'] ?? null,
-                fn ($query, string $grade) =>
-                    $query->where(
-                        'service_grade',
-                        $grade
-                    )
+                fn ($query, string $grade) => $query->where(
+                    'service_grade',
+                    $grade
+                )
             )
             ->when(
                 $filters['school_id'] ?? null,
-                fn ($query, $schoolId) =>
-                    $query->whereHas(
-                        'currentAppointment',
-                        fn ($query) =>
-                            $query->where(
-                                'school_id',
-                                $schoolId
-                            )
+                fn ($query, $schoolId) => $query->whereHas(
+                    'currentAppointment',
+                    fn ($query) => $query->where(
+                        'school_id',
+                        $schoolId
                     )
+                )
             )
             ->when(
                 $filters['zone_id'] ?? null,
                 function ($query, $zoneId): void {
                     $query->whereHas(
                         'currentAppointment.school.division',
-                        fn ($query) =>
-                            $query->where(
-                                'zone_id',
-                                $zoneId
-                            )
+                        fn ($query) => $query->where(
+                            'zone_id',
+                            $zoneId
+                        )
                     );
                 }
             )
@@ -139,16 +136,15 @@ class PrincipalProfileController extends Controller
                 'profiles' => $profiles,
                 'filters' => $filters,
                 'statuses' => $this->statuses(),
-                'serviceGrades' =>
-                    PrincipalProfile::query()
-                        ->whereNotNull('service_grade')
-                        ->distinct()
-                        ->orderBy('service_grade')
-                        ->pluck('service_grade'),
-                'zones' => \App\Models\Zone::query()
+                'serviceGrades' => PrincipalProfile::query()
+                    ->whereNotNull('service_grade')
+                    ->distinct()
+                    ->orderBy('service_grade')
+                    ->pluck('service_grade'),
+                'zones' => Zone::query()
                     ->orderBy('sort_order')
                     ->get(['id', 'name']),
-                'schools' => \App\Models\School::query()
+                'schools' => School::query()
                     ->orderBy('name')
                     ->get(['id', 'name']),
             ]
@@ -167,10 +163,8 @@ class PrincipalProfileController extends Controller
         return Inertia::render(
             'Admin/PrincipalProfiles/Create',
             [
-                'availableAccounts' =>
-                    $this->availableAccounts(),
-                'registries' =>
-                    $this->availableRegistries(),
+                'availableAccounts' => $this->availableAccounts(),
+                'registries' => $this->availableRegistries(),
                 'options' => $this->options(),
             ]
         );
@@ -188,10 +182,8 @@ class PrincipalProfileController extends Controller
             ): void {
                 PrincipalProfile::create([
                     ...$validated,
-                    'created_by' =>
-                        $request->user()->id,
-                    'updated_by' =>
-                        $request->user()->id,
+                    'created_by' => $request->user()->id,
+                    'updated_by' => $request->user()->id,
                 ]);
             }
         );
@@ -220,12 +212,11 @@ class PrincipalProfileController extends Controller
         $principalProfile->load([
             'user:id,name,email,is_active,email_verified_at,last_login_at',
             'registry:id,nic,designation,registration_status',
-            'appointments' => fn ($query) =>
-                $query
-                    ->with(
-                        'school.division.zone'
-                    )
-                    ->orderByDesc('start_date'),
+            'appointments' => fn ($query) => $query
+                ->with(
+                    'school.division.zone'
+                )
+                ->orderByDesc('start_date'),
         ]);
 
         return Inertia::render(
@@ -262,8 +253,7 @@ class PrincipalProfileController extends Controller
     ): RedirectResponse {
         $principalProfile->update([
             ...$request->validated(),
-            'updated_by' =>
-                $request->user()->id,
+            'updated_by' => $request->user()->id,
         ]);
 
         return redirect()

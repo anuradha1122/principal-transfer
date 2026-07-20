@@ -72,39 +72,25 @@ class PrincipalProfileManagementTest extends TestCase
                     'user_id' => $principal->id,
                     'principal_registry_id' => null,
                     'nic' => '123456789V',
-                    'employee_number' =>
-                        'EMP001',
-                    'full_name' =>
-                        'Test Principal',
-                    'name_with_initials' =>
-                        'T Principal',
+                    'employee_number' => 'EMP001',
+                    'full_name' => 'Test Principal',
+                    'name_with_initials' => 'T Principal',
                     'gender' => 'Male',
-                    'date_of_birth' =>
-                        '1980-01-01',
-                    'mobile_number' =>
-                        '0711234567',
+                    'date_of_birth' => '1980-01-01',
+                    'mobile_number' => '0711234567',
                     'alternate_number' => null,
-                    'personal_email' =>
-                        'personal@example.com',
-                    'address_line_1' =>
-                        'Main Road',
+                    'personal_email' => 'personal@example.com',
+                    'address_line_1' => 'Main Road',
                     'address_line_2' => null,
                     'city' => 'Ratnapura',
                     'postal_code' => null,
-                    'service_category' =>
-                        'Sri Lanka Principals Service',
-                    'service_grade' =>
-                        'Grade II',
-                    'first_appointment_date' =>
-                        '2005-01-01',
-                    'principal_service_entry_date' =>
-                        '2015-01-01',
-                    'retirement_date' =>
-                        '2040-01-01',
-                    'employment_status' =>
-                        'Active',
-                    'qualifications_summary' =>
-                        null,
+                    'service_category' => 'Sri Lanka Principals Service',
+                    'service_grade' => 'Grade II',
+                    'first_appointment_date' => '2005-01-01',
+                    'principal_service_entry_date' => '2015-01-01',
+                    'retirement_date' => '2040-01-01',
+                    'employment_status' => 'Active',
+                    'qualifications_summary' => null,
                     'notes' => null,
                     'profile_completed' => true,
                 ]
@@ -134,12 +120,9 @@ class PrincipalProfileManagementTest extends TestCase
             PrincipalProfile::create([
                 'user_id' => $principal->id,
                 'nic' => '123456789V',
-                'full_name' =>
-                    'Test Principal',
-                'service_category' =>
-                    'Sri Lanka Principals Service',
-                'employment_status' =>
-                    'Active',
+                'full_name' => 'Test Principal',
+                'service_category' => 'Sri Lanka Principals Service',
+                'employment_status' => 'Active',
             ]);
 
         $zone = Zone::create([
@@ -174,16 +157,12 @@ class PrincipalProfileManagementTest extends TestCase
 
         $oldAppointment =
             PrincipalAppointment::create([
-                'principal_profile_id' =>
-                    $profile->id,
+                'principal_profile_id' => $profile->id,
                 'school_id' => $schoolOne->id,
                 'designation' => 'Principal',
-                'appointment_type' =>
-                    'Permanent',
-                'appointment_date' =>
-                    '2020-01-01',
-                'start_date' =>
-                    '2020-01-01',
+                'appointment_type' => 'Permanent',
+                'appointment_date' => '2020-01-01',
+                'start_date' => '2020-01-01',
                 'is_current' => true,
             ]);
 
@@ -192,18 +171,12 @@ class PrincipalProfileManagementTest extends TestCase
             ->post(
                 "/admin/principal-profiles/{$profile->id}/appointments",
                 [
-                    'school_id' =>
-                        $schoolTwo->id,
-                    'designation' =>
-                        'Principal',
-                    'appointment_type' =>
-                        'Permanent',
-                    'appointment_number' =>
-                        'APT-002',
-                    'appointment_date' =>
-                        '2026-01-01',
-                    'start_date' =>
-                        '2026-01-10',
+                    'school_id' => $schoolTwo->id,
+                    'designation' => 'Principal',
+                    'appointment_type' => 'Permanent',
+                    'appointment_number' => 'APT-002',
+                    'appointment_date' => '2026-01-01',
+                    'start_date' => '2026-01-10',
                     'end_date' => null,
                     'is_current' => true,
                     'reason_for_end' => null,
@@ -231,10 +204,8 @@ class PrincipalProfileManagementTest extends TestCase
         $this->assertDatabaseHas(
             'principal_appointments',
             [
-                'principal_profile_id' =>
-                    $profile->id,
-                'school_id' =>
-                    $schoolTwo->id,
+                'principal_profile_id' => $profile->id,
+                'school_id' => $schoolTwo->id,
                 'is_current' => true,
             ]
         );

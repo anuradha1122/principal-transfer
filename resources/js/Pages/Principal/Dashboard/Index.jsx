@@ -1,100 +1,164 @@
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, usePage } from '@inertiajs/react';
+import AdminLayout from '@/Layouts/AdminLayout';
 import {
-    CircleCheckBig,
+    CheckCircle2,
     FilePlus2,
     History,
     UserRound,
 } from 'lucide-react';
+import { Link } from '@inertiajs/react';
 
-export default function Index() {
-    const { auth } = usePage().props;
-
-    const cards = [
-        {
-            title: 'My Profile',
-            description:
-                'Complete and review your principal profile.',
-            icon: UserRound,
-        },
-        {
-            title: 'New Application',
-            description:
-                'Create a principal transfer application.',
-            icon: FilePlus2,
-        },
-        {
-            title: 'Application Status',
-            description:
-                'Track the current approval stage.',
-            icon: History,
-        },
-        {
-            title: 'Final Decision',
-            description:
-                'View the Transfer Board result.',
-            icon: CircleCheckBig,
-        },
-    ];
+export default function Dashboard({
+    auth,
+    profile,
+    applications = [],
+    openCycles = [],
+}) {
+    const latestApplication =
+        applications?.[0] ?? null;
 
     return (
-        <AuthenticatedLayout
+        <AdminLayout
+            title="Principal Dashboard"
             header={
-                <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                    Principal Dashboard
-                </h2>
+                <div>
+                    <h1 className="text-2xl font-bold text-slate-900">
+                        Principal Dashboard
+                    </h1>
+
+                    <p className="mt-1 text-sm text-slate-500">
+                        Manage your profile and transfer applications.
+                    </p>
+                </div>
             }
         >
-            <Head title="Principal Dashboard" />
+            <section className="rounded-2xl bg-slate-950 p-8 text-white shadow-sm">
+                <p className="text-sm font-medium text-blue-300">
+                    Welcome
+                </p>
 
-            <div className="py-8">
-                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <div className="rounded-2xl bg-slate-950 p-7 text-white">
-                        <p className="text-sm text-blue-300">
-                            Welcome
-                        </p>
+                <h2 className="mt-2 text-3xl font-bold">
+                    {auth?.user?.name}
+                </h2>
 
-                        <h1 className="mt-2 text-2xl font-bold">
-                            {auth.user.name}
-                        </h1>
+                <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-300">
+                    From this portal, you can review your
+                    principal profile, submit transfer
+                    applications and track their progress.
+                </p>
+            </section>
 
-                        <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">
-                            From this portal, you will be able to submit
-                            and track your principal transfer
-                            application.
-                        </p>
+            <div className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+                <Link
+                    href={route(
+                        'principal.profile.show',
+                    )}
+                    className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md"
+                >
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                        <UserRound className="h-6 w-6" />
                     </div>
 
-                    <div className="mt-6 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-                        {cards.map((card) => {
-                            const Icon = card.icon;
+                    <h3 className="mt-5 font-bold text-slate-900">
+                        My Profile
+                    </h3>
 
-                            return (
-                                <div
-                                    key={card.title}
-                                    className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
-                                >
-                                    <div className="inline-flex rounded-xl bg-blue-50 p-3 text-blue-600">
-                                        <Icon className="h-6 w-6" />
-                                    </div>
+                    <p className="mt-2 text-sm leading-6 text-slate-500">
+                        Review and update your principal
+                        profile information.
+                    </p>
 
-                                    <h2 className="mt-4 font-bold text-slate-900">
-                                        {card.title}
-                                    </h2>
+                    <span className="mt-5 inline-flex rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                        Available
+                    </span>
+                </Link>
 
-                                    <p className="mt-2 text-sm leading-6 text-slate-500">
-                                        {card.description}
-                                    </p>
-
-                                    <span className="mt-4 inline-block rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
-                                        Coming soon
-                                    </span>
-                                </div>
-                            );
-                        })}
+                <Link
+                    href={route(
+                        'principal.transfer-applications.index',
+                    )}
+                    className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md"
+                >
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                        <FilePlus2 className="h-6 w-6" />
                     </div>
+
+                    <h3 className="mt-5 font-bold text-slate-900">
+                        New Application
+                    </h3>
+
+                    <p className="mt-2 text-sm leading-6 text-slate-500">
+                        Start an application for an open
+                        transfer cycle.
+                    </p>
+
+                    <span
+                        className={[
+                            'mt-5 inline-flex rounded-full px-3 py-1 text-xs font-semibold',
+                            openCycles.length > 0
+                                ? 'bg-emerald-50 text-emerald-700'
+                                : 'bg-amber-50 text-amber-700',
+                        ].join(' ')}
+                    >
+                        {openCycles.length > 0
+                            ? `${openCycles.length} open cycle(s)`
+                            : 'No open cycles'}
+                    </span>
+                </Link>
+
+                <Link
+                    href={route(
+                        'principal.transfer-applications.index',
+                    )}
+                    className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md"
+                >
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                        <History className="h-6 w-6" />
+                    </div>
+
+                    <h3 className="mt-5 font-bold text-slate-900">
+                        Application Status
+                    </h3>
+
+                    <p className="mt-2 text-sm leading-6 text-slate-500">
+                        Track submitted transfer applications
+                        and current review stages.
+                    </p>
+
+                    <span className="mt-5 inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+                        {latestApplication
+                            ? latestApplication.status
+                            : 'No application'}
+                    </span>
+                </Link>
+
+                <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                        <CheckCircle2 className="h-6 w-6" />
+                    </div>
+
+                    <h3 className="mt-5 font-bold text-slate-900">
+                        Final Decision
+                    </h3>
+
+                    <p className="mt-2 text-sm leading-6 text-slate-500">
+                        View the final Transfer Board decision
+                        when the review is completed.
+                    </p>
+
+                    <span className="mt-5 inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+                        {latestApplication &&
+                        [
+                            'Approved',
+                            'Rejected',
+                            'Waitlisted',
+                        ].includes(
+                            latestApplication.status,
+                        )
+                            ? latestApplication.status
+                            : 'Pending'}
+                    </span>
                 </div>
             </div>
-        </AuthenticatedLayout>
+        </AdminLayout>
     );
 }

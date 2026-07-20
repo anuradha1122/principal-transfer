@@ -94,17 +94,26 @@ return new class extends Migration
 
             $table->timestamps();
 
-            $table->index([
-                'division_id',
-                'is_active',
-            ]);
+            $table->index(
+                [
+                    'division_id',
+                    'is_active',
+                ],
+                'schools_division_active_idx'
+            );
 
-            $table->index([
-                'school_type',
-                'gender_type',
-            ]);
+            $table->index(
+                [
+                    'school_type',
+                    'gender_type',
+                ],
+                'schools_type_gender_idx'
+            );
 
-            $table->index('name');
+            $table->index(
+                'name',
+                'schools_name_idx'
+            );
         });
     }
 

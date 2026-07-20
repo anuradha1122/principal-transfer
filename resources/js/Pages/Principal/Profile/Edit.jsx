@@ -11,13 +11,43 @@ import {
 } from 'lucide-react';
 
 function dateValue(value) {
-    return value ? value.substring(0, 10) : '';
+    return value
+        ? String(value).substring(0, 10)
+        : '';
 }
 
 export default function Edit({
     profile,
-    genders,
+    options = {},
+    genders: legacyGenders = [],
 }) {
+    const genders =
+        options.genders ??
+        legacyGenders ??
+        [
+            'Male',
+            'Female',
+            'Other',
+        ];
+
+    const serviceGrades =
+        options.serviceGrades ?? [
+            'SLPS I',
+            'SLPS II',
+            'SLPS III',
+            'Other',
+        ];
+
+    const employmentStatuses =
+        options.employmentStatuses ?? [
+            'Active',
+            'Retired',
+            'Resigned',
+            'Deceased',
+            'Suspended',
+            'Other',
+        ];
+
     const {
         data,
         setData,
@@ -25,33 +55,93 @@ export default function Edit({
         processing,
         errors,
     } = useForm({
+        employee_number:
+            profile.employee_number ?? '',
+
+        full_name:
+            profile.full_name ?? '',
+
         name_with_initials:
             profile.name_with_initials ?? '',
-        gender: profile.gender ?? '',
-        date_of_birth: dateValue(
-            profile.date_of_birth,
-        ),
+
+        gender:
+            profile.gender ?? '',
+
+        date_of_birth:
+            dateValue(
+                profile.date_of_birth,
+            ),
+
         mobile_number:
             profile.mobile_number ?? '',
+
         alternate_number:
             profile.alternate_number ?? '',
+
         personal_email:
             profile.personal_email ?? '',
+
         address_line_1:
             profile.address_line_1 ?? '',
+
         address_line_2:
             profile.address_line_2 ?? '',
-        city: profile.city ?? '',
+
+        city:
+            profile.city ?? '',
+
         postal_code:
             profile.postal_code ?? '',
+
+        service_category:
+            profile.service_category ?? '',
+
+        service_grade:
+            profile.service_grade ?? '',
+
+        first_appointment_date:
+            dateValue(
+                profile.first_appointment_date,
+            ),
+
+        principal_service_entry_date:
+            dateValue(
+                profile.principal_service_entry_date,
+            ),
+
+        retirement_date:
+            dateValue(
+                profile.retirement_date,
+            ),
+
+        employment_status:
+            profile.employment_status ??
+            'Active',
+
         qualifications_summary:
-            profile.qualifications_summary ?? '',
+            profile.qualifications_summary ??
+            '',
+
+        notes:
+            profile.notes ?? '',
+
+        profile_completed:
+            Boolean(
+                profile.profile_completed,
+            ),
     });
 
     const submit = (event) => {
         event.preventDefault();
 
-        put(route('principal.profile.update'));
+        put(
+            route(
+                'principal.profile.update',
+            ),
+            {
+                preserveScroll: true,
+            },
+        );
     };
 
     return (
@@ -65,7 +155,8 @@ export default function Edit({
                         </h1>
 
                         <p className="mt-1 text-sm text-slate-500">
-                            Update your personal and contact
+                            Update your personal,
+                            contact and service
                             information.
                         </p>
                     </div>
@@ -90,14 +181,16 @@ export default function Edit({
 
                     <div>
                         <p className="font-semibold text-blue-900">
-                            Official service information is read-only
+                            NIC number is locked
                         </p>
 
                         <p className="mt-1 text-sm leading-6 text-blue-700">
-                            NIC, employee number, service grade,
-                            employment status and appointment details
-                            can be changed only by an authorized
-                            officer.
+                            You may update personal,
+                            contact and service
+                            information. Your NIC number
+                            cannot be changed because it is
+                            linked to the principal
+                            registry.
                         </p>
                     </div>
                 </div>
@@ -109,26 +202,39 @@ export default function Edit({
             >
                 <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
                     <h2 className="text-lg font-bold text-slate-900">
-                        Official Information
+                        Identity Information
                     </h2>
 
                     <p className="mt-1 text-sm text-slate-500">
-                        These fields cannot be changed from your
-                        account.
+                        Only the NIC field is read-only.
                     </p>
 
                     <div className="mt-6 grid gap-6 md:grid-cols-2">
                         <div>
                             <InputLabel
+                                htmlFor="full_name"
                                 value="Full Name"
                             />
 
                             <TextInput
+                                id="full_name"
                                 value={
-                                    profile.full_name ?? ''
+                                    data.full_name
                                 }
-                                disabled
-                                className="mt-1 block w-full bg-slate-100"
+                                className="mt-1 block w-full"
+                                onChange={(event) =>
+                                    setData(
+                                        'full_name',
+                                        event.target.value,
+                                    )
+                                }
+                            />
+
+                            <InputError
+                                message={
+                                    errors.full_name
+                                }
+                                className="mt-2"
                             />
                         </div>
 
@@ -138,50 +244,46 @@ export default function Edit({
                             />
 
                             <TextInput
-                                value={profile.nic ?? ''}
+                                value={
+                                    profile.nic ?? ''
+                                }
                                 disabled
-                                className="mt-1 block w-full bg-slate-100"
+                                className="mt-1 block w-full bg-slate-100 text-slate-500"
                             />
+
+                            <p className="mt-1 text-xs text-slate-500">
+                                NIC cannot be changed.
+                            </p>
                         </div>
 
                         <div>
                             <InputLabel
+                                htmlFor="employee_number"
                                 value="Employee Number"
                             />
 
                             <TextInput
+                                id="employee_number"
                                 value={
-                                    profile.employee_number ??
-                                    ''
+                                    data.employee_number
                                 }
-                                disabled
-                                className="mt-1 block w-full bg-slate-100"
+                                className="mt-1 block w-full"
+                                onChange={(event) =>
+                                    setData(
+                                        'employee_number',
+                                        event.target.value,
+                                    )
+                                }
+                            />
+
+                            <InputError
+                                message={
+                                    errors.employee_number
+                                }
+                                className="mt-2"
                             />
                         </div>
 
-                        <div>
-                            <InputLabel
-                                value="Service Grade"
-                            />
-
-                            <TextInput
-                                value={
-                                    profile.service_grade ??
-                                    ''
-                                }
-                                disabled
-                                className="mt-1 block w-full bg-slate-100"
-                            />
-                        </div>
-                    </div>
-                </section>
-
-                <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                    <h2 className="text-lg font-bold text-slate-900">
-                        Personal Information
-                    </h2>
-
-                    <div className="mt-6 grid gap-6 md:grid-cols-2">
                         <div>
                             <InputLabel
                                 htmlFor="name_with_initials"
@@ -231,18 +333,22 @@ export default function Edit({
                                     Select gender
                                 </option>
 
-                                {genders.map((gender) => (
-                                    <option
-                                        key={gender}
-                                        value={gender}
-                                    >
-                                        {gender}
-                                    </option>
-                                ))}
+                                {genders.map(
+                                    (gender) => (
+                                        <option
+                                            key={gender}
+                                            value={gender}
+                                        >
+                                            {gender}
+                                        </option>
+                                    ),
+                                )}
                             </select>
 
                             <InputError
-                                message={errors.gender}
+                                message={
+                                    errors.gender
+                                }
                                 className="mt-2"
                             />
                         </div>
@@ -486,6 +592,230 @@ export default function Edit({
                 </section>
 
                 <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                    <h2 className="text-lg font-bold text-slate-900">
+                        Service Information
+                    </h2>
+
+                    <div className="mt-6 grid gap-6 md:grid-cols-2">
+                        <div>
+                            <InputLabel
+                                htmlFor="service_category"
+                                value="Service Category"
+                            />
+
+                            <select
+                                id="service_category"
+                                value={data.service_category}
+                                onChange={(event) =>
+                                    setData(
+                                        'service_category',
+                                        event.target.value,
+                                    )
+                                }
+                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                            >
+                                <option value="">
+                                    Select service category
+                                </option>
+
+                                <option value="Sri Lanka Principals Service">
+                                    Sri Lanka Principals Service
+                                </option>
+
+                                <option value="Sri Lanka Education Administrative Service">
+                                    Sri Lanka Education Administrative Service
+                                </option>
+
+                                <option value="Other">
+                                    Other
+                                </option>
+                            </select>
+
+                            <InputError
+                                message={errors.service_category}
+                                className="mt-2"
+                            />
+
+                            <InputError
+                                message={
+                                    errors.service_category
+                                }
+                                className="mt-2"
+                            />
+                        </div>
+
+                        <div>
+                            <InputLabel
+                                htmlFor="service_grade"
+                                value="Service Grade"
+                            />
+
+                            <select
+                                id="service_grade"
+                                value={
+                                    data.service_grade
+                                }
+                                onChange={(event) =>
+                                    setData(
+                                        'service_grade',
+                                        event.target.value,
+                                    )
+                                }
+                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                            >
+                                <option value="">
+                                    Select service grade
+                                </option>
+
+                                {serviceGrades.map(
+                                    (grade) => (
+                                        <option
+                                            key={grade}
+                                            value={grade}
+                                        >
+                                            {grade}
+                                        </option>
+                                    ),
+                                )}
+                            </select>
+
+                            <InputError
+                                message={
+                                    errors.service_grade
+                                }
+                                className="mt-2"
+                            />
+                        </div>
+
+                        <div>
+                            <InputLabel
+                                htmlFor="first_appointment_date"
+                                value="First Appointment Date"
+                            />
+
+                            <TextInput
+                                id="first_appointment_date"
+                                type="date"
+                                value={
+                                    data.first_appointment_date
+                                }
+                                className="mt-1 block w-full"
+                                onChange={(event) =>
+                                    setData(
+                                        'first_appointment_date',
+                                        event.target.value,
+                                    )
+                                }
+                            />
+
+                            <InputError
+                                message={
+                                    errors.first_appointment_date
+                                }
+                                className="mt-2"
+                            />
+                        </div>
+
+                        <div>
+                            <InputLabel
+                                htmlFor="principal_service_entry_date"
+                                value="Principal Service Entry Date"
+                            />
+
+                            <TextInput
+                                id="principal_service_entry_date"
+                                type="date"
+                                value={
+                                    data.principal_service_entry_date
+                                }
+                                className="mt-1 block w-full"
+                                onChange={(event) =>
+                                    setData(
+                                        'principal_service_entry_date',
+                                        event.target.value,
+                                    )
+                                }
+                            />
+
+                            <InputError
+                                message={
+                                    errors.principal_service_entry_date
+                                }
+                                className="mt-2"
+                            />
+                        </div>
+
+                        <div>
+                            <InputLabel
+                                htmlFor="retirement_date"
+                                value="Retirement Date"
+                            />
+
+                            <TextInput
+                                id="retirement_date"
+                                type="date"
+                                value={
+                                    data.retirement_date
+                                }
+                                className="mt-1 block w-full"
+                                onChange={(event) =>
+                                    setData(
+                                        'retirement_date',
+                                        event.target.value,
+                                    )
+                                }
+                            />
+
+                            <InputError
+                                message={
+                                    errors.retirement_date
+                                }
+                                className="mt-2"
+                            />
+                        </div>
+
+                        <div>
+                            <InputLabel
+                                htmlFor="employment_status"
+                                value="Employment Status"
+                            />
+
+                            <select
+                                id="employment_status"
+                                value={
+                                    data.employment_status
+                                }
+                                onChange={(event) =>
+                                    setData(
+                                        'employment_status',
+                                        event.target.value,
+                                    )
+                                }
+                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                            >
+                                {employmentStatuses.map(
+                                    (status) => (
+                                        <option
+                                            key={status}
+                                            value={status}
+                                        >
+                                            {status}
+                                        </option>
+                                    ),
+                                )}
+                            </select>
+
+                            <InputError
+                                message={
+                                    errors.employment_status
+                                }
+                                className="mt-2"
+                            />
+                        </div>
+                    </div>
+                </section>
+
+                <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
                     <InputLabel
                         htmlFor="qualifications_summary"
                         value="Qualifications Summary"
@@ -513,6 +843,59 @@ export default function Edit({
                         }
                         className="mt-2"
                     />
+
+                    <div className="mt-6">
+                        <InputLabel
+                            htmlFor="notes"
+                            value="Notes"
+                        />
+
+                        <textarea
+                            id="notes"
+                            rows="5"
+                            value={data.notes}
+                            onChange={(event) =>
+                                setData(
+                                    'notes',
+                                    event.target.value,
+                                )
+                            }
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                            placeholder="Add any relevant notes"
+                        />
+
+                        <InputError
+                            message={errors.notes}
+                            className="mt-2"
+                        />
+                    </div>
+
+                    <label className="mt-6 flex items-center gap-3 rounded-xl border border-slate-200 p-4">
+                        <input
+                            type="checkbox"
+                            checked={
+                                data.profile_completed
+                            }
+                            onChange={(event) =>
+                                setData(
+                                    'profile_completed',
+                                    event.target.checked,
+                                )
+                            }
+                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+
+                        <div>
+                            <p className="text-sm font-semibold text-slate-800">
+                                Profile information is complete
+                            </p>
+
+                            <p className="mt-1 text-xs text-slate-500">
+                                Confirm that the information
+                                entered above is complete.
+                            </p>
+                        </div>
+                    </label>
                 </section>
 
                 <div className="flex justify-end gap-3">

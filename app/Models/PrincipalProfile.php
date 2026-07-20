@@ -75,9 +75,13 @@ class PrincipalProfile extends Model
     public function currentAppointment(): HasOne
     {
         return $this
-            ->hasOne(PrincipalAppointment::class)
-            ->where('is_current', true)
-            ->latestOfMany('start_date');
+            ->hasOne(
+                PrincipalAppointment::class
+            )
+            ->where(
+                'is_current',
+                true
+            );
     }
 
     public function creator(): BelongsTo
@@ -93,6 +97,13 @@ class PrincipalProfile extends Model
         return $this->belongsTo(
             User::class,
             'updated_by'
+        );
+    }
+
+    public function transferApplications(): HasMany
+    {
+        return $this->hasMany(
+            TransferApplication::class
         );
     }
 }

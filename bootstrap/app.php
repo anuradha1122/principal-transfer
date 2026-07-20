@@ -30,16 +30,14 @@ return Application::configure(
             $middleware->alias([
                 'role' => RoleMiddleware::class,
                 'permission' => PermissionMiddleware::class,
-                'role_or_permission' =>
-                    RoleOrPermissionMiddleware::class,
+                'role_or_permission' => RoleOrPermissionMiddleware::class,
             ]);
         }
     )
     ->withExceptions(
         function (Exceptions $exceptions): void {
             $exceptions->shouldRenderJsonWhen(
-                fn (Request $request): bool =>
-                    $request->is('api/*')
+                fn (Request $request): bool => $request->is('api/*')
             );
         }
     )

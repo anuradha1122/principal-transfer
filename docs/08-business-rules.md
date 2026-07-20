@@ -44,3 +44,20 @@
 - Principals may update contact and limited personal details.
 - Principals cannot change controlled service or appointment information.
 - Appointment history must remain available for transfer evaluation.
+
+
+## Transfer Cycle Rules
+
+- Applications are permitted only for published and open cycles.
+- A principal may submit only one application per cycle.
+- A current appointment is required.
+- The principal must have Active employment status.
+- Minimum service at the current school is configurable by cycle.
+- The current school cannot be selected as a preference.
+- Duplicate preferred schools are prohibited.
+- Preference order is preserved.
+- Draft applications may be edited or deleted.
+- Submitted applications cannot be edited.
+- A submitted application receives a unique application number.
+- Withdrawal is permitted only where allowed by the cycle and workflow status.
+- Application data stores a snapshot of the current appointment.

@@ -46,9 +46,11 @@ class StorePrincipalAppointmentRequest extends FormRequest
                 'required',
                 'date',
             ],
+
             'start_date' => [
                 'required',
                 'date',
+                'same:appointment_date',
             ],
             'end_date' => [
                 'nullable',
