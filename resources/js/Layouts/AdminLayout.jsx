@@ -2,6 +2,7 @@ import AdminSidebar from '@/Components/Admin/AdminSidebar';
 import AdminTopbar from '@/Components/Admin/AdminTopbar';
 import PrincipalSidebar from '@/Components/Principal/PrincipalSidebar';
 import ProvincialSidebar from '@/Components/Provincial/ProvincialSidebar';
+import TransferBoardSidebar from '@/Components/TransferBoard/TransferBoardSidebar';
 import ZonalSidebar from '@/Components/Zonal/ZonalSidebar';
 import { Head, usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
@@ -49,6 +50,13 @@ export default function AdminLayout({
         !isSuperAdmin &&
         !isPrincipal &&
         !isZonalDirector;
+
+    const isTransferBoardMember =
+        roles.includes('Transfer Board Member') &&
+        !isSuperAdmin &&
+        !isPrincipal &&
+        !isZonalDirector &&
+        !isProvincialDirector;
 
     const closeSidebar = () => {
         setSidebarOpen(false);
@@ -119,6 +127,15 @@ export default function AdminLayout({
         if (isProvincialDirector) {
             return (
                 <ProvincialSidebar
+                    open={sidebarOpen}
+                    onClose={closeSidebar}
+                />
+            );
+        }
+
+        if (isTransferBoardMember) {
+            return (
+                <TransferBoardSidebar
                     open={sidebarOpen}
                     onClose={closeSidebar}
                 />

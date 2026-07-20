@@ -22,6 +22,8 @@ use App\Http\Controllers\Zonal\DashboardController as ZonalDashboardController;
 use App\Http\Controllers\Zonal\TransferApplicationController as ZonalTransferApplicationController;
 use App\Http\Controllers\Provincial\DashboardController as ProvincialDashboardController;
 use App\Http\Controllers\Provincial\TransferApplicationController as ProvincialTransferApplicationController;
+use App\Http\Controllers\TransferBoard\DashboardController as TransferBoardDashboardController;
+use App\Http\Controllers\TransferBoard\TransferApplicationController as TransferBoardTransferApplicationController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -925,29 +927,121 @@ Route::middleware([
         |
         */
 
-        Route::get(
-            '/transfer-board/dashboard',
-            function () {
-                abort_unless(
-                    request()
-                        ->user()
-                        ->can(
-                            'view transfer board dashboard'
-                        ),
-                    403
-                );
+        Route::middleware([
+            'auth',
+            'verified',
+            'role:Transfer Board Member|Super Admin',
+        ])
+            ->prefix('transfer-board')
+            ->name('transfer-board.')
+            ->group(function (): void {
+                Route::get(
+                    '/dashboard',
+                    TransferBoardDashboardController::class
+                )
+                    ->middleware(
+                        'permission:view transfer board dashboard'
+                    )
+                    ->name('dashboard');
 
-                return Inertia::render(
-                    'Dashboard',
+                Route::get(
+                    '/transfer-applications',
                     [
-                        'dashboardTitle' =>
-                            'Transfer Board Dashboard',
+                        TransferBoardTransferApplicationController::class,
+                        'index',
                     ]
-                );
-            }
-        )->name(
-            'transfer-board.dashboard'
-        );
+                )
+                    ->middleware(
+                        'permission:view board transfer applications'
+                    )
+                    ->name(
+                        'transfer-applications.index'
+                    );
+
+                Route::get(
+                    '/transfer-applications/{transferApplication}/pdf',
+                    [
+                        TransferBoardTransferApplicationController::class,
+                        'downloadPdf',
+                    ]
+                )
+                    ->middleware(
+                        'permission:download board transfer application pdfs'
+                    )
+                    ->name(
+                        'transfer-applications.pdf'
+                    );
+
+                Route::post(
+                    '/transfer-applications/{transferApplication}/start-review',
+                    [
+                        TransferBoardTransferApplicationController::class,
+                        'startReview',
+                    ]
+                )
+                    ->middleware(
+                        'permission:review board transfer applications'
+                    )
+                    ->name(
+                        'transfer-applications.start-review'
+                    );
+
+                Route::post(
+                    '/transfer-applications/{transferApplication}/approve',
+                    [
+                        TransferBoardTransferApplicationController::class,
+                        'approve',
+                    ]
+                )
+                    ->middleware(
+                        'permission:record transfer board decisions'
+                    )
+                    ->name(
+                        'transfer-applications.approve'
+                    );
+
+                Route::post(
+                    '/transfer-applications/{transferApplication}/reject',
+                    [
+                        TransferBoardTransferApplicationController::class,
+                        'reject',
+                    ]
+                )
+                    ->middleware(
+                        'permission:record transfer board decisions'
+                    )
+                    ->name(
+                        'transfer-applications.reject'
+                    );
+
+                Route::post(
+                    '/transfer-applications/{transferApplication}/waitlist',
+                    [
+                        TransferBoardTransferApplicationController::class,
+                        'waitlist',
+                    ]
+                )
+                    ->middleware(
+                        'permission:record transfer board decisions'
+                    )
+                    ->name(
+                        'transfer-applications.waitlist'
+                    );
+
+                Route::get(
+                    '/transfer-applications/{transferApplication}',
+                    [
+                        TransferBoardTransferApplicationController::class,
+                        'show',
+                    ]
+                )
+                    ->middleware(
+                        'permission:view board transfer applications'
+                    )
+                    ->name(
+                        'transfer-applications.show'
+                    );
+            });
     });
 
 /*

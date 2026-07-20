@@ -29,6 +29,18 @@ class TransferApplicationAction extends Model
     public const ACTION_RETURNED_TO_ZONE =
         'Returned to Zone';
 
+    public const ACTION_BOARD_REVIEW_STARTED =
+        'Board Review Started';
+
+    public const ACTION_BOARD_APPROVED =
+        'Board Approved';
+
+    public const ACTION_BOARD_REJECTED =
+        'Board Rejected';
+
+    public const ACTION_BOARD_WAITLISTED =
+        'Board Waitlisted';
+
     protected $fillable = [
         'transfer_application_id',
         'action',

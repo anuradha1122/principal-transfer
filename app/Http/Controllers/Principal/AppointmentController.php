@@ -31,7 +31,7 @@ class AppointmentController extends Controller
 
                 'schools' => $this->schools(),
 
-                'options' => $this->options(),
+                'options' => $this->appointmentOptions(),
             ]
         );
     }
@@ -121,7 +121,7 @@ class AppointmentController extends Controller
 
                 'schools' => $this->schools(),
 
-                'options' => $this->options(),
+                'options' => $this->appointmentOptions(),
             ]
         );
     }
@@ -308,23 +308,21 @@ class AppointmentController extends Controller
             ]);
     }
 
-    private function options(): array
+    private function appointmentOptions(): array
     {
         return [
-            'appointmentTypes' => [
-                'Permanent',
-                'Acting',
-                'Covering',
-                'Temporary',
-                'Other',
-            ],
-
             'designations' => [
                 'Principal',
                 'Deputy Principal',
                 'Assistant Principal',
                 'Acting Principal',
-                'Other',
+            ],
+
+            'appointmentTypes' => [
+                'Permanent',
+                'Acting',
+                'Covering',
+                'Temporary',
             ],
         ];
     }

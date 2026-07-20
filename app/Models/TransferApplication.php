@@ -13,15 +13,20 @@ class TransferApplication extends Model
 {
     use HasFactory;
 
-    public const STATUS_DRAFT = 'Draft';
+    public const STATUS_DRAFT =
+        'Draft';
 
-    public const STATUS_SUBMITTED = 'Submitted';
+    public const STATUS_SUBMITTED =
+        'Submitted';
 
-    public const STATUS_ZONAL_REVIEW = 'Zonal Review';
+    public const STATUS_ZONAL_REVIEW =
+        'Zonal Review';
 
-    public const STATUS_ZONAL_APPROVED = 'Zonal Approved';
+    public const STATUS_ZONAL_APPROVED =
+        'Zonal Approved';
 
-    public const STATUS_ZONAL_REJECTED = 'Zonal Rejected';
+    public const STATUS_ZONAL_REJECTED =
+        'Zonal Rejected';
 
     public const STATUS_PROVINCIAL_REVIEW =
         'Provincial Review';
@@ -135,6 +140,12 @@ class TransferApplication extends Model
         ];
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Relationships
+    |--------------------------------------------------------------------------
+    */
+
     public function transferCycle(): BelongsTo
     {
         return $this->belongsTo(
@@ -202,9 +213,12 @@ class TransferApplication extends Model
 
     public function actions(): HasMany
     {
-        return $this->hasMany(
-            TransferApplicationAction::class
-        );
+        return $this
+            ->hasMany(
+                TransferApplicationAction::class
+            )
+            ->latest('acted_at')
+            ->latest('id');
     }
 
     public function zonalReview(): HasOne
@@ -220,6 +234,19 @@ class TransferApplication extends Model
             ProvincialReview::class
         );
     }
+
+    public function transferBoardDecision(): HasOne
+    {
+        return $this->hasOne(
+            TransferBoardDecision::class
+        );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Query scopes
+    |--------------------------------------------------------------------------
+    */
 
     public function scopeActiveForPrincipal(
         Builder $query,
@@ -310,6 +337,37 @@ class TransferApplication extends Model
         );
     }
 
+    public function scopeBoardQueue(
+        Builder $query
+    ): Builder {
+        return $query->whereIn(
+            'status',
+            [
+                self::STATUS_PROVINCIAL_APPROVED,
+                self::STATUS_BOARD_REVIEW,
+            ]
+        );
+    }
+
+    public function scopeBoardDecided(
+        Builder $query
+    ): Builder {
+        return $query->whereIn(
+            'status',
+            [
+                self::STATUS_APPROVED,
+                self::STATUS_REJECTED,
+                self::STATUS_WAITLISTED,
+            ]
+        );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Principal workflow helpers
+    |--------------------------------------------------------------------------
+    */
+
     public function isEditableByPrincipal(): bool
     {
         return $this->status
@@ -330,6 +388,12 @@ class TransferApplication extends Model
                 true
             );
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Zonal workflow helpers
+    |--------------------------------------------------------------------------
+    */
 
     public function canStartZonalReview(): bool
     {
@@ -360,6 +424,12 @@ class TransferApplication extends Model
             true
         );
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Provincial workflow helpers
+    |--------------------------------------------------------------------------
+    */
 
     public function canEnterProvincialReview(): bool
     {
@@ -410,6 +480,12 @@ class TransferApplication extends Model
         );
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Transfer Board workflow helpers
+    |--------------------------------------------------------------------------
+    */
+
     public function canEnterBoardReview(): bool
     {
         return $this->status
@@ -420,6 +496,30 @@ class TransferApplication extends Model
     {
         return $this->status
             === self::STATUS_BOARD_REVIEW;
+    }
+
+    public function canReceiveBoardDecision(): bool
+    {
+        return $this->status
+            === self::STATUS_BOARD_REVIEW;
+    }
+
+    public function isApproved(): bool
+    {
+        return $this->status
+            === self::STATUS_APPROVED;
+    }
+
+    public function isRejected(): bool
+    {
+        return $this->status
+            === self::STATUS_REJECTED;
+    }
+
+    public function isWaitlisted(): bool
+    {
+        return $this->status
+            === self::STATUS_WAITLISTED;
     }
 
     public function hasFinalDecision(): bool

@@ -24,6 +24,9 @@ export default function UserForm({
     const isProvincialDirector =
         data.role === 'Provincial Director';
 
+    const isTransferBoardMember =
+        data.role === 'Transfer Board Member';
+
     const handleRoleChange = (
         event
     ) => {
@@ -285,6 +288,18 @@ export default function UserForm({
 
                     <p className="mt-2 text-sm leading-6 text-slate-600">
                         This officer will have Province-wide access to transfer applications from all Zones.
+                    </p>
+                </section>
+            )}
+
+            {isTransferBoardMember && (
+                <section className="rounded-2xl border border-indigo-200 bg-indigo-50 p-5">
+                    <h2 className="font-bold text-slate-900">
+                        Transfer Board Access
+                    </h2>
+
+                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                        This officer will have Province-wide access to Provincially approved transfer applications and may record final Board decisions.
                     </p>
                 </section>
             )}

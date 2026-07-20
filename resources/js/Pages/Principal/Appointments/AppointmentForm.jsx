@@ -25,7 +25,6 @@ export default function AppointmentForm({
             'Deputy Principal',
             'Assistant Principal',
             'Acting Principal',
-            'Other',
         ];
 
     const appointmentTypes =
@@ -34,7 +33,6 @@ export default function AppointmentForm({
             'Acting',
             'Covering',
             'Temporary',
-            'Other',
         ];
 
     const selectedSchool = useMemo(
