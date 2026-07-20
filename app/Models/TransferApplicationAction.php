@@ -17,6 +17,18 @@ class TransferApplicationAction extends Model
     public const ACTION_ZONAL_APPROVED = 'zonal_approved';
     public const ACTION_ZONAL_REJECTED = 'zonal_rejected';
 
+    public const ACTION_PROVINCIAL_REVIEW_STARTED =
+        'Provincial Review Started';
+
+    public const ACTION_PROVINCIAL_APPROVED =
+        'Provincial Approved';
+
+    public const ACTION_PROVINCIAL_REJECTED =
+        'Provincial Rejected';
+
+    public const ACTION_RETURNED_TO_ZONE =
+        'Returned to Zone';
+
     protected $fillable = [
         'transfer_application_id',
         'action',

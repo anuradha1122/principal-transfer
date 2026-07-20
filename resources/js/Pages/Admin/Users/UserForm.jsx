@@ -21,6 +21,9 @@ export default function UserForm({
     const isZonalDirector =
         data.role === 'Zonal Director';
 
+    const isProvincialDirector =
+        data.role === 'Provincial Director';
+
     const handleRoleChange = (
         event
     ) => {
@@ -271,6 +274,18 @@ export default function UserForm({
                             Zone.
                         </div>
                     </div>
+                </section>
+            )}
+
+            {isProvincialDirector && (
+                <section className="rounded-2xl border border-violet-200 bg-violet-50 p-5">
+                    <h2 className="font-bold text-slate-900">
+                        Provincial Office Access
+                    </h2>
+
+                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                        This officer will have Province-wide access to transfer applications from all Zones.
+                    </p>
                 </section>
             )}
 

@@ -10,7 +10,7 @@ use Spatie\Permission\PermissionRegistrar;
 class RolePermissionSeeder extends Seeder
 {
     /**
-     * Seed the application's roles and permissions.
+     * Seed all application roles and permissions.
      */
     public function run(): void
     {
@@ -88,6 +88,7 @@ class RolePermissionSeeder extends Seeder
             'manage principal profiles',
 
             'edit own principal profile',
+
             'view own principal appointments',
             'create own principal appointments',
             'edit own principal appointments',
@@ -188,6 +189,12 @@ class RolePermissionSeeder extends Seeder
             'view audit logs',
         ];
 
+        /*
+        |--------------------------------------------------------------------------
+        | Create permissions
+        |--------------------------------------------------------------------------
+        */
+
         foreach ($permissions as $permissionName) {
             Permission::findOrCreate(
                 $permissionName,
@@ -197,7 +204,7 @@ class RolePermissionSeeder extends Seeder
 
         /*
         |--------------------------------------------------------------------------
-        | Roles
+        | Create roles
         |--------------------------------------------------------------------------
         */
 
@@ -236,14 +243,18 @@ class RolePermissionSeeder extends Seeder
         | Super Admin permissions
         |--------------------------------------------------------------------------
         |
-        | Super Admin receives every permission.
+        | Super Admin receives every web permission.
         |
         */
 
         $superAdmin->syncPermissions(
             Permission::query()
-                ->where('guard_name', 'web')
-                ->get()
+                ->where(
+                    'guard_name',
+                    'web'
+                )
+                ->pluck('name')
+                ->all()
         );
 
         /*
@@ -368,9 +379,16 @@ class RolePermissionSeeder extends Seeder
             'edit principal appointments',
 
             'view transfer cycles',
+
             'view transfer applications',
             'download transfer application pdfs',
         ]);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Clear cached permissions
+        |--------------------------------------------------------------------------
+        */
 
         app(PermissionRegistrar::class)
             ->forgetCachedPermissions();

@@ -14,19 +14,62 @@ class TransferApplication extends Model
     use HasFactory;
 
     public const STATUS_DRAFT = 'Draft';
+
     public const STATUS_SUBMITTED = 'Submitted';
+
     public const STATUS_ZONAL_REVIEW = 'Zonal Review';
+
     public const STATUS_ZONAL_APPROVED = 'Zonal Approved';
+
     public const STATUS_ZONAL_REJECTED = 'Zonal Rejected';
-    public const STATUS_PROVINCIAL_REVIEW = 'Provincial Review';
-    public const STATUS_PROVINCIAL_APPROVED = 'Provincial Approved';
-    public const STATUS_PROVINCIAL_REJECTED = 'Provincial Rejected';
-    public const STATUS_BOARD_REVIEW = 'Board Review';
-    public const STATUS_APPROVED = 'Approved';
-    public const STATUS_REJECTED = 'Rejected';
-    public const STATUS_WAITLISTED = 'Waitlisted';
-    public const STATUS_WITHDRAWN = 'Withdrawn';
-    public const STATUS_CANCELLED = 'Cancelled';
+
+    public const STATUS_PROVINCIAL_REVIEW =
+        'Provincial Review';
+
+    public const STATUS_PROVINCIAL_APPROVED =
+        'Provincial Approved';
+
+    public const STATUS_PROVINCIAL_REJECTED =
+        'Provincial Rejected';
+
+    public const STATUS_RETURNED_TO_ZONE =
+        'Returned to Zone';
+
+    public const STATUS_BOARD_REVIEW =
+        'Board Review';
+
+    public const STATUS_APPROVED =
+        'Approved';
+
+    public const STATUS_REJECTED =
+        'Rejected';
+
+    public const STATUS_WAITLISTED =
+        'Waitlisted';
+
+    public const STATUS_WITHDRAWN =
+        'Withdrawn';
+
+    public const STATUS_CANCELLED =
+        'Cancelled';
+
+    public const STATUSES = [
+        self::STATUS_DRAFT,
+        self::STATUS_SUBMITTED,
+        self::STATUS_ZONAL_REVIEW,
+        self::STATUS_ZONAL_APPROVED,
+        self::STATUS_ZONAL_REJECTED,
+        self::STATUS_PROVINCIAL_REVIEW,
+        self::STATUS_PROVINCIAL_APPROVED,
+        self::STATUS_PROVINCIAL_REJECTED,
+        self::STATUS_RETURNED_TO_ZONE,
+        self::STATUS_BOARD_REVIEW,
+        self::STATUS_APPROVED,
+        self::STATUS_REJECTED,
+        self::STATUS_WAITLISTED,
+        self::STATUS_WITHDRAWN,
+        self::STATUS_CANCELLED,
+    ];
 
     protected $fillable = [
         'transfer_cycle_id',
@@ -63,16 +106,32 @@ class TransferApplication extends Model
     protected function casts(): array
     {
         return [
-            'current_appointment_start_date' => 'date',
-            'current_school_service_months' => 'integer',
-            'has_medical_reason' => 'boolean',
-            'has_spouse_employment_reason' => 'boolean',
-            'is_mutual_transfer' => 'boolean',
-            'submitted_at' => 'datetime',
-            'withdrawn_at' => 'datetime',
-            'declaration_accepted' => 'boolean',
-            'submitted_pdf_generated_at' => 'datetime',
-            'declaration_accepted' => 'boolean',
+            'current_appointment_start_date' =>
+                'date',
+
+            'current_school_service_months' =>
+                'integer',
+
+            'has_medical_reason' =>
+                'boolean',
+
+            'has_spouse_employment_reason' =>
+                'boolean',
+
+            'is_mutual_transfer' =>
+                'boolean',
+
+            'submitted_at' =>
+                'datetime',
+
+            'withdrawn_at' =>
+                'datetime',
+
+            'declaration_accepted' =>
+                'boolean',
+
+            'submitted_pdf_generated_at' =>
+                'datetime',
         ];
     }
 
@@ -106,13 +165,23 @@ class TransferApplication extends Model
         );
     }
 
+    public function originZone(): BelongsTo
+    {
+        return $this->belongsTo(
+            Zone::class,
+            'origin_zone_id'
+        );
+    }
+
     public function preferences(): HasMany
     {
         return $this
             ->hasMany(
                 TransferPreference::class
             )
-            ->orderBy('preference_order');
+            ->orderBy(
+                'preference_order'
+            );
     }
 
     public function creator(): BelongsTo
@@ -128,6 +197,27 @@ class TransferApplication extends Model
         return $this->belongsTo(
             User::class,
             'updated_by'
+        );
+    }
+
+    public function actions(): HasMany
+    {
+        return $this->hasMany(
+            TransferApplicationAction::class
+        );
+    }
+
+    public function zonalReview(): HasOne
+    {
+        return $this->hasOne(
+            ZonalReview::class
+        );
+    }
+
+    public function provincialReview(): HasOne
+    {
+        return $this->hasOne(
+            ProvincialReview::class
         );
     }
 
@@ -148,15 +238,82 @@ class TransferApplication extends Model
             ->whereNotIn(
                 'status',
                 [
-                    'Withdrawn',
-                    'Cancelled',
+                    self::STATUS_WITHDRAWN,
+                    self::STATUS_CANCELLED,
                 ]
             );
     }
 
+    public function scopeForZone(
+        Builder $query,
+        ?int $zoneId
+    ): Builder {
+        if ($zoneId === null) {
+            return $query->whereRaw(
+                '1 = 0'
+            );
+        }
+
+        return $query->where(
+            'origin_zone_id',
+            $zoneId
+        );
+    }
+
+    public function scopeZonalQueue(
+        Builder $query
+    ): Builder {
+        return $query->whereIn(
+            'status',
+            [
+                self::STATUS_SUBMITTED,
+                self::STATUS_ZONAL_REVIEW,
+                self::STATUS_RETURNED_TO_ZONE,
+            ]
+        );
+    }
+
+    public function scopeZonallyReviewed(
+        Builder $query
+    ): Builder {
+        return $query->whereIn(
+            'status',
+            [
+                self::STATUS_ZONAL_APPROVED,
+                self::STATUS_ZONAL_REJECTED,
+            ]
+        );
+    }
+
+    public function scopeProvincialQueue(
+        Builder $query
+    ): Builder {
+        return $query->whereIn(
+            'status',
+            [
+                self::STATUS_ZONAL_APPROVED,
+                self::STATUS_PROVINCIAL_REVIEW,
+            ]
+        );
+    }
+
+    public function scopeProvinciallyReviewed(
+        Builder $query
+    ): Builder {
+        return $query->whereIn(
+            'status',
+            [
+                self::STATUS_PROVINCIAL_APPROVED,
+                self::STATUS_PROVINCIAL_REJECTED,
+                self::STATUS_RETURNED_TO_ZONE,
+            ]
+        );
+    }
+
     public function isEditableByPrincipal(): bool
     {
-        return $this->status === 'Draft';
+        return $this->status
+            === self::STATUS_DRAFT;
     }
 
     public function canBeWithdrawn(): bool
@@ -167,70 +324,114 @@ class TransferApplication extends Model
             && in_array(
                 $this->status,
                 [
-                    'Submitted',
-                    'Zonal Review',
+                    self::STATUS_SUBMITTED,
+                    self::STATUS_ZONAL_REVIEW,
                 ],
                 true
             );
     }
 
-    public function originZone(): BelongsTo
-    {
-        return $this->belongsTo(Zone::class, 'origin_zone_id');
-    }
-
-    public function actions(): HasMany
-    {
-        return $this->hasMany(TransferApplicationAction::class);
-    }
-
-    public function zonalReview(): HasOne
-    {
-        return $this->hasOne(ZonalReview::class);
-    }
-
-    public function scopeForZone(
-        Builder $query,
-        ?int $zoneId
-    ): Builder {
-        if ($zoneId === null) {
-            return $query->whereRaw('1 = 0');
-        }
-
-        return $query->where('origin_zone_id', $zoneId);
-    }
-
-    public function scopeZonalQueue(Builder $query): Builder
-    {
-        return $query->whereIn('status', [
-            self::STATUS_SUBMITTED,
-            self::STATUS_ZONAL_REVIEW,
-        ]);
-    }
-
-    public function scopeZonallyReviewed(Builder $query): Builder
-    {
-        return $query->whereIn('status', [
-            self::STATUS_ZONAL_APPROVED,
-            self::STATUS_ZONAL_REJECTED,
-        ]);
-    }
-
     public function canStartZonalReview(): bool
     {
-        return $this->status === self::STATUS_SUBMITTED;
+        return in_array(
+            $this->status,
+            [
+                self::STATUS_SUBMITTED,
+                self::STATUS_RETURNED_TO_ZONE,
+            ],
+            true
+        );
     }
 
     public function canReceiveZonalDecision(): bool
     {
-        return $this->status === self::STATUS_ZONAL_REVIEW;
+        return $this->status
+            === self::STATUS_ZONAL_REVIEW;
     }
 
     public function hasZonalDecision(): bool
     {
-        return in_array($this->status, [
-            self::STATUS_ZONAL_APPROVED,
-            self::STATUS_ZONAL_REJECTED,
-        ], true);
+        return in_array(
+            $this->status,
+            [
+                self::STATUS_ZONAL_APPROVED,
+                self::STATUS_ZONAL_REJECTED,
+            ],
+            true
+        );
+    }
+
+    public function canEnterProvincialReview(): bool
+    {
+        return $this->status
+            === self::STATUS_ZONAL_APPROVED;
+    }
+
+    public function isUnderProvincialReview(): bool
+    {
+        return $this->status
+            === self::STATUS_PROVINCIAL_REVIEW;
+    }
+
+    public function canReceiveProvincialDecision(): bool
+    {
+        return $this->status
+            === self::STATUS_PROVINCIAL_REVIEW;
+    }
+
+    public function isProvincialApproved(): bool
+    {
+        return $this->status
+            === self::STATUS_PROVINCIAL_APPROVED;
+    }
+
+    public function isProvincialRejected(): bool
+    {
+        return $this->status
+            === self::STATUS_PROVINCIAL_REJECTED;
+    }
+
+    public function isReturnedToZone(): bool
+    {
+        return $this->status
+            === self::STATUS_RETURNED_TO_ZONE;
+    }
+
+    public function hasProvincialDecision(): bool
+    {
+        return in_array(
+            $this->status,
+            [
+                self::STATUS_PROVINCIAL_APPROVED,
+                self::STATUS_PROVINCIAL_REJECTED,
+                self::STATUS_RETURNED_TO_ZONE,
+            ],
+            true
+        );
+    }
+
+    public function canEnterBoardReview(): bool
+    {
+        return $this->status
+            === self::STATUS_PROVINCIAL_APPROVED;
+    }
+
+    public function isUnderBoardReview(): bool
+    {
+        return $this->status
+            === self::STATUS_BOARD_REVIEW;
+    }
+
+    public function hasFinalDecision(): bool
+    {
+        return in_array(
+            $this->status,
+            [
+                self::STATUS_APPROVED,
+                self::STATUS_REJECTED,
+                self::STATUS_WAITLISTED,
+            ],
+            true
+        );
     }
 }

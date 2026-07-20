@@ -20,6 +20,8 @@ use App\Http\Controllers\Principal\TransferApplicationController as PrincipalTra
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Zonal\DashboardController as ZonalDashboardController;
 use App\Http\Controllers\Zonal\TransferApplicationController as ZonalTransferApplicationController;
+use App\Http\Controllers\Provincial\DashboardController as ProvincialDashboardController;
+use App\Http\Controllers\Provincial\TransferApplicationController as ProvincialTransferApplicationController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -798,63 +800,155 @@ Route::middleware([
     |
     */
 
-    Route::get(
-        '/provincial/dashboard',
-        function () {
-            abort_unless(
-                request()
-                    ->user()
-                    ->can(
-                        'view provincial dashboard'
-                    ),
-                403
-            );
+    Route::middleware([
+        'auth',
+        'verified',
+        'role:Provincial Director|Super Admin',
+    ])
+        ->prefix('provincial')
+        ->name('provincial.')
+        ->group(function (): void {
+            Route::get(
+                '/dashboard',
+                ProvincialDashboardController::class
+            )
+                ->middleware(
+                    'permission:view provincial dashboard'
+                )
+                ->name('dashboard');
 
-            return Inertia::render(
-                'Dashboard',
+            Route::get(
+                '/transfer-applications',
                 [
-                    'dashboardTitle' =>
-                        'Provincial Director Dashboard',
+                    ProvincialTransferApplicationController::class,
+                    'index',
                 ]
-            );
-        }
-    )->name(
-        'provincial.dashboard'
-    );
+            )
+                ->middleware(
+                    'permission:view provincial transfer applications'
+                )
+                ->name(
+                    'transfer-applications.index'
+                );
 
-    /*
-    |--------------------------------------------------------------------------
-    | Transfer Board Dashboard Placeholder
-    |--------------------------------------------------------------------------
-    |
-    | This remains temporary until the Transfer Board module is built.
-    |
-    */
-
-    Route::get(
-        '/transfer-board/dashboard',
-        function () {
-            abort_unless(
-                request()
-                    ->user()
-                    ->can(
-                        'view transfer board dashboard'
-                    ),
-                403
-            );
-
-            return Inertia::render(
-                'Dashboard',
+            Route::get(
+                '/transfer-applications/{transferApplication}/pdf',
                 [
-                    'dashboardTitle' =>
-                        'Transfer Board Dashboard',
+                    ProvincialTransferApplicationController::class,
+                    'downloadPdf',
                 ]
-            );
-        }
-    )->name(
-        'transfer-board.dashboard'
-    );
-});
+            )
+                ->middleware(
+                    'permission:download provincial transfer application pdfs'
+                )
+                ->name(
+                    'transfer-applications.pdf'
+                );
+
+            Route::post(
+                '/transfer-applications/{transferApplication}/start-review',
+                [
+                    ProvincialTransferApplicationController::class,
+                    'startReview',
+                ]
+            )
+                ->middleware(
+                    'permission:review provincial transfer applications'
+                )
+                ->name(
+                    'transfer-applications.start-review'
+                );
+
+            Route::post(
+                '/transfer-applications/{transferApplication}/approve',
+                [
+                    ProvincialTransferApplicationController::class,
+                    'approve',
+                ]
+            )
+                ->middleware(
+                    'permission:approve provincial transfer applications'
+                )
+                ->name(
+                    'transfer-applications.approve'
+                );
+
+            Route::post(
+                '/transfer-applications/{transferApplication}/reject',
+                [
+                    ProvincialTransferApplicationController::class,
+                    'reject',
+                ]
+            )
+                ->middleware(
+                    'permission:reject provincial transfer applications'
+                )
+                ->name(
+                    'transfer-applications.reject'
+                );
+
+            Route::post(
+                '/transfer-applications/{transferApplication}/return-to-zone',
+                [
+                    ProvincialTransferApplicationController::class,
+                    'returnToZone',
+                ]
+            )
+                ->middleware(
+                    'permission:return provincial transfer applications'
+                )
+                ->name(
+                    'transfer-applications.return-to-zone'
+                );
+
+            Route::get(
+                '/transfer-applications/{transferApplication}',
+                [
+                    ProvincialTransferApplicationController::class,
+                    'show',
+                ]
+            )
+                ->middleware(
+                    'permission:view provincial transfer applications'
+                )
+                ->name(
+                    'transfer-applications.show'
+                );
+        });
+
+        /*
+        |--------------------------------------------------------------------------
+        | Transfer Board Dashboard Placeholder
+        |--------------------------------------------------------------------------
+        |
+        | This remains temporary until the Transfer Board module is built.
+        |
+        */
+
+        Route::get(
+            '/transfer-board/dashboard',
+            function () {
+                abort_unless(
+                    request()
+                        ->user()
+                        ->can(
+                            'view transfer board dashboard'
+                        ),
+                    403
+                );
+
+                return Inertia::render(
+                    'Dashboard',
+                    [
+                        'dashboardTitle' =>
+                            'Transfer Board Dashboard',
+                    ]
+                );
+            }
+        )->name(
+            'transfer-board.dashboard'
+        );
+    });
 
 /*
 |--------------------------------------------------------------------------

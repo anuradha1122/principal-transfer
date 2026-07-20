@@ -1,6 +1,7 @@
 import AdminSidebar from '@/Components/Admin/AdminSidebar';
 import AdminTopbar from '@/Components/Admin/AdminTopbar';
 import PrincipalSidebar from '@/Components/Principal/PrincipalSidebar';
+import ProvincialSidebar from '@/Components/Provincial/ProvincialSidebar';
 import ZonalSidebar from '@/Components/Zonal/ZonalSidebar';
 import { Head, usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
@@ -21,6 +22,16 @@ export default function AdminLayout({
     const roles =
         page.props.auth?.roles ?? [];
 
+    /*
+     * Sidebar priority:
+     *
+     * 1. Super Admin
+     * 2. Principal
+     * 3. Zonal Director
+     * 4. Provincial Director
+     * 5. Other administrative roles
+     */
+
     const isSuperAdmin =
         roles.includes('Super Admin');
 
@@ -32,6 +43,12 @@ export default function AdminLayout({
         roles.includes('Zonal Director') &&
         !isSuperAdmin &&
         !isPrincipal;
+
+    const isProvincialDirector =
+        roles.includes('Provincial Director') &&
+        !isSuperAdmin &&
+        !isPrincipal &&
+        !isZonalDirector;
 
     const closeSidebar = () => {
         setSidebarOpen(false);
@@ -93,6 +110,15 @@ export default function AdminLayout({
         if (isZonalDirector) {
             return (
                 <ZonalSidebar
+                    open={sidebarOpen}
+                    onClose={closeSidebar}
+                />
+            );
+        }
+
+        if (isProvincialDirector) {
+            return (
+                <ProvincialSidebar
                     open={sidebarOpen}
                     onClose={closeSidebar}
                 />
