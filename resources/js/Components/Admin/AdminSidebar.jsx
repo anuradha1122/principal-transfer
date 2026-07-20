@@ -13,6 +13,7 @@ import {
     ShieldCheck,
     UserRoundCheck,
     Users,
+    Files,
     X,
 } from 'lucide-react';
 
@@ -116,6 +117,16 @@ export default function AdminSidebar({
                 'view board transfer applications',
             ),
             disabled: true,
+        },
+        {
+            label: 'Transfer Documents',
+            href: route(
+                'admin.transfer-documents.index',
+            ),
+            icon: Files,
+            visible: can(
+                'view transfer documents',
+            ),
         },
         {
             label: 'Reports',

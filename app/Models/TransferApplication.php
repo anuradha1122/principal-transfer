@@ -242,6 +242,16 @@ class TransferApplication extends Model
         );
     }
 
+    public function transferDocuments(): HasMany
+    {
+        return $this
+            ->hasMany(
+                TransferDocument::class
+            )
+            ->latest('issued_date')
+            ->latest('id');
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Query scopes
@@ -350,6 +360,19 @@ class TransferApplication extends Model
     }
 
     public function scopeBoardDecided(
+        Builder $query
+    ): Builder {
+        return $query->whereIn(
+            'status',
+            [
+                self::STATUS_APPROVED,
+                self::STATUS_REJECTED,
+                self::STATUS_WAITLISTED,
+            ]
+        );
+    }
+
+    public function scopeFinalized(
         Builder $query
     ): Builder {
         return $query->whereIn(
@@ -533,5 +556,126 @@ class TransferApplication extends Model
             ],
             true
         );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Transfer document helpers
+    |--------------------------------------------------------------------------
+    */
+
+    public function canGenerateTransferOrder(): bool
+    {
+        $decision =
+            $this->transferBoardDecision;
+
+        return $this->status
+            === self::STATUS_APPROVED
+            && $decision !== null
+            && filled(
+                $decision->recommended_school_id
+            )
+            && filled(
+                $decision->effective_date
+            )
+            && filled(
+                $decision->decision_reference
+            );
+    }
+
+    public function canGenerateAppointmentLetter(): bool
+    {
+        return $this
+            ->canGenerateTransferOrder();
+    }
+
+    public function canGenerateDecisionLetter(): bool
+    {
+        $decision =
+            $this->transferBoardDecision;
+
+        return in_array(
+            $this->status,
+            [
+                self::STATUS_REJECTED,
+                self::STATUS_WAITLISTED,
+            ],
+            true
+        )
+            && $decision !== null
+            && filled(
+                $decision->decision_reference
+            );
+    }
+
+    public function canGenerateDocumentType(
+        string $documentType
+    ): bool {
+        return match ($documentType) {
+            TransferDocument::TYPE_TRANSFER_ORDER =>
+                $this
+                    ->canGenerateTransferOrder(),
+
+            TransferDocument::TYPE_APPOINTMENT_LETTER =>
+                $this
+                    ->canGenerateAppointmentLetter(),
+
+            TransferDocument::TYPE_DECISION_LETTER =>
+                $this
+                    ->canGenerateDecisionLetter(),
+
+            default => false,
+        };
+    }
+
+    public function hasTransferDocumentType(
+        string $documentType
+    ): bool {
+        if (
+            $this->relationLoaded(
+                'transferDocuments'
+            )
+        ) {
+            return $this
+                ->transferDocuments
+                ->contains(
+                    'document_type',
+                    $documentType
+                );
+        }
+
+        return $this
+            ->transferDocuments()
+            ->where(
+                'document_type',
+                $documentType
+            )
+            ->exists();
+    }
+
+    public function hasPublishedTransferDocuments(): bool
+    {
+        if (
+            $this->relationLoaded(
+                'transferDocuments'
+            )
+        ) {
+            return $this
+                ->transferDocuments
+                ->contains(
+                    fn (
+                        TransferDocument $document
+                    ): bool =>
+                        $document->is_published
+                );
+        }
+
+        return $this
+            ->transferDocuments()
+            ->where(
+                'is_published',
+                true
+            )
+            ->exists();
     }
 }

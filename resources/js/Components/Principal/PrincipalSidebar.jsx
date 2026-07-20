@@ -1,6 +1,7 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
     FileText,
+    Files,
     GraduationCap,
     LayoutDashboard,
     UserRound,
@@ -8,8 +9,8 @@ import {
 } from 'lucide-react';
 
 export default function PrincipalSidebar({
-    open,
-    onClose,
+    open = false,
+    onClose = () => {},
 }) {
     const page = usePage();
 
@@ -17,23 +18,60 @@ export default function PrincipalSidebar({
         page.url ??
         window.location.pathname;
 
+    const permissions =
+        page.props?.auth?.permissions ?? [];
+
+    const can = (permission) =>
+        permissions.includes(permission);
+
     const menuItems = [
         {
             label: 'Dashboard',
-            href: '/principal/dashboard',
+            href: route(
+                'principal.dashboard',
+            ),
+            path: '/principal/dashboard',
             icon: LayoutDashboard,
+            visible: can(
+                'view principal dashboard',
+            ),
         },
         {
             label: 'My Profile',
-            href: '/principal/profile',
+            href: route(
+                'principal.profile.show',
+            ),
+            path: '/principal/profile',
             icon: UserRound,
+            visible: can(
+                'edit own principal profile',
+            ),
         },
         {
             label: 'Transfer Applications',
-            href: '/principal/transfer-applications',
+            href: route(
+                'principal.transfer-applications.index',
+            ),
+            path:
+                '/principal/transfer-applications',
             icon: FileText,
+            visible: can(
+                'view own transfer applications',
+            ),
         },
-    ];
+        {
+            label: 'Transfer Documents',
+            href: route(
+                'principal.transfer-documents.index',
+            ),
+            path:
+                '/principal/transfer-documents',
+            icon: Files,
+            visible: can(
+                'view own transfer documents',
+            ),
+        },
+    ].filter((item) => item.visible);
 
     const normalizePath = (value) => {
         if (!value) {
@@ -41,21 +79,28 @@ export default function PrincipalSidebar({
         }
 
         const path =
-            value.split('?')[0].split('#')[0];
+            value
+                .split('?')[0]
+                .split('#')[0];
 
         if (path.length > 1) {
-            return path.replace(/\/+$/, '');
+            return path.replace(
+                /\/+$/,
+                '',
+            );
         }
 
         return path;
     };
 
-    const isActive = (href) => {
+    const isActive = (path) => {
         const currentPath =
-            normalizePath(currentUrl);
+            normalizePath(
+                currentUrl,
+            );
 
         const menuPath =
-            normalizePath(href);
+            normalizePath(path);
 
         return (
             currentPath === menuPath ||
@@ -67,9 +112,8 @@ export default function PrincipalSidebar({
 
     return (
         <>
-            <div
-                role="button"
-                tabIndex={-1}
+            <button
+                type="button"
                 aria-label="Close sidebar overlay"
                 className={[
                     'fixed inset-0 z-40 bg-slate-950/60 transition-opacity duration-200 lg:hidden',
@@ -91,20 +135,22 @@ export default function PrincipalSidebar({
                 <div className="flex h-full flex-col bg-slate-950 text-white">
                     <div className="flex h-20 items-center justify-between border-b border-white/10 px-5">
                         <Link
-                            href="/principal/dashboard"
+                            href={route(
+                                'principal.dashboard',
+                            )}
                             onClick={onClose}
-                            className="flex items-center gap-3"
+                            className="flex min-w-0 items-center gap-3"
                         >
-                            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-600">
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-600">
                                 <GraduationCap className="h-6 w-6" />
                             </div>
 
-                            <div>
-                                <p className="text-sm font-bold">
+                            <div className="min-w-0">
+                                <p className="truncate text-sm font-bold">
                                     Principal Transfer
                                 </p>
 
-                                <p className="text-xs text-slate-400">
+                                <p className="truncate text-xs text-slate-400">
                                     Principal Portal
                                 </p>
                             </div>
@@ -121,41 +167,57 @@ export default function PrincipalSidebar({
                     </div>
 
                     <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-5">
-                        {menuItems.map((item) => {
-                            const Icon = item.icon;
+                        {menuItems.map(
+                            (item) => {
+                                const Icon =
+                                    item.icon;
 
-                            const active =
-                                isActive(item.href);
+                                const active =
+                                    isActive(
+                                        item.path,
+                                    );
 
-                            return (
-                                <Link
-                                    key={item.label}
-                                    href={item.href}
-                                    onClick={onClose}
-                                    className={[
-                                        'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition',
-                                        active
-                                            ? 'bg-blue-600 text-white shadow-lg shadow-blue-950/30'
-                                            : 'text-slate-300 hover:bg-white/10 hover:text-white',
-                                    ].join(' ')}
-                                >
-                                    <Icon className="h-5 w-5 shrink-0" />
+                                return (
+                                    <Link
+                                        key={
+                                            item.label
+                                        }
+                                        href={
+                                            item.href
+                                        }
+                                        onClick={
+                                            onClose
+                                        }
+                                        className={[
+                                            'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition',
+                                            active
+                                                ? 'bg-blue-600 text-white shadow-lg shadow-blue-950/30'
+                                                : 'text-slate-300 hover:bg-white/10 hover:text-white',
+                                        ].join(
+                                            ' ',
+                                        )}
+                                    >
+                                        <Icon className="h-5 w-5 shrink-0" />
 
-                                    <span>
-                                        {item.label}
-                                    </span>
+                                        <span className="truncate">
+                                            {
+                                                item.label
+                                            }
+                                        </span>
 
-                                    {active && (
-                                        <span className="ml-auto h-2 w-2 rounded-full bg-white" />
-                                    )}
-                                </Link>
-                            );
-                        })}
+                                        {active && (
+                                            <span className="ml-auto h-2 w-2 shrink-0 rounded-full bg-white" />
+                                        )}
+                                    </Link>
+                                );
+                            },
+                        )}
                     </nav>
 
                     <div className="border-t border-white/10 px-5 py-4">
                         <p className="text-xs leading-5 text-slate-500">
-                            Provincial Department of Education
+                            Provincial Department
+                            of Education
                         </p>
 
                         <p className="text-xs leading-5 text-slate-500">

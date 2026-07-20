@@ -159,7 +159,7 @@
 
     <div class="header">
         <h1>
-            Sabaragamuwa Provincial Department of Education
+            Sabaragamuwa Provincial Ministry of Education
         </h1>
 
         <h2>

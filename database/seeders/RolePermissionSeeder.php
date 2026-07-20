@@ -120,7 +120,7 @@ class RolePermissionSeeder extends Seeder
             'submit transfer applications',
             'withdraw transfer applications',
             'delete draft transfer applications',
-            'download own transfer documents',
+            'download own transfer application pdfs',
 
             /*
             |--------------------------------------------------------------------------
@@ -168,6 +168,22 @@ class RolePermissionSeeder extends Seeder
             'record transfer board decisions',
             'edit transfer board decisions',
             'download board transfer application pdfs',
+
+            /*
+            |--------------------------------------------------------------------------
+            | Transfer documents and publication
+            |--------------------------------------------------------------------------
+            */
+
+            'view transfer documents',
+            'generate transfer documents',
+            'upload signed transfer documents',
+            'publish transfer results',
+            'unpublish transfer results',
+            'download transfer documents',
+
+            'view own transfer documents',
+            'download own transfer documents',
 
             /*
             |--------------------------------------------------------------------------
@@ -242,9 +258,6 @@ class RolePermissionSeeder extends Seeder
         |--------------------------------------------------------------------------
         | Super Admin permissions
         |--------------------------------------------------------------------------
-        |
-        | Super Admin receives every web permission.
-        |
         */
 
         $superAdmin->syncPermissions(
@@ -279,6 +292,9 @@ class RolePermissionSeeder extends Seeder
             'submit transfer applications',
             'withdraw transfer applications',
             'delete draft transfer applications',
+            'download own transfer application pdfs',
+
+            'view own transfer documents',
             'download own transfer documents',
         ]);
 
@@ -317,6 +333,11 @@ class RolePermissionSeeder extends Seeder
             'return provincial transfer applications',
             'download provincial transfer application pdfs',
 
+            'view transfer documents',
+            'generate transfer documents',
+            'upload signed transfer documents',
+            'download transfer documents',
+
             'export transfer applications',
             'view reports',
             'export reports',
@@ -336,6 +357,13 @@ class RolePermissionSeeder extends Seeder
             'record transfer board decisions',
             'edit transfer board decisions',
             'download board transfer application pdfs',
+
+            'view transfer documents',
+            'generate transfer documents',
+            'upload signed transfer documents',
+            'publish transfer results',
+            'unpublish transfer results',
+            'download transfer documents',
 
             'export transfer applications',
             'view reports',
