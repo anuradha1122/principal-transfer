@@ -2,31 +2,29 @@
 
 namespace App\Providers;
 
-use App\Models\User;
+use App\Models\TransferApplication;
+use App\Policies\ZonalTransferApplicationPolicy;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Register application services.
-     */
     public function register(): void
     {
         //
     }
 
-    /**
-     * Bootstrap application services.
-     */
     public function boot(): void
     {
-        Gate::before(
-            function (User $user, string $ability): ?bool {
-                return $user->hasRole('Super Admin')
-                    ? true
-                    : null;
-            }
+        Gate::policy(
+            TransferApplication::class,
+            ZonalTransferApplicationPolicy::class
         );
+
+        Gate::before(function ($user, string $ability): ?bool {
+            return $user->hasRole('Super Admin')
+                ? true
+                : null;
+        });
     }
 }

@@ -18,6 +18,8 @@ use App\Http\Controllers\Principal\AppointmentController as PrincipalSelfAppoint
 use App\Http\Controllers\Principal\ProfileController as PrincipalProfileSelfController;
 use App\Http\Controllers\Principal\TransferApplicationController as PrincipalTransferApplicationController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Zonal\DashboardController as ZonalDashboardController;
+use App\Http\Controllers\Zonal\TransferApplicationController as ZonalTransferApplicationController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -124,6 +126,134 @@ Route::middleware('auth')->group(function (): void {
 
 /*
 |--------------------------------------------------------------------------
+| Zonal Routes
+|--------------------------------------------------------------------------
+|
+| These routes are available only to Zonal Directors and Super Admins.
+| The assigned zone restriction remains enforced inside the policy and
+| controller service layer.
+|
+*/
+
+Route::middleware([
+    'auth',
+    'verified',
+    'role:Zonal Director|Super Admin',
+])
+    ->prefix('zonal')
+    ->name('zonal.')
+    ->group(function (): void {
+        /*
+        |--------------------------------------------------------------------------
+        | Zonal Dashboard
+        |--------------------------------------------------------------------------
+        */
+
+        Route::get(
+            '/dashboard',
+            ZonalDashboardController::class
+        )
+            ->middleware(
+                'permission:view zonal dashboard'
+            )
+            ->name('dashboard');
+
+        /*
+        |--------------------------------------------------------------------------
+        | Zonal Transfer Applications
+        |--------------------------------------------------------------------------
+        */
+
+        Route::get(
+            '/transfer-applications',
+            [
+                ZonalTransferApplicationController::class,
+                'index',
+            ]
+        )
+            ->middleware(
+                'permission:view zonal transfer applications'
+            )
+            ->name(
+                'transfer-applications.index'
+            );
+
+        Route::get(
+            '/transfer-applications/{transferApplication}/pdf',
+            [
+                ZonalTransferApplicationController::class,
+                'downloadPdf',
+            ]
+        )
+            ->middleware(
+                'permission:download zonal transfer application pdfs'
+            )
+            ->name(
+                'transfer-applications.pdf'
+            );
+
+        Route::post(
+            '/transfer-applications/{transferApplication}/start-review',
+            [
+                ZonalTransferApplicationController::class,
+                'startReview',
+            ]
+        )
+            ->middleware(
+                'permission:review zonal transfer applications'
+            )
+            ->name(
+                'transfer-applications.start-review'
+            );
+
+        Route::post(
+            '/transfer-applications/{transferApplication}/approve',
+            [
+                ZonalTransferApplicationController::class,
+                'approve',
+            ]
+        )
+            ->middleware(
+                'permission:approve zonal transfer applications'
+            )
+            ->name(
+                'transfer-applications.approve'
+            );
+
+        Route::post(
+            '/transfer-applications/{transferApplication}/reject',
+            [
+                ZonalTransferApplicationController::class,
+                'reject',
+            ]
+        )
+            ->middleware(
+                'permission:reject zonal transfer applications'
+            )
+            ->name(
+                'transfer-applications.reject'
+            );
+
+        /*
+         * Keep the general show route after /pdf and action routes.
+         */
+        Route::get(
+            '/transfer-applications/{transferApplication}',
+            [
+                ZonalTransferApplicationController::class,
+                'show',
+            ]
+        )
+            ->middleware(
+                'permission:view zonal transfer applications'
+            )
+            ->name(
+                'transfer-applications.show'
+            );
+    });
+
+/*
+|--------------------------------------------------------------------------
 | Authenticated and Verified Routes
 |--------------------------------------------------------------------------
 */
@@ -187,7 +317,9 @@ Route::middleware([
                     UserController::class,
                     'resetPassword',
                 ]
-            )->name('users.reset-password');
+            )->name(
+                'users.reset-password'
+            );
 
             /*
             |--------------------------------------------------------------------------
@@ -206,7 +338,9 @@ Route::middleware([
                     PermissionController::class,
                     'index',
                 ]
-            )->name('permissions.index');
+            )->name(
+                'permissions.index'
+            );
 
             Route::post(
                 'permissions',
@@ -214,7 +348,9 @@ Route::middleware([
                     PermissionController::class,
                     'store',
                 ]
-            )->name('permissions.store');
+            )->name(
+                'permissions.store'
+            );
 
             Route::delete(
                 'permissions/{permission}',
@@ -222,7 +358,9 @@ Route::middleware([
                     PermissionController::class,
                     'destroy',
                 ]
-            )->name('permissions.destroy');
+            )->name(
+                'permissions.destroy'
+            );
 
             /*
             |--------------------------------------------------------------------------
@@ -249,11 +387,6 @@ Route::middleware([
             |--------------------------------------------------------------------------
             | Principal Registry
             |--------------------------------------------------------------------------
-            |
-            | Import and template routes must appear before the resource route.
-            | Otherwise "import" may be interpreted as a registry parameter,
-            | because routes enjoy converting ordinary words into model IDs.
-            |
             */
 
             Route::get(
@@ -290,7 +423,8 @@ Route::middleware([
                 'principal-registry',
                 PrincipalRegistryController::class
             )->parameters([
-                'principal-registry' => 'principal_registry',
+                'principal-registry' =>
+                    'principal_registry',
             ]);
 
             /*
@@ -303,7 +437,8 @@ Route::middleware([
                 'principal-profiles',
                 PrincipalProfileController::class
             )->parameters([
-                'principal-profiles' => 'principal_profile',
+                'principal-profiles' =>
+                    'principal_profile',
             ]);
 
             /*
@@ -460,7 +595,9 @@ Route::middleware([
                     PrincipalProfileSelfController::class,
                     'show',
                 ]
-            )->name('profile.show');
+            )->name(
+                'profile.show'
+            );
 
             Route::get(
                 '/profile/edit',
@@ -468,7 +605,9 @@ Route::middleware([
                     PrincipalProfileSelfController::class,
                     'edit',
                 ]
-            )->name('profile.edit');
+            )->name(
+                'profile.edit'
+            );
 
             Route::put(
                 '/profile',
@@ -476,16 +615,14 @@ Route::middleware([
                     PrincipalProfileSelfController::class,
                     'update',
                 ]
-            )->name('profile.update');
+            )->name(
+                'profile.update'
+            );
 
             /*
             |--------------------------------------------------------------------------
             | Principal Self-Service Appointments
             |--------------------------------------------------------------------------
-            |
-            | Principals may add and update their own appointment records.
-            | Ownership validation remains inside the controller.
-            |
             */
 
             Route::get(
@@ -628,7 +765,7 @@ Route::middleware([
             );
 
             /*
-             * General show route stays after the more specific routes.
+             * PDF route remains before the general show route.
              */
 
             Route::get(
@@ -640,6 +777,7 @@ Route::middleware([
             )->name(
                 'transfer-applications.pdf'
             );
+
             Route::get(
                 '/transfer-applications/{transferApplication}',
                 [
@@ -653,35 +791,11 @@ Route::middleware([
 
     /*
     |--------------------------------------------------------------------------
-    | Zonal Director Dashboard
+    | Provincial Director Dashboard Placeholder
     |--------------------------------------------------------------------------
-    */
-
-    Route::get(
-        '/zonal/dashboard',
-        function () {
-            abort_unless(
-                request()
-                    ->user()
-                    ->can(
-                        'view zonal dashboard'
-                    ),
-                403
-            );
-
-            return Inertia::render(
-                'Dashboard',
-                [
-                    'dashboardTitle' => 'Zonal Director Dashboard',
-                ]
-            );
-        }
-    )->name('zonal.dashboard');
-
-    /*
-    |--------------------------------------------------------------------------
-    | Provincial Director Dashboard
-    |--------------------------------------------------------------------------
+    |
+    | This remains temporary until the Provincial review module is built.
+    |
     */
 
     Route::get(
@@ -699,16 +813,22 @@ Route::middleware([
             return Inertia::render(
                 'Dashboard',
                 [
-                    'dashboardTitle' => 'Provincial Director Dashboard',
+                    'dashboardTitle' =>
+                        'Provincial Director Dashboard',
                 ]
             );
         }
-    )->name('provincial.dashboard');
+    )->name(
+        'provincial.dashboard'
+    );
 
     /*
     |--------------------------------------------------------------------------
-    | Transfer Board Dashboard
+    | Transfer Board Dashboard Placeholder
     |--------------------------------------------------------------------------
+    |
+    | This remains temporary until the Transfer Board module is built.
+    |
     */
 
     Route::get(
@@ -726,11 +846,14 @@ Route::middleware([
             return Inertia::render(
                 'Dashboard',
                 [
-                    'dashboardTitle' => 'Transfer Board Dashboard',
+                    'dashboardTitle' =>
+                        'Transfer Board Dashboard',
                 ]
             );
         }
-    )->name('transfer-board.dashboard');
+    )->name(
+        'transfer-board.dashboard'
+    );
 });
 
 /*

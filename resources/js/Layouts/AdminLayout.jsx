@@ -1,8 +1,9 @@
 import AdminSidebar from '@/Components/Admin/AdminSidebar';
 import AdminTopbar from '@/Components/Admin/AdminTopbar';
 import PrincipalSidebar from '@/Components/Principal/PrincipalSidebar';
+import ZonalSidebar from '@/Components/Zonal/ZonalSidebar';
 import { Head, usePage } from '@inertiajs/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function AdminLayout({
     title,
@@ -20,13 +21,17 @@ export default function AdminLayout({
     const roles =
         page.props.auth?.roles ?? [];
 
-    /*
-     * A Super Admin may also temporarily have the Principal role.
-     * In that situation, the admin sidebar must take priority.
-     */
+    const isSuperAdmin =
+        roles.includes('Super Admin');
+
     const isPrincipal =
         roles.includes('Principal') &&
-        !roles.includes('Super Admin');
+        !isSuperAdmin;
+
+    const isZonalDirector =
+        roles.includes('Zonal Director') &&
+        !isSuperAdmin &&
+        !isPrincipal;
 
     const closeSidebar = () => {
         setSidebarOpen(false);
@@ -36,23 +41,79 @@ export default function AdminLayout({
         setSidebarOpen(true);
     };
 
-    return (
-        <div className="min-h-screen bg-slate-100">
-            <Head title={title} />
+    useEffect(() => {
+        closeSidebar();
+    }, [page.url]);
 
-            {isPrincipal ? (
+    useEffect(() => {
+        const handleEscape = (event) => {
+            if (event.key === 'Escape') {
+                closeSidebar();
+            }
+        };
+
+        window.addEventListener(
+            'keydown',
+            handleEscape,
+        );
+
+        return () => {
+            window.removeEventListener(
+                'keydown',
+                handleEscape,
+            );
+        };
+    }, []);
+
+    useEffect(() => {
+        if (sidebarOpen) {
+            document.body.style.overflow =
+                'hidden';
+        } else {
+            document.body.style.overflow =
+                '';
+        }
+
+        return () => {
+            document.body.style.overflow =
+                '';
+        };
+    }, [sidebarOpen]);
+
+    const renderSidebar = () => {
+        if (isPrincipal) {
+            return (
                 <PrincipalSidebar
                     open={sidebarOpen}
                     onClose={closeSidebar}
                 />
-            ) : (
-                <AdminSidebar
+            );
+        }
+
+        if (isZonalDirector) {
+            return (
+                <ZonalSidebar
                     open={sidebarOpen}
                     onClose={closeSidebar}
                 />
-            )}
+            );
+        }
 
-            <div className="lg:pl-72">
+        return (
+            <AdminSidebar
+                open={sidebarOpen}
+                onClose={closeSidebar}
+            />
+        );
+    };
+
+    return (
+        <div className="min-h-screen bg-slate-100">
+            <Head title={title} />
+
+            {renderSidebar()}
+
+            <div className="min-h-screen lg:pl-72">
                 <AdminTopbar
                     onMenuClick={openSidebar}
                 />

@@ -8,7 +8,8 @@ import { useForm } from '@inertiajs/react';
 
 export default function Edit({
     account,
-    roles,
+    roles = [],
+    zones = [],
 }) {
     const {
         data,
@@ -20,8 +21,14 @@ export default function Edit({
         name: account.name,
         email: account.email,
         role: account.role ?? '',
-        is_active: account.is_active,
-        email_verified: account.email_verified,
+        assigned_zone_id:
+            account.assigned_zone_id ?? '',
+        is_active: Boolean(
+            account.is_active
+        ),
+        email_verified: Boolean(
+            account.email_verified
+        ),
     });
 
     const passwordForm = useForm({
@@ -32,7 +39,12 @@ export default function Edit({
     const submit = (event) => {
         event.preventDefault();
 
-        put(route('admin.users.update', account.id));
+        put(
+            route(
+                'admin.users.update',
+                account.id
+            )
+        );
     };
 
     const resetPassword = (event) => {
@@ -41,13 +53,14 @@ export default function Edit({
         passwordForm.put(
             route(
                 'admin.users.reset-password',
-                account.id,
+                account.id
             ),
             {
                 preserveScroll: true,
+
                 onSuccess: () =>
                     passwordForm.reset(),
-            },
+            }
         );
     };
 
@@ -61,7 +74,8 @@ export default function Edit({
                     </h1>
 
                     <p className="mt-1 text-sm text-slate-500">
-                        Update account access and role assignment.
+                        Update account access, role assignment
+                        and organizational office.
                     </p>
                 </div>
             }
@@ -74,6 +88,7 @@ export default function Edit({
                         errors={errors}
                         processing={processing}
                         roles={roles}
+                        zones={zones}
                         editing
                         onSubmit={submit}
                     />
@@ -102,20 +117,22 @@ export default function Edit({
                                 id="password"
                                 type="password"
                                 value={
-                                    passwordForm.data.password
+                                    passwordForm.data
+                                        .password
                                 }
                                 className="mt-1 block w-full"
                                 onChange={(event) =>
                                     passwordForm.setData(
                                         'password',
-                                        event.target.value,
+                                        event.target.value
                                     )
                                 }
                             />
 
                             <InputError
                                 message={
-                                    passwordForm.errors.password
+                                    passwordForm.errors
+                                        .password
                                 }
                                 className="mt-2"
                             />
@@ -138,9 +155,17 @@ export default function Edit({
                                 onChange={(event) =>
                                     passwordForm.setData(
                                         'password_confirmation',
-                                        event.target.value,
+                                        event.target.value
                                     )
                                 }
+                            />
+
+                            <InputError
+                                message={
+                                    passwordForm.errors
+                                        .password_confirmation
+                                }
+                                className="mt-2"
                             />
                         </div>
 

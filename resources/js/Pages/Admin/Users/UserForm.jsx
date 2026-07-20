@@ -3,16 +3,47 @@ import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import { Link } from '@inertiajs/react';
+import {
+    Building2,
+    MapPinned,
+} from 'lucide-react';
 
 export default function UserForm({
     data,
     setData,
     errors,
     processing,
-    roles,
+    roles = [],
+    zones = [],
     editing = false,
     onSubmit,
 }) {
+    const isZonalDirector =
+        data.role === 'Zonal Director';
+
+    const handleRoleChange = (
+        event
+    ) => {
+        const selectedRole =
+            event.target.value;
+
+        setData((currentData) => ({
+            ...currentData,
+            role: selectedRole,
+
+            /*
+             * Remove stale Zone access whenever the user
+             * is changed to a non-Zonal role.
+             */
+            assigned_zone_id:
+                selectedRole ===
+                'Zonal Director'
+                    ? currentData
+                        .assigned_zone_id
+                    : '',
+        }));
+    };
+
     return (
         <form
             onSubmit={onSubmit}
@@ -32,7 +63,7 @@ export default function UserForm({
                         onChange={(event) =>
                             setData(
                                 'name',
-                                event.target.value,
+                                event.target.value
                             )
                         }
                     />
@@ -57,7 +88,7 @@ export default function UserForm({
                         onChange={(event) =>
                             setData(
                                 'email',
-                                event.target.value,
+                                event.target.value
                             )
                         }
                     />
@@ -77,11 +108,8 @@ export default function UserForm({
                     <select
                         id="role"
                         value={data.role}
-                        onChange={(event) =>
-                            setData(
-                                'role',
-                                event.target.value,
-                            )
+                        onChange={
+                            handleRoleChange
                         }
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                     >
@@ -120,13 +148,15 @@ export default function UserForm({
                             onChange={(event) =>
                                 setData(
                                     'password',
-                                    event.target.value,
+                                    event.target.value
                                 )
                             }
                         />
 
                         <InputError
-                            message={errors.password}
+                            message={
+                                errors.password
+                            }
                             className="mt-2"
                         />
                     </div>
@@ -142,28 +172,121 @@ export default function UserForm({
                         <TextInput
                             id="password_confirmation"
                             type="password"
-                            value={data.password_confirmation}
+                            value={
+                                data.password_confirmation
+                            }
                             className="mt-1 block w-full"
                             onChange={(event) =>
                                 setData(
                                     'password_confirmation',
-                                    event.target.value,
+                                    event.target.value
                                 )
                             }
+                        />
+
+                        <InputError
+                            message={
+                                errors
+                                    .password_confirmation
+                            }
+                            className="mt-2"
                         />
                     </div>
                 )}
             </div>
 
+            {isZonalDirector && (
+                <section className="rounded-2xl border border-blue-200 bg-blue-50/60 p-5">
+                    <div className="flex items-start gap-3">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-blue-600 shadow-sm">
+                            <MapPinned className="h-5 w-5" />
+                        </div>
+
+                        <div>
+                            <h2 className="font-bold text-slate-900">
+                                Zonal Office Assignment
+                            </h2>
+
+                            <p className="mt-1 text-sm leading-6 text-slate-600">
+                                Select the Zone whose transfer
+                                applications this officer may
+                                review.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="mt-5">
+                        <InputLabel
+                            htmlFor="assigned_zone_id"
+                            value="Assigned Zone *"
+                        />
+
+                        <select
+                            id="assigned_zone_id"
+                            value={
+                                data.assigned_zone_id
+                                ?? ''
+                            }
+                            onChange={(event) =>
+                                setData(
+                                    'assigned_zone_id',
+                                    event.target.value
+                                )
+                            }
+                            className="mt-1 block w-full rounded-md border-gray-300 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        >
+                            <option value="">
+                                Select a Zone
+                            </option>
+
+                            {zones.map((zone) => (
+                                <option
+                                    key={zone.id}
+                                    value={zone.id}
+                                >
+                                    {zone.name}
+                                    {zone.code
+                                        ? ` (${zone.code})`
+                                        : ''}
+                                    {zone.district
+                                        ? ` - ${zone.district}`
+                                        : ''}
+                                </option>
+                            ))}
+                        </select>
+
+                        <InputError
+                            message={
+                                errors
+                                    .assigned_zone_id
+                            }
+                            className="mt-2"
+                        />
+
+                        <div className="mt-3 flex items-center gap-2 text-xs text-slate-500">
+                            <Building2 className="h-4 w-4" />
+
+                            This officer will only access
+                            applications from the selected
+                            Zone.
+                        </div>
+                    </div>
+                </section>
+            )}
+
             <div className="grid gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-2">
                 <label className="flex items-center gap-3">
                     <input
                         type="checkbox"
-                        checked={data.is_active}
+                        checked={
+                            Boolean(
+                                data.is_active
+                            )
+                        }
                         onChange={(event) =>
                             setData(
                                 'is_active',
-                                event.target.checked,
+                                event.target.checked
                             )
                         }
                         className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
@@ -183,11 +306,15 @@ export default function UserForm({
                 <label className="flex items-center gap-3">
                     <input
                         type="checkbox"
-                        checked={data.email_verified}
+                        checked={
+                            Boolean(
+                                data.email_verified
+                            )
+                        }
                         onChange={(event) =>
                             setData(
                                 'email_verified',
-                                event.target.checked,
+                                event.target.checked
                             )
                         }
                         className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
@@ -199,7 +326,8 @@ export default function UserForm({
                         </span>
 
                         <span className="block text-xs text-slate-500">
-                            Mark trusted staff accounts as verified.
+                            Mark trusted staff accounts as
+                            verified.
                         </span>
                     </span>
                 </label>
@@ -207,13 +335,17 @@ export default function UserForm({
 
             <div className="flex justify-end gap-3">
                 <Link
-                    href={route('admin.users.index')}
+                    href={route(
+                        'admin.users.index'
+                    )}
                     className="rounded-xl border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
                 >
                     Cancel
                 </Link>
 
-                <PrimaryButton disabled={processing}>
+                <PrimaryButton
+                    disabled={processing}
+                >
                     {processing
                         ? 'Saving...'
                         : editing

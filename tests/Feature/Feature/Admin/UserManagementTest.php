@@ -3,6 +3,7 @@
 namespace Tests\Feature\Admin;
 
 use App\Models\User;
+use App\Models\Zone;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -52,9 +53,17 @@ class UserManagementTest extends TestCase
     {
         $admin = User::factory()->create([
             'email_verified_at' => now(),
+            'is_active' => true,
         ]);
 
         $admin->assignRole('Super Admin');
+
+        $zone = Zone::create([
+            'name' => 'Ratnapura',
+            'code' => 'RAT',
+            'district' => 'Ratnapura',
+            'is_active' => true,
+        ]);
 
         $response = $this
             ->actingAs($admin)
@@ -64,6 +73,7 @@ class UserManagementTest extends TestCase
                 'password' => 'Password123',
                 'password_confirmation' => 'Password123',
                 'role' => 'Zonal Director',
+                'assigned_zone_id' => $zone->id,
                 'is_active' => true,
                 'email_verified' => true,
             ]);
@@ -72,6 +82,7 @@ class UserManagementTest extends TestCase
 
         $this->assertDatabaseHas('users', [
             'email' => 'zonal@example.com',
+            'assigned_zone_id' => $zone->id,
             'is_active' => true,
         ]);
 
@@ -81,6 +92,11 @@ class UserManagementTest extends TestCase
 
         $this->assertTrue(
             $user->hasRole('Zonal Director')
+        );
+
+        $this->assertSame(
+            $zone->id,
+            $user->assigned_zone_id
         );
     }
 

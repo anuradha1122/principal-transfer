@@ -7,40 +7,59 @@ use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
-    /**
-     * Redirect the authenticated user to the correct dashboard.
-     */
-    public function __invoke(Request $request): RedirectResponse
-    {
+    public function __invoke(
+        Request $request
+    ): RedirectResponse {
         $user = $request->user();
 
+        /*
+         * Super Admin always receives the admin dashboard.
+         */
         if ($user->hasRole('Super Admin')) {
-            return redirect()->route('admin.dashboard');
+            return redirect()
+                ->route('admin.dashboard');
         }
 
+        /*
+         * Self-registered users are Principals.
+         *
+         * Check Principal before Zonal Director so an account
+         * with an accidental duplicate role does not enter the
+         * Zonal workflow.
+         */
         if ($user->hasRole('Principal')) {
-            return redirect()->route('principal.dashboard');
+            return redirect()
+                ->route('principal.dashboard');
         }
 
         if ($user->hasRole('Zonal Director')) {
-            return redirect()->route('zonal.dashboard');
+            abort_unless(
+                $user->assigned_zone_id !== null,
+                403,
+                'No Zone has been assigned to this Zonal Director account.'
+            );
+
+            return redirect()
+                ->route('zonal.dashboard');
         }
 
         if ($user->hasRole('Provincial Director')) {
-            return redirect()->route('provincial.dashboard');
+            return redirect()
+                ->route('provincial.dashboard');
         }
 
-        if ($user->hasRole('Transfer Board Member')) {
-            return redirect()->route('transfer-board.dashboard');
-        }
-
-        if ($user->hasRole('Data Entry Officer')) {
-            return redirect()->route('admin.dashboard');
+        if ($user->hasRole(
+            'Transfer Board Member'
+        )) {
+            return redirect()
+                ->route(
+                    'transfer-board.dashboard'
+                );
         }
 
         abort(
             403,
-            'Your account does not have an assigned system role.'
+            'No dashboard has been assigned to this account.'
         );
     }
 }

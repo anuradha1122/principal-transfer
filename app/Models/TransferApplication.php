@@ -7,10 +7,26 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class TransferApplication extends Model
 {
     use HasFactory;
+
+    public const STATUS_DRAFT = 'Draft';
+    public const STATUS_SUBMITTED = 'Submitted';
+    public const STATUS_ZONAL_REVIEW = 'Zonal Review';
+    public const STATUS_ZONAL_APPROVED = 'Zonal Approved';
+    public const STATUS_ZONAL_REJECTED = 'Zonal Rejected';
+    public const STATUS_PROVINCIAL_REVIEW = 'Provincial Review';
+    public const STATUS_PROVINCIAL_APPROVED = 'Provincial Approved';
+    public const STATUS_PROVINCIAL_REJECTED = 'Provincial Rejected';
+    public const STATUS_BOARD_REVIEW = 'Board Review';
+    public const STATUS_APPROVED = 'Approved';
+    public const STATUS_REJECTED = 'Rejected';
+    public const STATUS_WAITLISTED = 'Waitlisted';
+    public const STATUS_WITHDRAWN = 'Withdrawn';
+    public const STATUS_CANCELLED = 'Cancelled';
 
     protected $fillable = [
         'transfer_cycle_id',
@@ -41,6 +57,7 @@ class TransferApplication extends Model
         'updated_by',
         'submitted_pdf_path',
         'submitted_pdf_generated_at',
+        'origin_zone_id',
     ];
 
     protected function casts(): array
@@ -155,5 +172,65 @@ class TransferApplication extends Model
                 ],
                 true
             );
+    }
+
+    public function originZone(): BelongsTo
+    {
+        return $this->belongsTo(Zone::class, 'origin_zone_id');
+    }
+
+    public function actions(): HasMany
+    {
+        return $this->hasMany(TransferApplicationAction::class);
+    }
+
+    public function zonalReview(): HasOne
+    {
+        return $this->hasOne(ZonalReview::class);
+    }
+
+    public function scopeForZone(
+        Builder $query,
+        ?int $zoneId
+    ): Builder {
+        if ($zoneId === null) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        return $query->where('origin_zone_id', $zoneId);
+    }
+
+    public function scopeZonalQueue(Builder $query): Builder
+    {
+        return $query->whereIn('status', [
+            self::STATUS_SUBMITTED,
+            self::STATUS_ZONAL_REVIEW,
+        ]);
+    }
+
+    public function scopeZonallyReviewed(Builder $query): Builder
+    {
+        return $query->whereIn('status', [
+            self::STATUS_ZONAL_APPROVED,
+            self::STATUS_ZONAL_REJECTED,
+        ]);
+    }
+
+    public function canStartZonalReview(): bool
+    {
+        return $this->status === self::STATUS_SUBMITTED;
+    }
+
+    public function canReceiveZonalDecision(): bool
+    {
+        return $this->status === self::STATUS_ZONAL_REVIEW;
+    }
+
+    public function hasZonalDecision(): bool
+    {
+        return in_array($this->status, [
+            self::STATUS_ZONAL_APPROVED,
+            self::STATUS_ZONAL_REJECTED,
+        ], true);
     }
 }

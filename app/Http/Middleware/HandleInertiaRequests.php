@@ -31,6 +31,10 @@ class HandleInertiaRequests extends Middleware
     {
         $user = $request->user();
 
+        if ($user) {
+            $user->loadMissing('assignedZone');
+        }
+
         return [
             ...parent::share($request),
 
@@ -40,16 +44,41 @@ class HandleInertiaRequests extends Middleware
                         'id' => $user->id,
                         'name' => $user->name,
                         'email' => $user->email,
-                        'email_verified_at' => $user->email_verified_at,
+                        'email_verified_at' =>
+                            $user->email_verified_at,
+
+                        'assigned_zone_id' =>
+                            $user->assigned_zone_id,
+
+                        'assigned_zone' =>
+                            $user->assignedZone
+                                ? [
+                                    'id' =>
+                                        $user->assignedZone->id,
+
+                                    'name' =>
+                                        $user->assignedZone->name,
+
+                                    'code' =>
+                                        $user->assignedZone->code,
+
+                                    'district' =>
+                                        $user->assignedZone->district,
+                                ]
+                                : null,
                     ]
                     : null,
 
                 'roles' => $user
-                    ? $user->getRoleNames()->values()->all()
+                    ? $user
+                        ->getRoleNames()
+                        ->values()
+                        ->all()
                     : [],
 
                 'permissions' => $user
-                    ? $user->getAllPermissions()
+                    ? $user
+                        ->getAllPermissions()
                         ->pluck('name')
                         ->values()
                         ->all()
@@ -57,11 +86,25 @@ class HandleInertiaRequests extends Middleware
             ],
 
             'flash' => [
-                'success' => fn () => $request->session()->get('success'),
+                'success' => fn () =>
+                    $request
+                        ->session()
+                        ->get('success'),
 
-                'error' => fn () => $request->session()->get('error'),
+                'error' => fn () =>
+                    $request
+                        ->session()
+                        ->get('error'),
 
-                'warning' => fn () => $request->session()->get('warning'),
+                'warning' => fn () =>
+                    $request
+                        ->session()
+                        ->get('warning'),
+
+                'info' => fn () =>
+                    $request
+                        ->session()
+                        ->get('info'),
             ],
         ];
     }

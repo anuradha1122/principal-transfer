@@ -44,12 +44,13 @@ class PrincipalProfileManagementTest extends TestCase
 
     public function test_principal_cannot_access_admin_profiles(): void
     {
-        $principal =
-            User::factory()->create([
-                'email_verified_at' => now(),
-            ]);
+        $principal = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
 
-        $principal->assignRole('Principal');
+        $principal->assignRole(
+            'Principal'
+        );
 
         $this
             ->actingAs($principal)
@@ -59,10 +60,11 @@ class PrincipalProfileManagementTest extends TestCase
 
     public function test_super_admin_can_create_profile(): void
     {
-        $principal =
-            User::factory()->create();
+        $principal = User::factory()->create();
 
-        $principal->assignRole('Principal');
+        $principal->assignRole(
+            'Principal'
+        );
 
         $response = $this
             ->actingAs($this->admin)
@@ -111,19 +113,19 @@ class PrincipalProfileManagementTest extends TestCase
 
     public function test_new_current_appointment_closes_previous_current_appointment(): void
     {
-        $principal =
-            User::factory()->create();
+        $principal = User::factory()->create();
 
-        $principal->assignRole('Principal');
+        $principal->assignRole(
+            'Principal'
+        );
 
-        $profile =
-            PrincipalProfile::create([
-                'user_id' => $principal->id,
-                'nic' => '123456789V',
-                'full_name' => 'Test Principal',
-                'service_category' => 'Sri Lanka Principals Service',
-                'employment_status' => 'Active',
-            ]);
+        $profile = PrincipalProfile::create([
+            'user_id' => $principal->id,
+            'nic' => '123456789V',
+            'full_name' => 'Test Principal',
+            'service_category' => 'Sri Lanka Principals Service',
+            'employment_status' => 'Active',
+        ]);
 
         $zone = Zone::create([
             'name' => 'Ratnapura',
@@ -155,16 +157,15 @@ class PrincipalProfileManagementTest extends TestCase
             'is_active' => true,
         ]);
 
-        $oldAppointment =
-            PrincipalAppointment::create([
-                'principal_profile_id' => $profile->id,
-                'school_id' => $schoolOne->id,
-                'designation' => 'Principal',
-                'appointment_type' => 'Permanent',
-                'appointment_date' => '2020-01-01',
-                'start_date' => '2020-01-01',
-                'is_current' => true,
-            ]);
+        $oldAppointment = PrincipalAppointment::create([
+            'principal_profile_id' => $profile->id,
+            'school_id' => $schoolOne->id,
+            'designation' => 'Principal',
+            'appointment_type' => 'Permanent',
+            'appointment_date' => '2020-01-01',
+            'start_date' => '2020-01-01',
+            'is_current' => true,
+        ]);
 
         $this
             ->actingAs($this->admin)
@@ -175,8 +176,14 @@ class PrincipalProfileManagementTest extends TestCase
                     'designation' => 'Principal',
                     'appointment_type' => 'Permanent',
                     'appointment_number' => 'APT-002',
-                    'appointment_date' => '2026-01-01',
+
+                    /*
+                     * The request requires start_date to match
+                     * appointment_date.
+                     */
+                    'appointment_date' => '2026-01-10',
                     'start_date' => '2026-01-10',
+
                     'end_date' => null,
                     'is_current' => true,
                     'reason_for_end' => null,
@@ -187,18 +194,22 @@ class PrincipalProfileManagementTest extends TestCase
                 "/admin/principal-profiles/{$profile->id}"
             );
 
+        $oldAppointment->refresh();
+
         $this->assertFalse(
-            $oldAppointment
-                ->fresh()
-                ->is_current
+            $oldAppointment->is_current
         );
 
         $this->assertSame(
             '2026-01-09',
             $oldAppointment
-                ->fresh()
                 ->end_date
                 ->toDateString()
+        );
+
+        $this->assertSame(
+            'Superseded by a new appointment',
+            $oldAppointment->reason_for_end
         );
 
         $this->assertDatabaseHas(
@@ -206,7 +217,9 @@ class PrincipalProfileManagementTest extends TestCase
             [
                 'principal_profile_id' => $profile->id,
                 'school_id' => $schoolTwo->id,
-                'is_current' => true,
+                'appointment_date' => '2026-01-10 00:00:00',
+                'start_date' => '2026-01-10 00:00:00',
+                'is_current' => 1,
             ]
         );
     }

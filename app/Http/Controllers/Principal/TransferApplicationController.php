@@ -6,19 +6,19 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Principal\StoreTransferApplicationRequest;
 use App\Http\Requests\Principal\SubmitTransferApplicationRequest;
 use App\Http\Requests\Principal\UpdateTransferApplicationRequest;
-use App\Services\TransferApplicationPdfService;
 use App\Models\PrincipalProfile;
 use App\Models\School;
 use App\Models\TransferApplication;
 use App\Models\TransferCycle;
+use App\Services\TransferApplicationPdfService;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
-use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class TransferApplicationController extends Controller
@@ -28,68 +28,61 @@ class TransferApplicationController extends Controller
     ): Response {
         $profile = $this->profile($request);
 
-        $applications =
-            TransferApplication::query()
-                ->where(
-                    'principal_profile_id',
-                    $profile->id
-                )
-                ->with([
-                    'transferCycle:id,name,code,transfer_year,application_close_date,status',
-                    'currentSchool:id,name',
-                ])
-                ->latest('id')
-                ->paginate(15);
+        $applications = TransferApplication::query()
+            ->where(
+                'principal_profile_id',
+                $profile->id
+            )
+            ->with([
+                'transferCycle:id,name,code,transfer_year,application_close_date,status',
+                'currentSchool:id,name',
+            ])
+            ->latest('id')
+            ->paginate(15);
 
-        $availableCycles =
-            TransferCycle::query()
-                ->published()
-                ->whereDate(
-                    'application_open_date',
-                    '<=',
-                    today()
-                )
-                ->whereDate(
-                    'application_close_date',
-                    '>=',
-                    today()
-                )
-                ->whereDoesntHave(
-                    'applications',
-                    function ($query) use (
-                        $profile
-                    ): void {
-                        $query
-                            ->where(
-                                'principal_profile_id',
-                                $profile->id
-                            )
-                            ->whereNotIn(
-                                'status',
-                                [
-                                    'Withdrawn',
-                                    'Cancelled',
-                                ]
-                            );
-                    }
-                )
-                ->orderByDesc(
-                    'transfer_year'
-                )
-                ->get([
-                    'id',
-                    'name',
-                    'code',
-                    'transfer_type',
-                    'transfer_year',
-                    'application_close_date',
-                ]);
+        $availableCycles = TransferCycle::query()
+            ->published()
+            ->whereDate(
+                'application_open_date',
+                '<=',
+                today()
+            )
+            ->whereDate(
+                'application_close_date',
+                '>=',
+                today()
+            )
+            ->whereDoesntHave(
+                'applications',
+                function ($query) use ($profile): void {
+                    $query
+                        ->where(
+                            'principal_profile_id',
+                            $profile->id
+                        )
+                        ->whereNotIn(
+                            'status',
+                            [
+                                'Withdrawn',
+                                'Cancelled',
+                            ]
+                        );
+                }
+            )
+            ->orderByDesc('transfer_year')
+            ->get([
+                'id',
+                'name',
+                'code',
+                'transfer_type',
+                'transfer_year',
+                'application_close_date',
+            ]);
 
         return Inertia::render(
             'Principal/TransferApplications/Index',
             [
                 'applications' => $applications,
-
                 'availableCycles' => $availableCycles,
             ]
         );
@@ -102,16 +95,12 @@ class TransferApplicationController extends Controller
 
         $currentAppointment = $profile
             ->currentAppointment()
-            ->with(
-                'school.division.zone'
-            )
+            ->with('school.division.zone')
             ->first();
 
         if (! $currentAppointment) {
             return redirect()
-                ->route(
-                    'principal.profile.show'
-                )
+                ->route('principal.profile.show')
                 ->with(
                     'warning',
                     'Please add your current appointment before applying for a transfer.'
@@ -159,14 +148,13 @@ class TransferApplicationController extends Controller
                 );
         }
 
-        $existingApplication =
-            TransferApplication::query()
-                ->activeForPrincipal(
-                    $cycle->id,
-                    $profile->id
-                )
-                ->latest('id')
-                ->first();
+        $existingApplication = TransferApplication::query()
+            ->activeForPrincipal(
+                $cycle->id,
+                $profile->id
+            )
+            ->latest('id')
+            ->first();
 
         if ($existingApplication) {
             return redirect()
@@ -186,18 +174,14 @@ class TransferApplicationController extends Controller
                 $cycle,
                 $currentAppointment
             );
-        } catch (
-            ValidationException $exception
-        ) {
+        } catch (ValidationException $exception) {
             return redirect()
                 ->route(
                     'principal.transfer-applications.index'
                 )
                 ->with(
                     'warning',
-                    collect(
-                        $exception->errors()
-                    )
+                    collect($exception->errors())
                         ->flatten()
                         ->first()
                     ?? 'You are not eligible for this transfer cycle.'
@@ -215,8 +199,7 @@ class TransferApplicationController extends Controller
                 'cycle' => $cycle,
 
                 'schools' => $this->eligibleSchools(
-                    $currentAppointment
-                        ->school_id
+                    $currentAppointment->school_id
                 ),
 
                 'reasons' => $this->reasons(),
@@ -260,29 +243,24 @@ class TransferApplicationController extends Controller
 
         $currentAppointment = $profile
             ->currentAppointment()
-            ->with(
-                'school.division.zone'
-            )
+            ->with('school.division.zone')
             ->first();
 
         if (! $currentAppointment) {
             return redirect()
-                ->route(
-                    'principal.profile.show'
-                )
+                ->route('principal.profile.show')
                 ->with(
                     'warning',
                     'Please add your current appointment before applying.'
                 );
         }
 
-        $existingApplication =
-            TransferApplication::query()
-                ->activeForPrincipal(
-                    $cycle->id,
-                    $profile->id
-                )
-                ->exists();
+        $existingApplication = TransferApplication::query()
+            ->activeForPrincipal(
+                $cycle->id,
+                $profile->id
+            )
+            ->exists();
 
         if ($existingApplication) {
             return redirect()
@@ -301,8 +279,7 @@ class TransferApplicationController extends Controller
             $currentAppointment
         );
 
-        $validated =
-            $request->validated();
+        $validated = $request->validated();
 
         $application = DB::transaction(
             function () use (
@@ -312,80 +289,76 @@ class TransferApplicationController extends Controller
                 $cycle,
                 $currentAppointment
             ): TransferApplication {
-                $application =
-                    TransferApplication::create([
-                        'transfer_cycle_id' => $cycle->id,
+                $application = TransferApplication::create([
+                    'transfer_cycle_id' => $cycle->id,
 
-                        'principal_profile_id' => $profile->id,
+                    'principal_profile_id' => $profile->id,
 
-                        'current_appointment_id' => $currentAppointment->id,
+                    'current_appointment_id' => $currentAppointment->id,
 
-                        'principal_name' => $profile->full_name,
+                    'principal_name' => $profile->full_name,
 
-                        'nic' => $profile->nic,
+                    'nic' => $profile->nic,
 
-                        'employee_number' => $profile->employee_number,
+                    'employee_number' => $profile->employee_number,
 
-                        'current_school_id' => $currentAppointment
-                            ->school_id,
+                    'current_school_id' => $currentAppointment->school_id,
 
-                        'current_designation' => $currentAppointment
-                            ->designation,
+                    /*
+                     * origin_zone_id is intentionally not set here.
+                     *
+                     * It is captured when the Principal officially
+                     * submits the application. This preserves the
+                     * submitted Zone snapshot.
+                     */
+                    'origin_zone_id' => null,
 
-                        'service_grade' => $profile->service_grade,
+                    'current_designation' => $currentAppointment->designation,
 
-                        'current_appointment_start_date' => $currentAppointment
-                            ->start_date,
+                    'service_grade' => $profile->service_grade,
 
-                        'current_school_service_months' => Carbon::parse(
-                            $currentAppointment
-                                ->start_date
-                        )->diffInMonths(
-                            today()
-                        ),
+                    'current_appointment_start_date' =>
+                        $currentAppointment->start_date,
 
-                        'transfer_reason' => $validated[
-                                'transfer_reason'
-                            ],
+                    'current_school_service_months' => Carbon::parse(
+                        $currentAppointment->start_date
+                    )->diffInMonths(today()),
 
-                        'reason_details' => $validated[
-                                'reason_details'
-                            ],
+                    'transfer_reason' =>
+                        $validated['transfer_reason'],
 
-                        'has_medical_reason' => $validated[
-                                'has_medical_reason'
-                            ],
+                    'reason_details' =>
+                        $validated['reason_details'],
 
-                        'has_spouse_employment_reason' => $validated[
-                                'has_spouse_employment_reason'
-                            ],
+                    'has_medical_reason' =>
+                        $validated['has_medical_reason'],
 
-                        'is_mutual_transfer' => $validated[
-                                'is_mutual_transfer'
-                            ],
+                    'has_spouse_employment_reason' =>
+                        $validated['has_spouse_employment_reason'],
 
-                        'mutual_principal_nic' => $validated[
-                                'is_mutual_transfer'
-                            ]
-                                ? (
-                                    $validated[
-                                        'mutual_principal_nic'
-                                    ] ?? null
-                                )
-                                : null,
+                    'is_mutual_transfer' =>
+                        $validated['is_mutual_transfer'],
 
-                        'principal_remarks' => $validated[
-                                'principal_remarks'
-                            ] ?? null,
+                    'mutual_principal_nic' =>
+                        $validated['is_mutual_transfer']
+                            ? (
+                                $validated['mutual_principal_nic']
+                                ?? null
+                            )
+                            : null,
 
-                        'status' => 'Draft',
+                    'principal_remarks' =>
+                        $validated['principal_remarks']
+                        ?? null,
 
-                        'declaration_accepted' => false,
+                    'status' => 'Draft',
 
-                        'created_by' => $request->user()->id,
+                    'declaration_accepted' => false,
 
-                        'updated_by' => $request->user()->id,
-                    ]);
+                    'created_by' => $request->user()->id,
+
+                    'updated_by' => $request->user()->id,
+                ]);
 
                 $this->syncPreferences(
                     $application,
@@ -419,6 +392,7 @@ class TransferApplicationController extends Controller
         $transferApplication->load([
             'transferCycle',
             'currentSchool.division.zone',
+            'originZone',
             'preferences.school.division.zone',
         ]);
 
@@ -439,10 +413,7 @@ class TransferApplicationController extends Controller
             $transferApplication
         );
 
-        if (
-            ! $transferApplication
-                ->isEditableByPrincipal()
-        ) {
+        if (! $transferApplication->isEditableByPrincipal()) {
             return redirect()
                 ->route(
                     'principal.transfer-applications.show',
@@ -454,11 +425,7 @@ class TransferApplicationController extends Controller
                 );
         }
 
-        if (
-            ! $transferApplication
-                ->transferCycle
-                ->isApplicationOpen()
-        ) {
+        if (! $transferApplication->transferCycle->isApplicationOpen()) {
             return redirect()
                 ->route(
                     'principal.transfer-applications.show',
@@ -470,20 +437,15 @@ class TransferApplicationController extends Controller
                 );
         }
 
-        $currentAppointment =
-            $transferApplication
-                ->principalProfile
-                ->currentAppointment()
-                ->with(
-                    'school.division.zone'
-                )
-                ->first();
+        $currentAppointment = $transferApplication
+            ->principalProfile
+            ->currentAppointment()
+            ->with('school.division.zone')
+            ->first();
 
         if (! $currentAppointment) {
             return redirect()
-                ->route(
-                    'principal.profile.show'
-                )
+                ->route('principal.profile.show')
                 ->with(
                     'warning',
                     'Please add your current appointment before editing this application.'
@@ -501,17 +463,14 @@ class TransferApplicationController extends Controller
                 'application' => $transferApplication,
 
                 'profile' => $this->profileData(
-                    $transferApplication
-                        ->principalProfile,
+                    $transferApplication->principalProfile,
                     $currentAppointment
                 ),
 
-                'cycle' => $transferApplication
-                    ->transferCycle,
+                'cycle' => $transferApplication->transferCycle,
 
                 'schools' => $this->eligibleSchools(
-                    $currentAppointment
-                        ->school_id
+                    $currentAppointment->school_id
                 ),
 
                 'reasons' => $this->reasons(),
@@ -528,10 +487,7 @@ class TransferApplicationController extends Controller
             $transferApplication
         );
 
-        if (
-            ! $transferApplication
-                ->isEditableByPrincipal()
-        ) {
+        if (! $transferApplication->isEditableByPrincipal()) {
             return redirect()
                 ->route(
                     'principal.transfer-applications.show',
@@ -543,11 +499,7 @@ class TransferApplicationController extends Controller
                 );
         }
 
-        if (
-            ! $transferApplication
-                ->transferCycle
-                ->isApplicationOpen()
-        ) {
+        if (! $transferApplication->transferCycle->isApplicationOpen()) {
             return redirect()
                 ->route(
                     'principal.transfer-applications.show',
@@ -559,8 +511,7 @@ class TransferApplicationController extends Controller
                 );
         }
 
-        $validated =
-            $request->validated();
+        $validated = $request->validated();
 
         DB::transaction(
             function () use (
@@ -569,39 +520,32 @@ class TransferApplicationController extends Controller
                 $transferApplication
             ): void {
                 $transferApplication->update([
-                    'transfer_reason' => $validated[
-                            'transfer_reason'
-                        ],
+                    'transfer_reason' =>
+                        $validated['transfer_reason'],
 
-                    'reason_details' => $validated[
-                            'reason_details'
-                        ],
+                    'reason_details' =>
+                        $validated['reason_details'],
 
-                    'has_medical_reason' => $validated[
-                            'has_medical_reason'
-                        ],
+                    'has_medical_reason' =>
+                        $validated['has_medical_reason'],
 
-                    'has_spouse_employment_reason' => $validated[
-                            'has_spouse_employment_reason'
-                        ],
+                    'has_spouse_employment_reason' =>
+                        $validated['has_spouse_employment_reason'],
 
-                    'is_mutual_transfer' => $validated[
-                            'is_mutual_transfer'
-                        ],
+                    'is_mutual_transfer' =>
+                        $validated['is_mutual_transfer'],
 
-                    'mutual_principal_nic' => $validated[
-                            'is_mutual_transfer'
-                        ]
+                    'mutual_principal_nic' =>
+                        $validated['is_mutual_transfer']
                             ? (
-                                $validated[
-                                    'mutual_principal_nic'
-                                ] ?? null
+                                $validated['mutual_principal_nic']
+                                ?? null
                             )
                             : null,
 
-                    'principal_remarks' => $validated[
-                            'principal_remarks'
-                        ] ?? null,
+                    'principal_remarks' =>
+                        $validated['principal_remarks']
+                        ?? null,
 
                     'updated_by' => $request->user()->id,
                 ]);
@@ -634,10 +578,7 @@ class TransferApplicationController extends Controller
             $transferApplication
         );
 
-        if (
-            $transferApplication->status
-            !== 'Draft'
-        ) {
+        if ($transferApplication->status !== 'Draft') {
             return redirect()
                 ->route(
                     'principal.transfer-applications.show',
@@ -649,11 +590,7 @@ class TransferApplicationController extends Controller
                 );
         }
 
-        if (
-            ! $transferApplication
-                ->transferCycle
-                ->isApplicationOpen()
-        ) {
+        if (! $transferApplication->transferCycle->isApplicationOpen()) {
             return redirect()
                 ->route(
                     'principal.transfer-applications.show',
@@ -665,11 +602,7 @@ class TransferApplicationController extends Controller
                 );
         }
 
-        if (
-            $transferApplication
-                ->preferences()
-                ->count() < 1
-        ) {
+        if ($transferApplication->preferences()->count() < 1) {
             return redirect()
                 ->route(
                     'principal.transfer-applications.edit',
@@ -681,36 +614,95 @@ class TransferApplicationController extends Controller
                 );
         }
 
-        DB::transaction(
-            function () use (
-                $request,
-                $transferApplication
-            ): void {
-                $transferApplication->update([
-                    'application_number' =>
-                        $this->generateApplicationNumber(
-                            $transferApplication
-                        ),
+        try {
+            DB::transaction(
+                function () use (
+                    $request,
+                    $transferApplication
+                ): void {
+                    /*
+                     * Reload and lock the application so two submission
+                     * requests cannot update it simultaneously.
+                     */
+                    $lockedApplication = TransferApplication::query()
+                        ->lockForUpdate()
+                        ->with([
+                            'transferCycle',
+                            'currentSchool.division',
+                        ])
+                        ->findOrFail(
+                            $transferApplication->id
+                        );
 
-                    'status' =>
-                        'Submitted',
+                    /*
+                     * Recheck the status after locking because another
+                     * request may have already submitted it.
+                     */
+                    if ($lockedApplication->status !== 'Draft') {
+                        throw ValidationException::withMessages([
+                            'status' =>
+                                'This application has already been submitted or is no longer editable.',
+                        ]);
+                    }
 
-                    'submitted_at' =>
-                        now(),
+                    /*
+                     * Capture the immutable origin Zone from the current
+                     * School snapshot.
+                     */
+                    $originZoneId = $lockedApplication
+                        ->currentSchool
+                        ?->division
+                        ?->zone_id;
 
-                    'declaration_accepted' =>
-                        true,
+                    if ($originZoneId === null) {
+                        throw ValidationException::withMessages([
+                            'current_school_id' =>
+                                'The current school does not belong to a valid education Zone. Please contact the system administrator.',
+                        ]);
+                    }
 
-                    'updated_by' =>
-                        $request->user()->id,
-                ]);
-            }
-        );
+                    $lockedApplication->update([
+                        'origin_zone_id' => $originZoneId,
+
+                        'application_number' =>
+                            $this->generateApplicationNumber(
+                                $lockedApplication
+                            ),
+
+                        'status' => 'Submitted',
+
+                        'submitted_at' => now(),
+
+                        'declaration_accepted' => true,
+
+                        'updated_by' => $request->user()->id,
+                    ]);
+                }
+            );
+        } catch (ValidationException $exception) {
+            return redirect()
+                ->route(
+                    'principal.transfer-applications.show',
+                    $transferApplication
+                )
+                ->withErrors(
+                    $exception->errors()
+                )
+                ->with(
+                    'warning',
+                    collect($exception->errors())
+                        ->flatten()
+                        ->first()
+                    ?? 'The application could not be submitted.'
+                );
+        }
 
         /*
-        * Reload all submitted information before generating
-        * the immutable PDF snapshot.
-        */
+         * Reload the submitted application and all PDF-related data.
+         *
+         * PDF generation stays outside the transaction so a PDF error
+         * does not reverse a successful application submission.
+         */
         $transferApplication->refresh();
 
         try {
@@ -751,10 +743,7 @@ class TransferApplicationController extends Controller
             $transferApplication
         );
 
-        if (
-            ! $transferApplication
-                ->canBeWithdrawn()
-        ) {
+        if (! $transferApplication->canBeWithdrawn()) {
             return redirect()
                 ->route(
                     'principal.transfer-applications.show',
@@ -766,24 +755,22 @@ class TransferApplicationController extends Controller
                 );
         }
 
-        $validated =
-            $request->validate([
-                'withdrawal_reason' => [
-                    'required',
-                    'string',
-                    'min:10',
-                    'max:2000',
-                ],
-            ]);
+        $validated = $request->validate([
+            'withdrawal_reason' => [
+                'required',
+                'string',
+                'min:10',
+                'max:2000',
+            ],
+        ]);
 
         $transferApplication->update([
             'status' => 'Withdrawn',
 
             'withdrawn_at' => now(),
 
-            'withdrawal_reason' => $validated[
-                    'withdrawal_reason'
-                ],
+            'withdrawal_reason' =>
+                $validated['withdrawal_reason'],
 
             'updated_by' => $request->user()->id,
         ]);
@@ -807,10 +794,7 @@ class TransferApplicationController extends Controller
             $transferApplication
         );
 
-        if (
-            $transferApplication->status
-            !== 'Draft'
-        ) {
+        if ($transferApplication->status !== 'Draft') {
             return redirect()
                 ->route(
                     'principal.transfer-applications.show',
@@ -855,11 +839,8 @@ class TransferApplicationController extends Controller
         TransferApplication $application
     ): void {
         abort_unless(
-            $application
-                ->principal_profile_id
-            === $this
-                ->profile($request)
-                ->id,
+            $application->principal_profile_id
+            === $this->profile($request)->id,
             403
         );
     }
@@ -880,13 +861,12 @@ class TransferApplicationController extends Controller
                 ->create([
                     'preference_order' => $index + 1,
 
-                    'school_id' => $preference[
-                            'school_id'
-                        ],
+                    'school_id' =>
+                        $preference['school_id'],
 
-                    'preference_reason' => $preference[
-                            'preference_reason'
-                        ] ?? null,
+                    'preference_reason' =>
+                        $preference['preference_reason']
+                        ?? null,
                 ]);
         }
     }
@@ -894,12 +874,14 @@ class TransferApplicationController extends Controller
     private function generateApplicationNumber(
         TransferApplication $application
     ): string {
+        $application->loadMissing(
+            'transferCycle'
+        );
+
         return strtoupper(
             sprintf(
                 '%s-%s',
-                $application
-                    ->transferCycle
-                    ->code,
+                $application->transferCycle->code,
                 str_pad(
                     (string) $application->id,
                     6,
@@ -915,28 +897,24 @@ class TransferApplicationController extends Controller
         TransferCycle $cycle,
         $currentAppointment
     ): void {
-        if (
-            $profile->employment_status
-            !== 'Active'
-        ) {
+        if ($profile->employment_status !== 'Active') {
             throw ValidationException::withMessages([
-                'transfer_cycle_id' => 'Only active principals can apply for transfers.',
+                'transfer_cycle_id' =>
+                    'Only active principals can apply for transfers.',
             ]);
         }
 
-        $serviceYears =
-            Carbon::parse(
-                $currentAppointment
-                    ->start_date
-            )->diffInYears(today());
+        $serviceYears = Carbon::parse(
+            $currentAppointment->start_date
+        )->diffInYears(today());
 
         if (
             $serviceYears
-            < $cycle
-                ->minimum_service_years
+            < $cycle->minimum_service_years
         ) {
             throw ValidationException::withMessages([
-                'transfer_cycle_id' => "A minimum of {$cycle->minimum_service_years} years at the current school is required.",
+                'transfer_cycle_id' =>
+                    "A minimum of {$cycle->minimum_service_years} years at the current school is required.",
             ]);
         }
     }
@@ -978,23 +956,26 @@ class TransferApplicationController extends Controller
 
             'nic' => $profile->nic,
 
-            'employee_number' => $profile->employee_number,
+            'employee_number' =>
+                $profile->employee_number,
 
-            'service_grade' => $profile->service_grade,
+            'service_grade' =>
+                $profile->service_grade,
 
-            'employment_status' => $profile->employment_status,
+            'employment_status' =>
+                $profile->employment_status,
 
             'current_appointment' => [
                 'id' => $currentAppointment->id,
 
-                'designation' => $currentAppointment
-                    ->designation,
+                'designation' =>
+                    $currentAppointment->designation,
 
-                'start_date' => $currentAppointment
-                    ->start_date,
+                'start_date' =>
+                    $currentAppointment->start_date,
 
-                'school' => $currentAppointment
-                    ->school,
+                'school' =>
+                    $currentAppointment->school,
             ],
         ];
     }
@@ -1035,8 +1016,10 @@ class TransferApplicationController extends Controller
                     'Provincial Review',
                     'Provincial Approved',
                     'Provincial Rejected',
+                    'Board Review',
                     'Approved',
                     'Rejected',
+                    'Waitlisted',
                     'Withdrawn',
                 ],
                 true
@@ -1065,8 +1048,7 @@ class TransferApplicationController extends Controller
                 $transferApplication
             ),
             [
-                'Content-Type' =>
-                    'application/pdf',
+                'Content-Type' => 'application/pdf',
             ]
         );
     }

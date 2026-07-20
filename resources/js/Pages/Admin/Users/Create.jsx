@@ -2,7 +2,10 @@ import AdminLayout from '@/Layouts/AdminLayout';
 import UserForm from './UserForm';
 import { useForm } from '@inertiajs/react';
 
-export default function Create({ roles }) {
+export default function Create({
+    roles = [],
+    zones = [],
+}) {
     const {
         data,
         setData,
@@ -15,6 +18,7 @@ export default function Create({ roles }) {
         password: '',
         password_confirmation: '',
         role: '',
+        assigned_zone_id: '',
         is_active: true,
         email_verified: true,
     });
@@ -22,7 +26,9 @@ export default function Create({ roles }) {
     const submit = (event) => {
         event.preventDefault();
 
-        post(route('admin.users.store'));
+        post(
+            route('admin.users.store')
+        );
     };
 
     return (
@@ -35,8 +41,8 @@ export default function Create({ roles }) {
                     </h1>
 
                     <p className="mt-1 text-sm text-slate-500">
-                        Create an officer account and assign its
-                        system role.
+                        Create an officer account, assign its
+                        system role and organizational office.
                     </p>
                 </div>
             }
@@ -48,6 +54,7 @@ export default function Create({ roles }) {
                     errors={errors}
                     processing={processing}
                     roles={roles}
+                    zones={zones}
                     onSubmit={submit}
                 />
             </div>
