@@ -390,9 +390,16 @@ class RolePermissionSeeder extends Seeder
             'return transfer appeals',
             'download transfer appeal documents',
 
-            'export transfer applications',
+            /*
+            |--------------------------------------------------------------------------
+            | Reports and audit
+            |--------------------------------------------------------------------------
+            */
+
             'view reports',
             'export reports',
+            'export transfer applications',
+            'view audit logs',
         ]);
 
         /*
@@ -430,8 +437,14 @@ class RolePermissionSeeder extends Seeder
             'return transfer appeals',
             'download transfer appeal documents',
 
-            'export transfer applications',
+            /*
+            |--------------------------------------------------------------------------
+            | Reports
+            |--------------------------------------------------------------------------
+            */
+
             'view reports',
+            'export transfer applications',
         ]);
 
         /*

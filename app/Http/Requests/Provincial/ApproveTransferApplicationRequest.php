@@ -35,8 +35,7 @@ class ApproveTransferApplicationRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'recommendation.required' =>
-                'A Provincial recommendation is required.',
+            'recommendation.required' => 'A Provincial recommendation is required.',
         ];
     }
 }

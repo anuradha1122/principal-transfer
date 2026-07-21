@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -10,18 +11,26 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class TransferAppeal extends Model
 {
-    use HasFactory;
+    use Auditable, HasFactory;
 
     public const STATUS_DRAFT = 'Draft';
+
     public const STATUS_SUBMITTED = 'Submitted';
+
     public const STATUS_UNDER_REVIEW = 'Under Review';
+
     public const STATUS_RETURNED = 'Returned for Clarification';
+
     public const STATUS_RESUBMITTED = 'Resubmitted';
+
     public const STATUS_APPROVED = 'Approved';
+
     public const STATUS_REJECTED = 'Rejected';
+
     public const STATUS_WITHDRAWN = 'Withdrawn';
 
     public const DECISION_APPROVED = 'Approved';
+
     public const DECISION_REJECTED = 'Rejected';
 
     protected $fillable = [
@@ -193,5 +202,17 @@ class TransferAppeal extends Model
             self::STATUS_REJECTED,
             self::STATUS_WITHDRAWN,
         ], true);
+    }
+
+    public function auditParent(): ?Model
+    {
+        return $this->transferApplication;
+    }
+
+    public function auditExcludedAttributes(): array
+    {
+        return [
+            'updated_at',
+        ];
     }
 }

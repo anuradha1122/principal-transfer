@@ -17,7 +17,7 @@ class DivisionFactory extends Factory
     {
         return [
             'zone_id' => Zone::factory(),
-            'name' => fake()->unique()->city() . ' Division',
+            'name' => fake()->unique()->city().' Division',
             'code' => strtoupper(fake()->unique()->lexify('????')),
             'is_active' => true,
             'sort_order' => fake()->numberBetween(1, 100),

@@ -64,17 +64,13 @@ class ApproveTransferApplicationRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'recommended_school_id.required' =>
-                'The approved transfer school is required.',
+            'recommended_school_id.required' => 'The approved transfer school is required.',
 
-            'effective_date.required' =>
-                'The transfer effective date is required.',
+            'effective_date.required' => 'The transfer effective date is required.',
 
-            'appointment_type.required' =>
-                'The appointment type is required.',
+            'appointment_type.required' => 'The appointment type is required.',
 
-            'decision_reference.required' =>
-                'The official decision reference is required.',
+            'decision_reference.required' => 'The official decision reference is required.',
         ];
     }
 }

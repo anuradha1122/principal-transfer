@@ -39,11 +39,10 @@ class TransferDocumentController extends Controller
                 ])
                 ->whereHas(
                     'transferApplication',
-                    fn ($query) =>
-                        $query->where(
-                            'principal_profile_id',
-                            $profile->id
-                        )
+                    fn ($query) => $query->where(
+                        'principal_profile_id',
+                        $profile->id
+                    )
                 )
                 ->where(
                     'is_published',
@@ -55,8 +54,7 @@ class TransferDocumentController extends Controller
         return Inertia::render(
             'Principal/TransferDocuments/Index',
             [
-                'documents' =>
-                    $documents,
+                'documents' => $documents,
             ]
         );
     }
@@ -79,8 +77,7 @@ class TransferDocumentController extends Controller
         return Inertia::render(
             'Principal/TransferDocuments/Show',
             [
-                'document' =>
-                    $transferDocument,
+                'document' => $transferDocument,
             ]
         );
     }
@@ -125,8 +122,7 @@ class TransferDocumentController extends Controller
                 )
                 ->toString(),
             [
-                'Content-Type' =>
-                    'application/pdf',
+                'Content-Type' => 'application/pdf',
             ]
         );
     }

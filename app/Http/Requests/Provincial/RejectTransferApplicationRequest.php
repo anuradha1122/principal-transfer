@@ -41,8 +41,7 @@ class RejectTransferApplicationRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'rejection_reason.required' =>
-                'A rejection reason is required.',
+            'rejection_reason.required' => 'A rejection reason is required.',
         ];
     }
 }

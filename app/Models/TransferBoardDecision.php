@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class TransferBoardDecision extends Model
 {
-    use HasFactory;
+    use Auditable, HasFactory;
 
     public const DECISION_PENDING =
         'Pending';
@@ -91,5 +92,10 @@ class TransferBoardDecision extends Model
     {
         return $this->decision
             === self::DECISION_WAITLISTED;
+    }
+
+    public function auditParent(): ?Model
+    {
+        return $this->transferApplication;
     }
 }

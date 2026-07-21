@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class PrincipalProfile extends Model
 {
-    use HasFactory;
+    use Auditable, HasFactory;
 
     protected $fillable = [
         'user_id',
@@ -110,5 +111,12 @@ class PrincipalProfile extends Model
     public function transferAppeals(): HasMany
     {
         return $this->hasMany(TransferAppeal::class);
+    }
+
+    public function auditExcludedAttributes(): array
+    {
+        return [
+            'nic',
+        ];
     }
 }

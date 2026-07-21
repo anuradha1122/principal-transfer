@@ -43,8 +43,7 @@ class ApproveZonalReviewRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'recommendation.required' =>
-                'Please select a Zonal recommendation.',
+            'recommendation.required' => 'Please select a Zonal recommendation.',
         ];
     }
 }

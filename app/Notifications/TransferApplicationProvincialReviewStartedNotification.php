@@ -12,8 +12,7 @@ class TransferApplicationProvincialReviewStartedNotification extends Notificatio
 
     public function __construct(
         public TransferApplication $application
-    ) {
-    }
+    ) {}
 
     public function via(object $notifiable): array
     {
@@ -25,23 +24,18 @@ class TransferApplicationProvincialReviewStartedNotification extends Notificatio
     public function toArray(object $notifiable): array
     {
         return [
-            'title' =>
-                'Provincial Review Started',
+            'title' => 'Provincial Review Started',
 
-            'message' =>
-                "Application {$this->application->application_number} is under Provincial review.",
+            'message' => "Application {$this->application->application_number} is under Provincial review.",
 
-            'transfer_application_id' =>
-                $this->application->id,
+            'transfer_application_id' => $this->application->id,
 
-            'status' =>
-                $this->application->status,
+            'status' => $this->application->status,
 
-            'url' =>
-                route(
-                    'principal.transfer-applications.show',
-                    $this->application
-                ),
+            'url' => route(
+                'principal.transfer-applications.show',
+                $this->application
+            ),
         ];
     }
 }

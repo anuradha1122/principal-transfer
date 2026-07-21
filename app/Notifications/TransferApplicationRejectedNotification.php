@@ -12,8 +12,7 @@ class TransferApplicationRejectedNotification extends Notification
 
     public function __construct(
         public TransferApplication $application
-    ) {
-    }
+    ) {}
 
     public function via(
         object $notifiable
@@ -27,23 +26,18 @@ class TransferApplicationRejectedNotification extends Notification
         object $notifiable
     ): array {
         return [
-            'title' =>
-                'Transfer Application Rejected',
+            'title' => 'Transfer Application Rejected',
 
-            'message' =>
-                "Application {$this->application->application_number} was rejected by the Transfer Board.",
+            'message' => "Application {$this->application->application_number} was rejected by the Transfer Board.",
 
-            'transfer_application_id' =>
-                $this->application->id,
+            'transfer_application_id' => $this->application->id,
 
-            'status' =>
-                $this->application->status,
+            'status' => $this->application->status,
 
-            'url' =>
-                route(
-                    'principal.transfer-applications.show',
-                    $this->application
-                ),
+            'url' => route(
+                'principal.transfer-applications.show',
+                $this->application
+            ),
         ];
     }
 }

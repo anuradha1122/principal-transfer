@@ -74,17 +74,15 @@ class PublicTransferResultController extends Controller
                     fn (
                         Builder $query,
                         string $decision
-                    ): Builder =>
-                        $query->whereHas(
-                            'transferApplication',
-                            fn (
-                                Builder $applicationQuery
-                            ) =>
-                                $applicationQuery->where(
-                                    'status',
-                                    $decision
-                                )
+                    ): Builder => $query->whereHas(
+                        'transferApplication',
+                        fn (
+                            Builder $applicationQuery
+                        ) => $applicationQuery->where(
+                            'status',
+                            $decision
                         )
+                    )
                 )
                 ->latest('published_at')
                 ->paginate(20)
@@ -113,11 +111,9 @@ class PublicTransferResultController extends Controller
         return Inertia::render(
             'Public/TransferResults/Index',
             [
-                'documents' =>
-                    $documents,
+                'documents' => $documents,
 
-                'filters' =>
-                    $filters,
+                'filters' => $filters,
             ]
         );
     }
@@ -154,8 +150,7 @@ class PublicTransferResultController extends Controller
         return Inertia::render(
             'Public/TransferResults/Show',
             [
-                'document' =>
-                    $transferDocument,
+                'document' => $transferDocument,
             ]
         );
     }

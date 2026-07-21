@@ -12,13 +12,13 @@ use App\Models\TransferCycle;
 use App\Services\TransferApplicationPdfService;
 use App\Services\ZonalTransferReviewService;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class TransferApplicationController extends Controller
 {
@@ -27,8 +27,7 @@ class TransferApplicationController extends Controller
     public function __construct(
         private readonly ZonalTransferReviewService $reviewService,
         private readonly TransferApplicationPdfService $pdfService
-    ) {
-    }
+    ) {}
 
     public function index(Request $request): Response
     {
@@ -69,7 +68,7 @@ class TransferApplicationController extends Controller
                 'zonalReview.reviewer:id,name',
             ])
             ->when(
-                !$user->hasRole('Super Admin'),
+                ! $user->hasRole('Super Admin'),
                 fn (Builder $builder) => $builder->where(
                     'origin_zone_id',
                     $user->assigned_zone_id
@@ -120,42 +119,37 @@ class TransferApplicationController extends Controller
             )
             ->when(
                 $validated['transfer_cycle_id'] ?? null,
-                fn (Builder $builder, int|string $cycleId) =>
-                    $builder->where(
-                        'transfer_cycle_id',
-                        $cycleId
-                    )
+                fn (Builder $builder, int|string $cycleId) => $builder->where(
+                    'transfer_cycle_id',
+                    $cycleId
+                )
             )
             ->when(
                 $validated['status'] ?? null,
-                fn (Builder $builder, string $status) =>
-                    $builder->where('status', $status)
+                fn (Builder $builder, string $status) => $builder->where('status', $status)
             )
             ->when(
                 $validated['school_id'] ?? null,
-                fn (Builder $builder, int|string $schoolId) =>
-                    $builder->where(
-                        'current_school_id',
-                        $schoolId
-                    )
+                fn (Builder $builder, int|string $schoolId) => $builder->where(
+                    'current_school_id',
+                    $schoolId
+                )
             )
             ->when(
                 $validated['submitted_from'] ?? null,
-                fn (Builder $builder, string $date) =>
-                    $builder->whereDate(
-                        'submitted_at',
-                        '>=',
-                        $date
-                    )
+                fn (Builder $builder, string $date) => $builder->whereDate(
+                    'submitted_at',
+                    '>=',
+                    $date
+                )
             )
             ->when(
                 $validated['submitted_to'] ?? null,
-                fn (Builder $builder, string $date) =>
-                    $builder->whereDate(
-                        'submitted_at',
-                        '<=',
-                        $date
-                    )
+                fn (Builder $builder, string $date) => $builder->whereDate(
+                    'submitted_at',
+                    '<=',
+                    $date
+                )
             )
             ->whereIn('status', [
                 TransferApplication::STATUS_SUBMITTED,
@@ -169,7 +163,7 @@ class TransferApplicationController extends Controller
 
         $summaryBase = TransferApplication::query()
             ->when(
-                !$user->hasRole('Super Admin'),
+                ! $user->hasRole('Super Admin'),
                 fn (Builder $builder) => $builder->where(
                     'origin_zone_id',
                     $user->assigned_zone_id
@@ -179,14 +173,13 @@ class TransferApplicationController extends Controller
         $schools = School::query()
             ->select(['id', 'name', 'census_number'])
             ->when(
-                !$user->hasRole('Super Admin'),
+                ! $user->hasRole('Super Admin'),
                 fn (Builder $builder) => $builder->whereHas(
                     'division',
-                    fn (Builder $divisionQuery) =>
-                        $divisionQuery->where(
-                            'zone_id',
-                            $user->assigned_zone_id
-                        )
+                    fn (Builder $divisionQuery) => $divisionQuery->where(
+                        'zone_id',
+                        $user->assigned_zone_id
+                    )
                 )
             )
             ->where('is_active', true)
@@ -256,9 +249,8 @@ class TransferApplicationController extends Controller
             'originZone',
             'preferences.school.division.zone',
             'zonalReview.reviewer',
-            'actions' => fn ($query) =>
-                $query->with('actor:id,name')
-                    ->latestFirst(),
+            'actions' => fn ($query) => $query->with('actor:id,name')
+                ->latestFirst(),
         ]);
 
         return Inertia::render(
@@ -299,8 +291,8 @@ class TransferApplicationController extends Controller
         $this->authorize('downloadPdf', $transferApplication);
 
         if (
-            !$transferApplication->pdf_path
-            || !Storage::disk('local')->exists(
+            ! $transferApplication->pdf_path
+            || ! Storage::disk('local')->exists(
                 $transferApplication->pdf_path
             )
         ) {

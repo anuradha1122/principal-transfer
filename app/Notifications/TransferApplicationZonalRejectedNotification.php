@@ -13,8 +13,7 @@ class TransferApplicationZonalRejectedNotification extends Notification
 
     public function __construct(
         public readonly TransferApplication $transferApplication
-    ) {
-    }
+    ) {}
 
     public function via(object $notifiable): array
     {
@@ -23,7 +22,7 @@ class TransferApplicationZonalRejectedNotification extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
-        return (new MailMessage())
+        return (new MailMessage)
             ->subject('Transfer Application Rejected at Zonal Level')
             ->greeting("Dear {$notifiable->name},")
             ->line(
@@ -31,11 +30,11 @@ class TransferApplicationZonalRejectedNotification extends Notification
             )
             ->line(
                 'Application Number: '
-                . ($this->transferApplication->application_number ?? 'Pending')
+                .($this->transferApplication->application_number ?? 'Pending')
             )
             ->line(
                 'Reason: '
-                . (
+                .(
                     $this->transferApplication
                         ->zonalReview
                         ?->rejection_reason
@@ -54,17 +53,13 @@ class TransferApplicationZonalRejectedNotification extends Notification
     public function toArray(object $notifiable): array
     {
         return [
-            'transfer_application_id' =>
-                $this->transferApplication->id,
-            'application_number' =>
-                $this->transferApplication->application_number,
+            'transfer_application_id' => $this->transferApplication->id,
+            'application_number' => $this->transferApplication->application_number,
             'status' => $this->transferApplication->status,
-            'rejection_reason' =>
-                $this->transferApplication
-                    ->zonalReview
-                    ?->rejection_reason,
-            'message' =>
-                'Your transfer application was rejected at Zonal level.',
+            'rejection_reason' => $this->transferApplication
+                ->zonalReview
+                ?->rejection_reason,
+            'message' => 'Your transfer application was rejected at Zonal level.',
         ];
     }
 }

@@ -26,16 +26,13 @@ class DecisionLetterPdfService
         $pdf = Pdf::loadView(
             'pdf.transfers.decision-letter',
             [
-                'document' =>
-                    $document,
+                'document' => $document,
 
-                'application' =>
-                    $document->transferApplication,
+                'application' => $document->transferApplication,
 
-                'decision' =>
-                    $document
-                        ->transferApplication
-                        ->transferBoardDecision,
+                'decision' => $document
+                    ->transferApplication
+                    ->transferBoardDecision,
             ]
         )->setPaper(
             'a4',

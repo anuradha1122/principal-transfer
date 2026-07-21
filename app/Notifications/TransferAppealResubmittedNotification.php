@@ -13,8 +13,7 @@ class TransferAppealResubmittedNotification extends Notification
 
     public function __construct(
         public TransferAppeal $appeal
-    ) {
-    }
+    ) {}
 
     public function via(object $notifiable): array
     {

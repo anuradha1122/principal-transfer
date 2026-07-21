@@ -22,8 +22,7 @@ class TransferAppealController extends Controller
 {
     public function __construct(
         private readonly TransferAppealService $appealService
-    ) {
-    }
+    ) {}
 
     public function index(Request $request): Response
     {

@@ -29,11 +29,10 @@ class DashboardController extends Controller
             TransferApplication::query()
                 ->when(
                     ! $user->hasRole('Super Admin'),
-                    fn (Builder $query) =>
-                        $query->where(
-                            'origin_zone_id',
-                            $user->assigned_zone_id
-                        )
+                    fn (Builder $query) => $query->where(
+                        'origin_zone_id',
+                        $user->assigned_zone_id
+                    )
                 );
 
         return Inertia::render(

@@ -83,18 +83,15 @@ class UserController extends Controller
             )
             ->when(
                 $filters['role'] ?? null,
-                fn ($query, string $role) =>
-                    $query->role($role)
+                fn ($query, string $role) => $query->role($role)
             )
             ->when(
                 ($filters['status'] ?? null) === 'active',
-                fn ($query) =>
-                    $query->where('is_active', true)
+                fn ($query) => $query->where('is_active', true)
             )
             ->when(
                 ($filters['status'] ?? null) === 'inactive',
-                fn ($query) =>
-                    $query->where('is_active', false)
+                fn ($query) => $query->where('is_active', false)
             )
             ->latest()
             ->paginate(15)
@@ -105,36 +102,26 @@ class UserController extends Controller
                     'name' => $user->name,
                     'email' => $user->email,
                     'is_active' => $user->is_active,
-                    'email_verified_at' =>
-                        $user->email_verified_at
-                            ?->toDateTimeString(),
-                    'last_login_at' =>
-                        $user->last_login_at
-                            ?->toDateTimeString(),
-                    'created_at' =>
-                        $user->created_at
-                            ?->toDateTimeString(),
+                    'email_verified_at' => $user->email_verified_at
+                        ?->toDateTimeString(),
+                    'last_login_at' => $user->last_login_at
+                        ?->toDateTimeString(),
+                    'created_at' => $user->created_at
+                        ?->toDateTimeString(),
                     'roles' => $user->roles
                         ->pluck('name')
                         ->values(),
-                    'assigned_zone' =>
-                        $user->assignedZone
+                    'assigned_zone' => $user->assignedZone
                             ? [
-                                'id' =>
-                                    $user->assignedZone->id,
-                                'name' =>
-                                    $user->assignedZone->name,
-                                'code' =>
-                                    $user->assignedZone->code,
+                                'id' => $user->assignedZone->id,
+                                'name' => $user->assignedZone->name,
+                                'code' => $user->assignedZone->code,
                             ]
                             : null,
-                    'creator' =>
-                        $user->creator
+                    'creator' => $user->creator
                             ? [
-                                'id' =>
-                                    $user->creator->id,
-                                'name' =>
-                                    $user->creator->name,
+                                'id' => $user->creator->id,
+                                'name' => $user->creator->name,
                             ]
                             : null,
                 ]
@@ -182,21 +169,16 @@ class UserController extends Controller
                 $user = User::create([
                     'name' => $validated['name'],
                     'email' => $validated['email'],
-                    'password' =>
-                        $validated['password'],
-                    'is_active' =>
-                        $validated['is_active'],
-                    'email_verified_at' =>
-                        $validated['email_verified']
+                    'password' => $validated['password'],
+                    'is_active' => $validated['is_active'],
+                    'email_verified_at' => $validated['email_verified']
                             ? now()
                             : null,
-                    'assigned_zone_id' =>
-                        $this->resolveAssignedZoneId(
-                            $role,
-                            $validated
-                        ),
-                    'created_by' =>
-                        $request->user()->id,
+                    'assigned_zone_id' => $this->resolveAssignedZoneId(
+                        $role,
+                        $validated
+                    ),
+                    'created_by' => $request->user()->id,
                 ]);
 
                 $user->syncRoles([
@@ -236,46 +218,33 @@ class UserController extends Controller
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
-                    'is_active' =>
-                        $user->is_active,
-                    'email_verified_at' =>
-                        $user->email_verified_at
-                            ?->toDateTimeString(),
-                    'last_login_at' =>
-                        $user->last_login_at
-                            ?->toDateTimeString(),
-                    'created_at' =>
-                        $user->created_at
-                            ?->toDateTimeString(),
+                    'is_active' => $user->is_active,
+                    'email_verified_at' => $user->email_verified_at
+                        ?->toDateTimeString(),
+                    'last_login_at' => $user->last_login_at
+                        ?->toDateTimeString(),
+                    'created_at' => $user->created_at
+                        ?->toDateTimeString(),
                     'roles' => $user->roles
                         ->pluck('name')
                         ->values(),
-                    'permissions' =>
-                        $user
-                            ->getAllPermissions()
-                            ->pluck('name')
-                            ->sort()
-                            ->values(),
-                    'assigned_zone' =>
-                        $user->assignedZone
+                    'permissions' => $user
+                        ->getAllPermissions()
+                        ->pluck('name')
+                        ->sort()
+                        ->values(),
+                    'assigned_zone' => $user->assignedZone
                             ? [
-                                'id' =>
-                                    $user->assignedZone->id,
-                                'name' =>
-                                    $user->assignedZone->name,
-                                'code' =>
-                                    $user->assignedZone->code,
-                                'district' =>
-                                    $user->assignedZone->district,
+                                'id' => $user->assignedZone->id,
+                                'name' => $user->assignedZone->name,
+                                'code' => $user->assignedZone->code,
+                                'district' => $user->assignedZone->district,
                             ]
                             : null,
-                    'creator' =>
-                        $user->creator
+                    'creator' => $user->creator
                             ? [
-                                'name' =>
-                                    $user->creator->name,
-                                'email' =>
-                                    $user->creator->email,
+                                'name' => $user->creator->name,
+                                'email' => $user->creator->email,
                             ]
                             : null,
                 ],
@@ -304,16 +273,12 @@ class UserController extends Controller
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
-                    'role' =>
-                        $user->roles
-                            ->first()
-                            ?->name,
-                    'is_active' =>
-                        $user->is_active,
-                    'email_verified' =>
-                        $user->email_verified_at !== null,
-                    'assigned_zone_id' =>
-                        $user->assigned_zone_id,
+                    'role' => $user->roles
+                        ->first()
+                        ?->name,
+                    'is_active' => $user->is_active,
+                    'email_verified' => $user->email_verified_at !== null,
+                    'assigned_zone_id' => $user->assigned_zone_id,
                 ],
                 'roles' => $this->roles(),
                 'zones' => $this->zones(),
@@ -342,24 +307,19 @@ class UserController extends Controller
                 $role = $validated['role'];
 
                 $user->update([
-                    'name' =>
-                        $validated['name'],
-                    'email' =>
-                        $validated['email'],
-                    'is_active' =>
-                        $validated['is_active'],
-                    'email_verified_at' =>
-                        $validated['email_verified']
+                    'name' => $validated['name'],
+                    'email' => $validated['email'],
+                    'is_active' => $validated['is_active'],
+                    'email_verified_at' => $validated['email_verified']
                             ? (
                                 $user->email_verified_at
                                 ?? now()
                             )
                             : null,
-                    'assigned_zone_id' =>
-                        $this->resolveAssignedZoneId(
-                            $role,
-                            $validated
-                        ),
+                    'assigned_zone_id' => $this->resolveAssignedZoneId(
+                        $role,
+                        $validated
+                    ),
                 ]);
 
                 $user->syncRoles([
@@ -417,8 +377,7 @@ class UserController extends Controller
         User $user
     ): RedirectResponse {
         $user->update([
-            'password' =>
-                $request->validated('password'),
+            'password' => $request->validated('password'),
         ]);
 
         return back()->with(

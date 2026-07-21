@@ -12,8 +12,7 @@ class TransferApplicationWaitlistedNotification extends Notification
 
     public function __construct(
         public TransferApplication $application
-    ) {
-    }
+    ) {}
 
     public function via(
         object $notifiable
@@ -27,23 +26,18 @@ class TransferApplicationWaitlistedNotification extends Notification
         object $notifiable
     ): array {
         return [
-            'title' =>
-                'Transfer Application Waitlisted',
+            'title' => 'Transfer Application Waitlisted',
 
-            'message' =>
-                "Application {$this->application->application_number} has been placed on the Transfer Board waitlist.",
+            'message' => "Application {$this->application->application_number} has been placed on the Transfer Board waitlist.",
 
-            'transfer_application_id' =>
-                $this->application->id,
+            'transfer_application_id' => $this->application->id,
 
-            'status' =>
-                $this->application->status,
+            'status' => $this->application->status,
 
-            'url' =>
-                route(
-                    'principal.transfer-applications.show',
-                    $this->application
-                ),
+            'url' => route(
+                'principal.transfer-applications.show',
+                $this->application
+            ),
         ];
     }
 }

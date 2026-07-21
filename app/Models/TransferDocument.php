@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -9,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class TransferDocument extends Model
 {
-    use HasFactory;
+    use Auditable, HasFactory;
 
     public const TYPE_TRANSFER_ORDER =
         'Transfer Order';
@@ -45,20 +46,15 @@ class TransferDocument extends Model
     protected function casts(): array
     {
         return [
-            'issued_date' =>
-                'date',
+            'issued_date' => 'date',
 
-            'effective_date' =>
-                'date',
+            'effective_date' => 'date',
 
-            'generated_at' =>
-                'datetime',
+            'generated_at' => 'datetime',
 
-            'is_published' =>
-                'boolean',
+            'is_published' => 'boolean',
 
-            'published_at' =>
-                'datetime',
+            'published_at' => 'datetime',
         ];
     }
 
@@ -105,5 +101,19 @@ class TransferDocument extends Model
     {
         return $this->signed_file_path
             ?: $this->generated_file_path;
+    }
+
+    public function auditParent(): ?Model
+    {
+        return $this->transferApplication;
+    }
+
+    public function auditExcludedAttributes(): array
+    {
+        return [
+            'generated_file_path',
+            'signed_file_path',
+            'file_path',
+        ];
     }
 }

@@ -35,8 +35,7 @@ class ReturnTransferApplicationRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'return_reason.required' =>
-                'A return reason is required.',
+            'return_reason.required' => 'A return reason is required.',
         ];
     }
 }

@@ -56,11 +56,9 @@ class TransferCycleFactory extends Factory
 
             'status' => 'Published',
 
-            'instructions' =>
-                'Submit the application before the closing date.',
+            'instructions' => 'Submit the application before the closing date.',
 
-            'eligibility_notes' =>
-                'Applicants must satisfy the minimum service requirement.',
+            'eligibility_notes' => 'Applicants must satisfy the minimum service requirement.',
 
             'created_by' => null,
 

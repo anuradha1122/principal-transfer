@@ -29,64 +29,58 @@ class DashboardController extends Controller
             'TransferBoard/Dashboard/Index',
             [
                 'summary' => [
-                    'awaiting_review' =>
-                        (clone $applications)
-                            ->where(
-                                'status',
-                                TransferApplication::STATUS_PROVINCIAL_APPROVED
-                            )
-                            ->count(),
+                    'awaiting_review' => (clone $applications)
+                        ->where(
+                            'status',
+                            TransferApplication::STATUS_PROVINCIAL_APPROVED
+                        )
+                        ->count(),
 
-                    'under_review' =>
-                        (clone $applications)
-                            ->where(
-                                'status',
-                                TransferApplication::STATUS_BOARD_REVIEW
-                            )
-                            ->count(),
+                    'under_review' => (clone $applications)
+                        ->where(
+                            'status',
+                            TransferApplication::STATUS_BOARD_REVIEW
+                        )
+                        ->count(),
 
-                    'approved' =>
-                        (clone $applications)
-                            ->where(
-                                'status',
-                                TransferApplication::STATUS_APPROVED
-                            )
-                            ->count(),
+                    'approved' => (clone $applications)
+                        ->where(
+                            'status',
+                            TransferApplication::STATUS_APPROVED
+                        )
+                        ->count(),
 
-                    'rejected' =>
-                        (clone $applications)
-                            ->where(
-                                'status',
-                                TransferApplication::STATUS_REJECTED
-                            )
-                            ->count(),
+                    'rejected' => (clone $applications)
+                        ->where(
+                            'status',
+                            TransferApplication::STATUS_REJECTED
+                        )
+                        ->count(),
 
-                    'waitlisted' =>
-                        (clone $applications)
-                            ->where(
-                                'status',
-                                TransferApplication::STATUS_WAITLISTED
-                            )
-                            ->count(),
+                    'waitlisted' => (clone $applications)
+                        ->where(
+                            'status',
+                            TransferApplication::STATUS_WAITLISTED
+                        )
+                        ->count(),
                 ],
 
-                'recentDecisions' =>
-                    TransferBoardDecision::query()
-                        ->with([
-                            'transferApplication:id,application_number,principal_name,status,origin_zone_id',
-                            'transferApplication.originZone:id,name,code',
-                            'reviewer:id,name',
-                            'recommendedSchool:id,name,census_number',
-                        ])
-                        ->whereNot(
-                            'decision',
-                            TransferBoardDecision::DECISION_PENDING
-                        )
-                        ->latest(
-                            'decided_at'
-                        )
-                        ->limit(8)
-                        ->get(),
+                'recentDecisions' => TransferBoardDecision::query()
+                    ->with([
+                        'transferApplication:id,application_number,principal_name,status,origin_zone_id',
+                        'transferApplication.originZone:id,name,code',
+                        'reviewer:id,name',
+                        'recommendedSchool:id,name,census_number',
+                    ])
+                    ->whereNot(
+                        'decision',
+                        TransferBoardDecision::DECISION_PENDING
+                    )
+                    ->latest(
+                        'decided_at'
+                    )
+                    ->limit(8)
+                    ->get(),
             ]
         );
     }

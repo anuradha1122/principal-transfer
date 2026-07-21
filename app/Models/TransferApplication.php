@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -11,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class TransferApplication extends Model
 {
+    use Auditable;
     use HasFactory;
 
     public const STATUS_DRAFT =
@@ -111,32 +113,23 @@ class TransferApplication extends Model
     protected function casts(): array
     {
         return [
-            'current_appointment_start_date' =>
-                'date',
+            'current_appointment_start_date' => 'date',
 
-            'current_school_service_months' =>
-                'integer',
+            'current_school_service_months' => 'integer',
 
-            'has_medical_reason' =>
-                'boolean',
+            'has_medical_reason' => 'boolean',
 
-            'has_spouse_employment_reason' =>
-                'boolean',
+            'has_spouse_employment_reason' => 'boolean',
 
-            'is_mutual_transfer' =>
-                'boolean',
+            'is_mutual_transfer' => 'boolean',
 
-            'submitted_at' =>
-                'datetime',
+            'submitted_at' => 'datetime',
 
-            'withdrawn_at' =>
-                'datetime',
+            'withdrawn_at' => 'datetime',
 
-            'declaration_accepted' =>
-                'boolean',
+            'declaration_accepted' => 'boolean',
 
-            'submitted_pdf_generated_at' =>
-                'datetime',
+            'submitted_pdf_generated_at' => 'datetime',
         ];
     }
 
@@ -612,17 +605,14 @@ class TransferApplication extends Model
         string $documentType
     ): bool {
         return match ($documentType) {
-            TransferDocument::TYPE_TRANSFER_ORDER =>
-                $this
-                    ->canGenerateTransferOrder(),
+            TransferDocument::TYPE_TRANSFER_ORDER => $this
+                ->canGenerateTransferOrder(),
 
-            TransferDocument::TYPE_APPOINTMENT_LETTER =>
-                $this
-                    ->canGenerateAppointmentLetter(),
+            TransferDocument::TYPE_APPOINTMENT_LETTER => $this
+                ->canGenerateAppointmentLetter(),
 
-            TransferDocument::TYPE_DECISION_LETTER =>
-                $this
-                    ->canGenerateDecisionLetter(),
+            TransferDocument::TYPE_DECISION_LETTER => $this
+                ->canGenerateDecisionLetter(),
 
             default => false,
         };
@@ -665,8 +655,7 @@ class TransferApplication extends Model
                 ->contains(
                     fn (
                         TransferDocument $document
-                    ): bool =>
-                        $document->is_published
+                    ): bool => $document->is_published
                 );
         }
 
@@ -682,5 +671,12 @@ class TransferApplication extends Model
     public function transferAppeals(): HasMany
     {
         return $this->hasMany(TransferAppeal::class);
+    }
+
+    public function auditExcludedAttributes(): array
+    {
+        return [
+            'submitted_pdf_path',
+        ];
     }
 }

@@ -16,14 +16,11 @@ class TransferBoardDecisionFactory extends Factory
     public function definition(): array
     {
         return [
-            'transfer_application_id' =>
-                TransferApplication::factory(),
+            'transfer_application_id' => TransferApplication::factory(),
 
-            'reviewer_id' =>
-                User::factory(),
+            'reviewer_id' => User::factory(),
 
-            'decision' =>
-                TransferBoardDecision::DECISION_PENDING,
+            'decision' => TransferBoardDecision::DECISION_PENDING,
 
             'recommended_school_id' => null,
 
@@ -39,8 +36,7 @@ class TransferBoardDecisionFactory extends Factory
 
             'waitlist_reason' => null,
 
-            'review_started_at' =>
-                now()->subHour(),
+            'review_started_at' => now()->subHour(),
 
             'decided_at' => null,
         ];
@@ -50,22 +46,17 @@ class TransferBoardDecisionFactory extends Factory
     {
         return $this->state(
             fn (): array => [
-                'decision' =>
-                    TransferBoardDecision::DECISION_APPROVED,
+                'decision' => TransferBoardDecision::DECISION_APPROVED,
 
-                'recommended_school_id' =>
-                    School::factory(),
+                'recommended_school_id' => School::factory(),
 
-                'effective_date' =>
-                    now()->addMonth()->toDateString(),
+                'effective_date' => now()->addMonth()->toDateString(),
 
-                'appointment_type' =>
-                    'Permanent',
+                'appointment_type' => 'Permanent',
 
-                'decision_reference' =>
-                    fake()->unique()->bothify(
-                        'TBD-####'
-                    ),
+                'decision_reference' => fake()->unique()->bothify(
+                    'TBD-####'
+                ),
 
                 'decided_at' => now(),
             ]
@@ -76,16 +67,13 @@ class TransferBoardDecisionFactory extends Factory
     {
         return $this->state(
             fn (): array => [
-                'decision' =>
-                    TransferBoardDecision::DECISION_REJECTED,
+                'decision' => TransferBoardDecision::DECISION_REJECTED,
 
-                'decision_reference' =>
-                    fake()->unique()->bothify(
-                        'TBD-####'
-                    ),
+                'decision_reference' => fake()->unique()->bothify(
+                    'TBD-####'
+                ),
 
-                'rejection_reason' =>
-                    'The application was not approved by the Transfer Board.',
+                'rejection_reason' => 'The application was not approved by the Transfer Board.',
 
                 'decided_at' => now(),
             ]
@@ -96,16 +84,13 @@ class TransferBoardDecisionFactory extends Factory
     {
         return $this->state(
             fn (): array => [
-                'decision' =>
-                    TransferBoardDecision::DECISION_WAITLISTED,
+                'decision' => TransferBoardDecision::DECISION_WAITLISTED,
 
-                'decision_reference' =>
-                    fake()->unique()->bothify(
-                        'TBD-####'
-                    ),
+                'decision_reference' => fake()->unique()->bothify(
+                    'TBD-####'
+                ),
 
-                'waitlist_reason' =>
-                    'No suitable vacancy is currently available.',
+                'waitlist_reason' => 'No suitable vacancy is currently available.',
 
                 'decided_at' => now(),
             ]

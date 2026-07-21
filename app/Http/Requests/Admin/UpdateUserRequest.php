@@ -17,8 +17,7 @@ class UpdateUserRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
-            'assigned_zone_id' =>
-                $this->filled('assigned_zone_id')
+            'assigned_zone_id' => $this->filled('assigned_zone_id')
                     ? (int) $this->input(
                         'assigned_zone_id'
                     )
@@ -61,8 +60,7 @@ class UpdateUserRequest extends FormRequest
 
             'assigned_zone_id' => [
                 Rule::requiredIf(
-                    fn (): bool =>
-                        $this->input('role')
+                    fn (): bool => $this->input('role')
                         === 'Zonal Director'
                 ),
                 'nullable',
@@ -91,10 +89,8 @@ class UpdateUserRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'assigned_zone_id.required' =>
-                'An assigned Zone is required for a Zonal Director.',
-            'assigned_zone_id.exists' =>
-                'The selected Zone is invalid or inactive.',
+            'assigned_zone_id.required' => 'An assigned Zone is required for a Zonal Director.',
+            'assigned_zone_id.exists' => 'The selected Zone is invalid or inactive.',
         ];
     }
 }

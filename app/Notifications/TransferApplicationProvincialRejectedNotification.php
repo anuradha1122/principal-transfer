@@ -12,8 +12,7 @@ class TransferApplicationProvincialRejectedNotification extends Notification
 
     public function __construct(
         public TransferApplication $application
-    ) {
-    }
+    ) {}
 
     public function via(object $notifiable): array
     {
@@ -25,23 +24,18 @@ class TransferApplicationProvincialRejectedNotification extends Notification
     public function toArray(object $notifiable): array
     {
         return [
-            'title' =>
-                'Provincial Review Rejected',
+            'title' => 'Provincial Review Rejected',
 
-            'message' =>
-                "Application {$this->application->application_number} was rejected at Provincial level.",
+            'message' => "Application {$this->application->application_number} was rejected at Provincial level.",
 
-            'transfer_application_id' =>
-                $this->application->id,
+            'transfer_application_id' => $this->application->id,
 
-            'status' =>
-                $this->application->status,
+            'status' => $this->application->status,
 
-            'url' =>
-                route(
-                    'principal.transfer-applications.show',
-                    $this->application
-                ),
+            'url' => route(
+                'principal.transfer-applications.show',
+                $this->application
+            ),
         ];
     }
 }

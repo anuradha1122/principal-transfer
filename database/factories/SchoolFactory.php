@@ -24,7 +24,7 @@ class SchoolFactory extends Factory
 
             'name' => fake()
                 ->unique()
-                ->company() . ' College',
+                ->company().' College',
 
             'school_type' => fake()->randomElement([
                 '1AB',

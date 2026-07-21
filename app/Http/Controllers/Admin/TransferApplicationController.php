@@ -159,33 +159,30 @@ class TransferApplicationController extends Controller
                     fn (
                         Builder $query,
                         int $cycleId
-                    ): Builder =>
-                        $query->where(
-                            'transfer_cycle_id',
-                            $cycleId
-                        )
+                    ): Builder => $query->where(
+                        'transfer_cycle_id',
+                        $cycleId
+                    )
                 )
                 ->when(
                     $filters['status'] ?? null,
                     fn (
                         Builder $query,
                         string $status
-                    ): Builder =>
-                        $query->where(
-                            'status',
-                            $status
-                        )
+                    ): Builder => $query->where(
+                        'status',
+                        $status
+                    )
                 )
                 ->when(
                     $filters['zone_id'] ?? null,
                     fn (
                         Builder $query,
                         int $zoneId
-                    ): Builder =>
-                        $query->where(
-                            'origin_zone_id',
-                            $zoneId
-                        )
+                    ): Builder => $query->where(
+                        'origin_zone_id',
+                        $zoneId
+                    )
                 )
                 ->latest('submitted_at')
                 ->latest('id')
@@ -195,43 +192,38 @@ class TransferApplicationController extends Controller
         return Inertia::render(
             'Admin/TransferApplications/Index',
             [
-                'applications' =>
-                    $applications,
+                'applications' => $applications,
 
-                'filters' =>
-                    $filters,
+                'filters' => $filters,
 
-                'cycles' =>
-                    TransferCycle::query()
-                        ->orderByDesc(
-                            'transfer_year'
-                        )
-                        ->orderByDesc('id')
-                        ->get([
-                            'id',
-                            'name',
-                            'code',
-                            'transfer_year',
-                            'status',
-                        ]),
+                'cycles' => TransferCycle::query()
+                    ->orderByDesc(
+                        'transfer_year'
+                    )
+                    ->orderByDesc('id')
+                    ->get([
+                        'id',
+                        'name',
+                        'code',
+                        'transfer_year',
+                        'status',
+                    ]),
 
-                'zones' =>
-                    Zone::query()
-                        ->where(
-                            'is_active',
-                            true
-                        )
-                        ->orderBy('sort_order')
-                        ->orderBy('name')
-                        ->get([
-                            'id',
-                            'name',
-                            'code',
-                            'district',
-                        ]),
+                'zones' => Zone::query()
+                    ->where(
+                        'is_active',
+                        true
+                    )
+                    ->orderBy('sort_order')
+                    ->orderBy('name')
+                    ->get([
+                        'id',
+                        'name',
+                        'code',
+                        'district',
+                    ]),
 
-                'statuses' =>
-                    $this->statuses(),
+                'statuses' => $this->statuses(),
             ]
         );
     }
@@ -278,25 +270,21 @@ class TransferApplicationController extends Controller
         return Inertia::render(
             'Admin/TransferApplications/Show',
             [
-                'application' =>
-                    $transferApplication,
+                'application' => $transferApplication,
 
                 'workflow' => [
-                    'zonal_review' =>
-                        $transferApplication
-                            ->zonalReview,
+                    'zonal_review' => $transferApplication
+                        ->zonalReview,
 
-                    'provincial_review' =>
-                        $transferApplication
-                            ->provincialReview,
+                    'provincial_review' => $transferApplication
+                        ->provincialReview,
 
-                    'actions' =>
-                        $transferApplication
-                            ->actions
-                            ->sortByDesc(
-                                'acted_at'
-                            )
-                            ->values(),
+                    'actions' => $transferApplication
+                        ->actions
+                        ->sortByDesc(
+                            'acted_at'
+                        )
+                        ->values(),
                 ],
             ]
         );
@@ -347,8 +335,7 @@ class TransferApplicationController extends Controller
                 $transferApplication
             ),
             [
-                'Content-Type' =>
-                    'application/pdf',
+                'Content-Type' => 'application/pdf',
             ]
         );
     }

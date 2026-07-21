@@ -15,14 +15,17 @@ use Illuminate\Validation\ValidationException;
 
 class TransferBoardReviewService
 {
+    public function __construct(
+        private readonly AuditLogService $auditLogService
+    ) {}
+
     public function startReview(
         TransferApplication $application,
         User $reviewer
     ): TransferApplication {
         if (! $application->canEnterBoardReview()) {
             throw ValidationException::withMessages([
-                'status' =>
-                    'Only Provincially approved applications can enter Transfer Board review.',
+                'status' => 'Only Provincially approved applications can enter Transfer Board review.',
             ]);
         }
 
@@ -31,65 +34,77 @@ class TransferBoardReviewService
                 $application,
                 $reviewer
             ): TransferApplication {
-                $fromStatus =
-                    $application->status;
+                $fromStatus = $application->status;
 
-                $decision =
-                    TransferBoardDecision::query()
-                        ->firstOrCreate(
-                            [
-                                'transfer_application_id' =>
-                                    $application->id,
-                            ],
-                            [
-                                'reviewer_id' =>
-                                    $reviewer->id,
+                $decision = TransferBoardDecision::query()
+                    ->firstOrCreate(
+                        [
+                            'transfer_application_id' => $application->id,
+                        ],
+                        [
+                            'reviewer_id' => $reviewer->id,
 
-                                'decision' =>
-                                    TransferBoardDecision::DECISION_PENDING,
+                            'decision' => TransferBoardDecision::DECISION_PENDING,
 
-                                'review_started_at' =>
-                                    now(),
-                            ]
-                        );
+                            'review_started_at' => now(),
+                        ]
+                    );
 
                 if (
                     $decision->decision
                     !== TransferBoardDecision::DECISION_PENDING
                 ) {
                     throw ValidationException::withMessages([
-                        'status' =>
-                            'This application already has a final Transfer Board decision.',
+                        'status' => 'This application already has a final Transfer Board decision.',
                     ]);
                 }
 
                 $decision->update([
-                    'reviewer_id' =>
-                        $reviewer->id,
+                    'reviewer_id' => $reviewer->id,
 
-                    'review_started_at' =>
-                        $decision->review_started_at
+                    'review_started_at' => $decision->review_started_at
                         ?? now(),
                 ]);
 
                 $application->update([
-                    'status' =>
-                        TransferApplication::STATUS_BOARD_REVIEW,
+                    'status' => TransferApplication::STATUS_BOARD_REVIEW,
 
-                    'updated_by' =>
-                        $reviewer->id,
+                    'updated_by' => $reviewer->id,
                 ]);
 
                 $this->recordAction(
                     application: $application,
                     actor: $reviewer,
-                    action:
-                        TransferApplicationAction::ACTION_BOARD_REVIEW_STARTED,
+                    action: TransferApplicationAction::ACTION_BOARD_REVIEW_STARTED,
                     fromStatus: $fromStatus,
-                    toStatus:
-                        TransferApplication::STATUS_BOARD_REVIEW,
-                    remarks:
-                        'Transfer Board review started.'
+                    toStatus: TransferApplication::STATUS_BOARD_REVIEW,
+                    remarks: 'Transfer Board review started.'
+                );
+
+                $this->auditLogService->workflow(
+                    'transfer_application.board_review_started',
+                    $application,
+                    $fromStatus,
+                    TransferApplication::STATUS_BOARD_REVIEW,
+                    [
+                        'description' => sprintf(
+                            'Transfer Board review started for application %s.',
+                            $application->application_number
+                                ?? $application->id
+                        ),
+                        'new_values' => [
+                            'status' => TransferApplication::STATUS_BOARD_REVIEW,
+                            'reviewer_id' => $reviewer->id,
+                            'review_started_at' => $decision->review_started_at,
+                            'decision' => $decision->decision,
+                        ],
+                        'metadata' => [
+                            'transfer_board_decision_id' => $decision->id,
+                            'reviewer_name' => $reviewer->name,
+                            'reviewer_email' => $reviewer->email,
+                        ],
+                        'user' => $reviewer,
+                    ]
                 );
 
                 $this->notifyPrincipal(
@@ -99,7 +114,13 @@ class TransferBoardReviewService
                     )
                 );
 
-                return $application->fresh();
+                return $application->fresh([
+                    'principalProfile.user',
+                    'transferCycle',
+                    'originZone',
+                    'transferBoardDecision.reviewer',
+                    'actions.actor',
+                ]);
             }
         );
     }
@@ -119,65 +140,95 @@ class TransferBoardReviewService
                 $reviewer,
                 $data
             ): TransferApplication {
-                $fromStatus =
-                    $application->status;
+                $fromStatus = $application->status;
 
-                $decision =
-                    $this->decisionRecord(
-                        $application
-                    );
+                $decision = $this->decisionRecord(
+                    $application
+                );
+
+                $oldDecisionValues = [
+                    'reviewer_id' => $decision->reviewer_id,
+                    'decision' => $decision->decision,
+                    'recommended_school_id' => $decision->recommended_school_id,
+                    'effective_date' => $decision->effective_date,
+                    'appointment_type' => $decision->appointment_type,
+                    'decision_reference' => $decision->decision_reference,
+                    'remarks' => $decision->remarks,
+                    'rejection_reason' => $decision->rejection_reason,
+                    'waitlist_reason' => $decision->waitlist_reason,
+                    'decided_at' => $decision->decided_at,
+                ];
 
                 $decision->update([
-                    'reviewer_id' =>
-                        $reviewer->id,
+                    'reviewer_id' => $reviewer->id,
 
-                    'decision' =>
-                        TransferBoardDecision::DECISION_APPROVED,
+                    'decision' => TransferBoardDecision::DECISION_APPROVED,
 
-                    'recommended_school_id' =>
-                        $data['recommended_school_id'],
+                    'recommended_school_id' => $data['recommended_school_id'],
 
-                    'effective_date' =>
-                        $data['effective_date'],
+                    'effective_date' => $data['effective_date'],
 
-                    'appointment_type' =>
-                        $data['appointment_type'],
+                    'appointment_type' => $data['appointment_type'],
 
-                    'decision_reference' =>
-                        $data['decision_reference'],
+                    'decision_reference' => $data['decision_reference'],
 
-                    'remarks' =>
-                        $data['remarks'] ?? null,
+                    'remarks' => $data['remarks'] ?? null,
 
-                    'rejection_reason' =>
-                        null,
+                    'rejection_reason' => null,
 
-                    'waitlist_reason' =>
-                        null,
+                    'waitlist_reason' => null,
 
-                    'decided_at' =>
-                        now(),
+                    'decided_at' => now(),
                 ]);
 
                 $application->update([
-                    'status' =>
-                        TransferApplication::STATUS_APPROVED,
+                    'status' => TransferApplication::STATUS_APPROVED,
 
-                    'updated_by' =>
-                        $reviewer->id,
+                    'updated_by' => $reviewer->id,
                 ]);
 
                 $this->recordAction(
                     application: $application,
                     actor: $reviewer,
-                    action:
-                        TransferApplicationAction::ACTION_BOARD_APPROVED,
+                    action: TransferApplicationAction::ACTION_BOARD_APPROVED,
                     fromStatus: $fromStatus,
-                    toStatus:
-                        TransferApplication::STATUS_APPROVED,
-                    remarks:
-                        $data['remarks']
+                    toStatus: TransferApplication::STATUS_APPROVED,
+                    remarks: $data['remarks']
                         ?? $data['decision_reference']
+                );
+
+                $this->auditLogService->workflow(
+                    'transfer_application.board_approved',
+                    $application,
+                    $fromStatus,
+                    TransferApplication::STATUS_APPROVED,
+                    [
+                        'description' => sprintf(
+                            'Transfer Board approved application %s.',
+                            $application->application_number
+                                ?? $application->id
+                        ),
+                        'old_values' => $oldDecisionValues,
+                        'new_values' => [
+                            'status' => TransferApplication::STATUS_APPROVED,
+                            'reviewer_id' => $reviewer->id,
+                            'decision' => $decision->decision,
+                            'recommended_school_id' => $decision->recommended_school_id,
+                            'effective_date' => $decision->effective_date,
+                            'appointment_type' => $decision->appointment_type,
+                            'decision_reference' => $decision->decision_reference,
+                            'remarks' => $decision->remarks,
+                            'rejection_reason' => $decision->rejection_reason,
+                            'waitlist_reason' => $decision->waitlist_reason,
+                            'decided_at' => $decision->decided_at,
+                        ],
+                        'metadata' => [
+                            'transfer_board_decision_id' => $decision->id,
+                            'reviewer_name' => $reviewer->name,
+                            'reviewer_email' => $reviewer->email,
+                        ],
+                        'user' => $reviewer,
+                    ]
                 );
 
                 $this->notifyPrincipal(
@@ -187,7 +238,14 @@ class TransferBoardReviewService
                     )
                 );
 
-                return $application->fresh();
+                return $application->fresh([
+                    'principalProfile.user',
+                    'transferCycle',
+                    'originZone',
+                    'transferBoardDecision.reviewer',
+                    'transferBoardDecision.recommendedSchool',
+                    'actions.actor',
+                ]);
             }
         );
     }
@@ -207,64 +265,94 @@ class TransferBoardReviewService
                 $reviewer,
                 $data
             ): TransferApplication {
-                $fromStatus =
-                    $application->status;
+                $fromStatus = $application->status;
 
-                $decision =
-                    $this->decisionRecord(
-                        $application
-                    );
+                $decision = $this->decisionRecord(
+                    $application
+                );
+
+                $oldDecisionValues = [
+                    'reviewer_id' => $decision->reviewer_id,
+                    'decision' => $decision->decision,
+                    'recommended_school_id' => $decision->recommended_school_id,
+                    'effective_date' => $decision->effective_date,
+                    'appointment_type' => $decision->appointment_type,
+                    'decision_reference' => $decision->decision_reference,
+                    'remarks' => $decision->remarks,
+                    'rejection_reason' => $decision->rejection_reason,
+                    'waitlist_reason' => $decision->waitlist_reason,
+                    'decided_at' => $decision->decided_at,
+                ];
 
                 $decision->update([
-                    'reviewer_id' =>
-                        $reviewer->id,
+                    'reviewer_id' => $reviewer->id,
 
-                    'decision' =>
-                        TransferBoardDecision::DECISION_REJECTED,
+                    'decision' => TransferBoardDecision::DECISION_REJECTED,
 
-                    'recommended_school_id' =>
-                        null,
+                    'recommended_school_id' => null,
 
-                    'effective_date' =>
-                        null,
+                    'effective_date' => null,
 
-                    'appointment_type' =>
-                        null,
+                    'appointment_type' => null,
 
-                    'decision_reference' =>
-                        $data['decision_reference'],
+                    'decision_reference' => $data['decision_reference'],
 
-                    'remarks' =>
-                        $data['remarks'] ?? null,
+                    'remarks' => $data['remarks'] ?? null,
 
-                    'rejection_reason' =>
-                        $data['rejection_reason'],
+                    'rejection_reason' => $data['rejection_reason'],
 
-                    'waitlist_reason' =>
-                        null,
+                    'waitlist_reason' => null,
 
-                    'decided_at' =>
-                        now(),
+                    'decided_at' => now(),
                 ]);
 
                 $application->update([
-                    'status' =>
-                        TransferApplication::STATUS_REJECTED,
+                    'status' => TransferApplication::STATUS_REJECTED,
 
-                    'updated_by' =>
-                        $reviewer->id,
+                    'updated_by' => $reviewer->id,
                 ]);
 
                 $this->recordAction(
                     application: $application,
                     actor: $reviewer,
-                    action:
-                        TransferApplicationAction::ACTION_BOARD_REJECTED,
+                    action: TransferApplicationAction::ACTION_BOARD_REJECTED,
                     fromStatus: $fromStatus,
-                    toStatus:
-                        TransferApplication::STATUS_REJECTED,
-                    remarks:
-                        $data['rejection_reason']
+                    toStatus: TransferApplication::STATUS_REJECTED,
+                    remarks: $data['rejection_reason']
+                );
+
+                $this->auditLogService->workflow(
+                    'transfer_application.board_rejected',
+                    $application,
+                    $fromStatus,
+                    TransferApplication::STATUS_REJECTED,
+                    [
+                        'description' => sprintf(
+                            'Transfer Board rejected application %s.',
+                            $application->application_number
+                                ?? $application->id
+                        ),
+                        'old_values' => $oldDecisionValues,
+                        'new_values' => [
+                            'status' => TransferApplication::STATUS_REJECTED,
+                            'reviewer_id' => $reviewer->id,
+                            'decision' => $decision->decision,
+                            'recommended_school_id' => $decision->recommended_school_id,
+                            'effective_date' => $decision->effective_date,
+                            'appointment_type' => $decision->appointment_type,
+                            'decision_reference' => $decision->decision_reference,
+                            'remarks' => $decision->remarks,
+                            'rejection_reason' => $decision->rejection_reason,
+                            'waitlist_reason' => $decision->waitlist_reason,
+                            'decided_at' => $decision->decided_at,
+                        ],
+                        'metadata' => [
+                            'transfer_board_decision_id' => $decision->id,
+                            'reviewer_name' => $reviewer->name,
+                            'reviewer_email' => $reviewer->email,
+                        ],
+                        'user' => $reviewer,
+                    ]
                 );
 
                 $this->notifyPrincipal(
@@ -274,7 +362,13 @@ class TransferBoardReviewService
                     )
                 );
 
-                return $application->fresh();
+                return $application->fresh([
+                    'principalProfile.user',
+                    'transferCycle',
+                    'originZone',
+                    'transferBoardDecision.reviewer',
+                    'actions.actor',
+                ]);
             }
         );
     }
@@ -294,64 +388,94 @@ class TransferBoardReviewService
                 $reviewer,
                 $data
             ): TransferApplication {
-                $fromStatus =
-                    $application->status;
+                $fromStatus = $application->status;
 
-                $decision =
-                    $this->decisionRecord(
-                        $application
-                    );
+                $decision = $this->decisionRecord(
+                    $application
+                );
+
+                $oldDecisionValues = [
+                    'reviewer_id' => $decision->reviewer_id,
+                    'decision' => $decision->decision,
+                    'recommended_school_id' => $decision->recommended_school_id,
+                    'effective_date' => $decision->effective_date,
+                    'appointment_type' => $decision->appointment_type,
+                    'decision_reference' => $decision->decision_reference,
+                    'remarks' => $decision->remarks,
+                    'rejection_reason' => $decision->rejection_reason,
+                    'waitlist_reason' => $decision->waitlist_reason,
+                    'decided_at' => $decision->decided_at,
+                ];
 
                 $decision->update([
-                    'reviewer_id' =>
-                        $reviewer->id,
+                    'reviewer_id' => $reviewer->id,
 
-                    'decision' =>
-                        TransferBoardDecision::DECISION_WAITLISTED,
+                    'decision' => TransferBoardDecision::DECISION_WAITLISTED,
 
-                    'recommended_school_id' =>
-                        null,
+                    'recommended_school_id' => null,
 
-                    'effective_date' =>
-                        null,
+                    'effective_date' => null,
 
-                    'appointment_type' =>
-                        null,
+                    'appointment_type' => null,
 
-                    'decision_reference' =>
-                        $data['decision_reference'],
+                    'decision_reference' => $data['decision_reference'],
 
-                    'remarks' =>
-                        $data['remarks'] ?? null,
+                    'remarks' => $data['remarks'] ?? null,
 
-                    'rejection_reason' =>
-                        null,
+                    'rejection_reason' => null,
 
-                    'waitlist_reason' =>
-                        $data['waitlist_reason'],
+                    'waitlist_reason' => $data['waitlist_reason'],
 
-                    'decided_at' =>
-                        now(),
+                    'decided_at' => now(),
                 ]);
 
                 $application->update([
-                    'status' =>
-                        TransferApplication::STATUS_WAITLISTED,
+                    'status' => TransferApplication::STATUS_WAITLISTED,
 
-                    'updated_by' =>
-                        $reviewer->id,
+                    'updated_by' => $reviewer->id,
                 ]);
 
                 $this->recordAction(
                     application: $application,
                     actor: $reviewer,
-                    action:
-                        TransferApplicationAction::ACTION_BOARD_WAITLISTED,
+                    action: TransferApplicationAction::ACTION_BOARD_WAITLISTED,
                     fromStatus: $fromStatus,
-                    toStatus:
-                        TransferApplication::STATUS_WAITLISTED,
-                    remarks:
-                        $data['waitlist_reason']
+                    toStatus: TransferApplication::STATUS_WAITLISTED,
+                    remarks: $data['waitlist_reason']
+                );
+
+                $this->auditLogService->workflow(
+                    'transfer_application.board_waitlisted',
+                    $application,
+                    $fromStatus,
+                    TransferApplication::STATUS_WAITLISTED,
+                    [
+                        'description' => sprintf(
+                            'Transfer Board waitlisted application %s.',
+                            $application->application_number
+                                ?? $application->id
+                        ),
+                        'old_values' => $oldDecisionValues,
+                        'new_values' => [
+                            'status' => TransferApplication::STATUS_WAITLISTED,
+                            'reviewer_id' => $reviewer->id,
+                            'decision' => $decision->decision,
+                            'recommended_school_id' => $decision->recommended_school_id,
+                            'effective_date' => $decision->effective_date,
+                            'appointment_type' => $decision->appointment_type,
+                            'decision_reference' => $decision->decision_reference,
+                            'remarks' => $decision->remarks,
+                            'rejection_reason' => $decision->rejection_reason,
+                            'waitlist_reason' => $decision->waitlist_reason,
+                            'decided_at' => $decision->decided_at,
+                        ],
+                        'metadata' => [
+                            'transfer_board_decision_id' => $decision->id,
+                            'reviewer_name' => $reviewer->name,
+                            'reviewer_email' => $reviewer->email,
+                        ],
+                        'user' => $reviewer,
+                    ]
                 );
 
                 $this->notifyPrincipal(
@@ -361,7 +485,13 @@ class TransferBoardReviewService
                     )
                 );
 
-                return $application->fresh();
+                return $application->fresh([
+                    'principalProfile.user',
+                    'transferCycle',
+                    'originZone',
+                    'transferBoardDecision.reviewer',
+                    'actions.actor',
+                ]);
             }
         );
     }
@@ -374,8 +504,7 @@ class TransferBoardReviewService
                 ->canReceiveBoardDecision()
         ) {
             throw ValidationException::withMessages([
-                'status' =>
-                    'The application is not under Transfer Board review.',
+                'status' => 'The application is not under Transfer Board review.',
             ]);
         }
     }
@@ -399,27 +528,20 @@ class TransferBoardReviewService
         string $toStatus,
         ?string $remarks = null
     ): void {
-        TransferApplicationAction::create([
-            'transfer_application_id' =>
-                $application->id,
+        TransferApplicationAction::query()->create([
+            'transfer_application_id' => $application->id,
 
-            'action' =>
-                $action,
+            'action' => $action,
 
-            'from_status' =>
-                $fromStatus,
+            'from_status' => $fromStatus,
 
-            'to_status' =>
-                $toStatus,
+            'to_status' => $toStatus,
 
-            'remarks' =>
-                $remarks,
+            'remarks' => $remarks,
 
-            'acted_by' =>
-                $actor->id,
+            'acted_by' => $actor->id,
 
-            'acted_at' =>
-                now(),
+            'acted_at' => now(),
         ]);
     }
 
@@ -434,6 +556,8 @@ class TransferBoardReviewService
         $application
             ->principalProfile
             ?->user
-            ?->notify($notification);
+            ?->notify(
+                $notification
+            );
     }
 }

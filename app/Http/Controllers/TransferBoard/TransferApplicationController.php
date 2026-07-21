@@ -23,8 +23,7 @@ class TransferApplicationController extends Controller
 {
     public function __construct(
         private readonly TransferBoardReviewService $reviewService
-    ) {
-    }
+    ) {}
 
     public function index(
         Request $request
@@ -113,18 +112,17 @@ class TransferApplicationController extends Controller
                                         'currentSchool',
                                         fn (
                                             Builder $schoolQuery
-                                        ) =>
-                                            $schoolQuery
-                                                ->where(
-                                                    'name',
-                                                    'like',
-                                                    "%{$search}%"
-                                                )
-                                                ->orWhere(
-                                                    'census_number',
-                                                    'like',
-                                                    "%{$search}%"
-                                                )
+                                        ) => $schoolQuery
+                                            ->where(
+                                                'name',
+                                                'like',
+                                                "%{$search}%"
+                                            )
+                                            ->orWhere(
+                                                'census_number',
+                                                'like',
+                                                "%{$search}%"
+                                            )
                                     );
                             }
                         );
@@ -135,22 +133,20 @@ class TransferApplicationController extends Controller
                     fn (
                         Builder $query,
                         string $status
-                    ): Builder =>
-                        $query->where(
-                            'status',
-                            $status
-                        )
+                    ): Builder => $query->where(
+                        'status',
+                        $status
+                    )
                 )
                 ->when(
                     $filters['zone_id'] ?? null,
                     fn (
                         Builder $query,
                         int $zoneId
-                    ): Builder =>
-                        $query->where(
-                            'origin_zone_id',
-                            $zoneId
-                        )
+                    ): Builder => $query->where(
+                        'origin_zone_id',
+                        $zoneId
+                    )
                 )
                 ->latest('submitted_at')
                 ->latest('id')
@@ -160,11 +156,9 @@ class TransferApplicationController extends Controller
         return Inertia::render(
             'TransferBoard/TransferApplications/Index',
             [
-                'applications' =>
-                    $applications,
+                'applications' => $applications,
 
-                'filters' =>
-                    $filters,
+                'filters' => $filters,
 
                 'statuses' => [
                     TransferApplication::STATUS_PROVINCIAL_APPROVED,
@@ -174,18 +168,17 @@ class TransferApplicationController extends Controller
                     TransferApplication::STATUS_WAITLISTED,
                 ],
 
-                'zones' =>
-                    Zone::query()
-                        ->where(
-                            'is_active',
-                            true
-                        )
-                        ->orderBy('name')
-                        ->get([
-                            'id',
-                            'name',
-                            'code',
-                        ]),
+                'zones' => Zone::query()
+                    ->where(
+                        'is_active',
+                        true
+                    )
+                    ->orderBy('name')
+                    ->get([
+                        'id',
+                        'name',
+                        'code',
+                    ]),
             ]
         );
     }
@@ -246,26 +239,24 @@ class TransferApplicationController extends Controller
         return Inertia::render(
             'TransferBoard/TransferApplications/Show',
             [
-                'application' =>
-                    $transferApplication,
+                'application' => $transferApplication,
 
-                'schools' =>
-                    School::query()
-                        ->with([
-                            'division:id,zone_id,name',
-                            'division.zone:id,name,code',
-                        ])
-                        ->where(
-                            'is_active',
-                            true
-                        )
-                        ->orderBy('name')
-                        ->get([
-                            'id',
-                            'division_id',
-                            'name',
-                            'census_number',
-                        ]),
+                'schools' => School::query()
+                    ->with([
+                        'division:id,zone_id,name',
+                        'division.zone:id,name,code',
+                    ])
+                    ->where(
+                        'is_active',
+                        true
+                    )
+                    ->orderBy('name')
+                    ->get([
+                        'id',
+                        'division_id',
+                        'name',
+                        'census_number',
+                    ]),
 
                 'appointmentTypes' => [
                     'Permanent',
@@ -275,13 +266,11 @@ class TransferApplicationController extends Controller
                 ],
 
                 'can' => [
-                    'start_review' =>
-                        $transferApplication
-                            ->canEnterBoardReview(),
+                    'start_review' => $transferApplication
+                        ->canEnterBoardReview(),
 
-                    'decide' =>
-                        $transferApplication
-                            ->canReceiveBoardDecision(),
+                    'decide' => $transferApplication
+                        ->canReceiveBoardDecision(),
                 ],
             ]
         );
@@ -414,8 +403,7 @@ class TransferApplicationController extends Controller
                 $transferApplication
             ),
             [
-                'Content-Type' =>
-                    'application/pdf',
+                'Content-Type' => 'application/pdf',
             ]
         );
     }

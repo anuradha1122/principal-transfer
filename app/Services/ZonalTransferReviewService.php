@@ -16,72 +16,103 @@ use Throwable;
 
 class ZonalTransferReviewService
 {
+    public function __construct(
+        private readonly AuditLogService $auditLogService
+    ) {}
+
     public function startReview(
         TransferApplication $transferApplication,
         User $reviewer
     ): TransferApplication {
-        if (!$transferApplication->canStartZonalReview()) {
+        if (! $transferApplication->canStartZonalReview()) {
             throw ValidationException::withMessages([
-                'status' =>
-                    'Only submitted applications can enter Zonal review.',
+                'status' => 'Only submitted applications can enter Zonal review.',
             ]);
         }
 
-        $updatedApplication = DB::transaction(function () use (
-            $transferApplication,
-            $reviewer
-        ): TransferApplication {
-            $lockedApplication = TransferApplication::query()
-                ->lockForUpdate()
-                ->findOrFail($transferApplication->id);
+        $updatedApplication = DB::transaction(
+            function () use (
+                $transferApplication,
+                $reviewer
+            ): TransferApplication {
+                $lockedApplication = TransferApplication::query()
+                    ->lockForUpdate()
+                    ->findOrFail(
+                        $transferApplication->id
+                    );
 
-            if (!$lockedApplication->canStartZonalReview()) {
-                throw ValidationException::withMessages([
-                    'status' =>
-                        'This application is no longer available for review.',
+                if (! $lockedApplication->canStartZonalReview()) {
+                    throw ValidationException::withMessages([
+                        'status' => 'This application is no longer available for review.',
+                    ]);
+                }
+
+                $fromStatus = $lockedApplication->status;
+
+                $review = ZonalReview::query()->firstOrNew([
+                    'transfer_application_id' => $lockedApplication->id,
+                ]);
+
+                $review->fill([
+                    'zone_id' => $lockedApplication->origin_zone_id,
+                    'reviewer_id' => $reviewer->id,
+                    'review_started_at' => $review->review_started_at
+                            ?? now(),
+                ]);
+
+                $review->save();
+
+                $lockedApplication->forceFill([
+                    'status' => TransferApplication::STATUS_ZONAL_REVIEW,
+                ])->save();
+
+                $this->recordAction(
+                    transferApplication: $lockedApplication,
+                    actor: $reviewer,
+                    action: TransferApplicationAction::ACTION_ZONAL_REVIEW_STARTED,
+                    fromStatus: $fromStatus,
+                    toStatus: TransferApplication::STATUS_ZONAL_REVIEW,
+                    remarks: 'Zonal review started.',
+                    metadata: [
+                        'zone_id' => $lockedApplication->origin_zone_id,
+                    ],
+                );
+
+                $this->auditLogService->workflow(
+                    'transfer_application.zonal_review_started',
+                    $lockedApplication,
+                    $fromStatus,
+                    TransferApplication::STATUS_ZONAL_REVIEW,
+                    [
+                        'description' => sprintf(
+                            'Zonal review started for transfer application %s.',
+                            $lockedApplication->application_number
+                                ?? $lockedApplication->id
+                        ),
+                        'new_values' => [
+                            'status' => TransferApplication::STATUS_ZONAL_REVIEW,
+                            'zone_id' => $lockedApplication->origin_zone_id,
+                            'reviewer_id' => $reviewer->id,
+                            'review_started_at' => $review->review_started_at,
+                        ],
+                        'metadata' => [
+                            'zonal_review_id' => $review->id,
+                            'reviewer_name' => $reviewer->name,
+                            'reviewer_email' => $reviewer->email,
+                        ],
+                        'user' => $reviewer,
+                    ]
+                );
+
+                return $lockedApplication->fresh([
+                    'principalProfile.user',
+                    'transferCycle',
+                    'originZone',
+                    'zonalReview.reviewer',
+                    'actions.actor',
                 ]);
             }
-
-            $fromStatus = $lockedApplication->status;
-
-            $review = ZonalReview::query()->firstOrNew([
-                'transfer_application_id' => $lockedApplication->id,
-            ]);
-
-            $review->fill([
-                'zone_id' => $lockedApplication->origin_zone_id,
-                'reviewer_id' => $reviewer->id,
-                'review_started_at' =>
-                    $review->review_started_at ?? now(),
-            ]);
-
-            $review->save();
-
-            $lockedApplication->forceFill([
-                'status' => TransferApplication::STATUS_ZONAL_REVIEW,
-            ])->save();
-
-            $this->recordAction(
-                transferApplication: $lockedApplication,
-                actor: $reviewer,
-                action:
-                    TransferApplicationAction::ACTION_ZONAL_REVIEW_STARTED,
-                fromStatus: $fromStatus,
-                toStatus: TransferApplication::STATUS_ZONAL_REVIEW,
-                remarks: 'Zonal review started.',
-                metadata: [
-                    'zone_id' => $lockedApplication->origin_zone_id,
-                ],
-            );
-
-            return $lockedApplication->fresh([
-                'principalProfile.user',
-                'transferCycle',
-                'originZone',
-                'zonalReview.reviewer',
-                'actions.actor',
-            ]);
-        });
+        );
 
         $this->sendNotificationSafely(
             $updatedApplication,
@@ -98,76 +129,122 @@ class ZonalTransferReviewService
         User $reviewer,
         array $validated
     ): TransferApplication {
-        if (!$transferApplication->canReceiveZonalDecision()) {
+        if (
+            ! $transferApplication
+                ->canReceiveZonalDecision()
+        ) {
             throw ValidationException::withMessages([
-                'status' =>
-                    'Only applications under Zonal review can be approved.',
+                'status' => 'Only applications under Zonal review can be approved.',
             ]);
         }
 
-        $updatedApplication = DB::transaction(function () use (
-            $transferApplication,
-            $reviewer,
-            $validated
-        ): TransferApplication {
-            $lockedApplication = TransferApplication::query()
-                ->lockForUpdate()
-                ->findOrFail($transferApplication->id);
+        $updatedApplication = DB::transaction(
+            function () use (
+                $transferApplication,
+                $reviewer,
+                $validated
+            ): TransferApplication {
+                $lockedApplication = TransferApplication::query()
+                    ->lockForUpdate()
+                    ->findOrFail(
+                        $transferApplication->id
+                    );
 
-            if (!$lockedApplication->canReceiveZonalDecision()) {
-                throw ValidationException::withMessages([
-                    'status' =>
-                        'This application is no longer awaiting a Zonal decision.',
+                if (
+                    ! $lockedApplication
+                        ->canReceiveZonalDecision()
+                ) {
+                    throw ValidationException::withMessages([
+                        'status' => 'This application is no longer awaiting a Zonal decision.',
+                    ]);
+                }
+
+                $fromStatus = $lockedApplication->status;
+
+                $review = ZonalReview::query()->firstOrNew([
+                    'transfer_application_id' => $lockedApplication->id,
                 ]);
-            }
 
-            $fromStatus = $lockedApplication->status;
+                $oldReviewValues = [
+                    'recommendation' => $review->recommendation,
+                    'decision' => $review->decision,
+                    'remarks' => $review->remarks,
+                    'rejection_reason' => $review->rejection_reason,
+                ];
 
-            $review = ZonalReview::query()->firstOrNew([
-                'transfer_application_id' => $lockedApplication->id,
-            ]);
-
-            $review->fill([
-                'zone_id' => $lockedApplication->origin_zone_id,
-                'reviewer_id' => $reviewer->id,
-                'recommendation' => $validated['recommendation'],
-                'decision' => ZonalReview::DECISION_APPROVED,
-                'remarks' => $validated['remarks'] ?? null,
-                'rejection_reason' => null,
-                'review_started_at' =>
-                    $review->review_started_at ?? now(),
-                'reviewed_at' => now(),
-            ]);
-
-            $review->save();
-
-            $lockedApplication->forceFill([
-                'status' => TransferApplication::STATUS_ZONAL_APPROVED,
-            ])->save();
-
-            $this->recordAction(
-                transferApplication: $lockedApplication,
-                actor: $reviewer,
-                action:
-                    TransferApplicationAction::ACTION_ZONAL_APPROVED,
-                fromStatus: $fromStatus,
-                toStatus: TransferApplication::STATUS_ZONAL_APPROVED,
-                remarks: $validated['remarks'] ?? null,
-                metadata: [
+                $review->fill([
                     'zone_id' => $lockedApplication->origin_zone_id,
+                    'reviewer_id' => $reviewer->id,
                     'recommendation' => $validated['recommendation'],
                     'decision' => ZonalReview::DECISION_APPROVED,
-                ],
-            );
+                    'remarks' => $validated['remarks']
+                            ?? null,
+                    'rejection_reason' => null,
+                    'review_started_at' => $review->review_started_at
+                            ?? now(),
+                    'reviewed_at' => now(),
+                ]);
 
-            return $lockedApplication->fresh([
-                'principalProfile.user',
-                'transferCycle',
-                'originZone',
-                'zonalReview.reviewer',
-                'actions.actor',
-            ]);
-        });
+                $review->save();
+
+                $lockedApplication->forceFill([
+                    'status' => TransferApplication::STATUS_ZONAL_APPROVED,
+                ])->save();
+
+                $this->recordAction(
+                    transferApplication: $lockedApplication,
+                    actor: $reviewer,
+                    action: TransferApplicationAction::ACTION_ZONAL_APPROVED,
+                    fromStatus: $fromStatus,
+                    toStatus: TransferApplication::STATUS_ZONAL_APPROVED,
+                    remarks: $validated['remarks']
+                            ?? null,
+                    metadata: [
+                        'zone_id' => $lockedApplication->origin_zone_id,
+                        'recommendation' => $validated['recommendation'],
+                        'decision' => ZonalReview::DECISION_APPROVED,
+                    ],
+                );
+
+                $this->auditLogService->workflow(
+                    'transfer_application.zonal_approved',
+                    $lockedApplication,
+                    $fromStatus,
+                    TransferApplication::STATUS_ZONAL_APPROVED,
+                    [
+                        'description' => sprintf(
+                            'Transfer application %s was approved at Zonal level.',
+                            $lockedApplication->application_number
+                                ?? $lockedApplication->id
+                        ),
+                        'old_values' => $oldReviewValues,
+                        'new_values' => [
+                            'status' => TransferApplication::STATUS_ZONAL_APPROVED,
+                            'zone_id' => $lockedApplication->origin_zone_id,
+                            'reviewer_id' => $reviewer->id,
+                            'recommendation' => $review->recommendation,
+                            'decision' => $review->decision,
+                            'remarks' => $review->remarks,
+                            'reviewed_at' => $review->reviewed_at,
+                        ],
+                        'metadata' => [
+                            'zonal_review_id' => $review->id,
+                            'reviewer_name' => $reviewer->name,
+                            'reviewer_email' => $reviewer->email,
+                        ],
+                        'user' => $reviewer,
+                    ]
+                );
+
+                return $lockedApplication->fresh([
+                    'principalProfile.user',
+                    'transferCycle',
+                    'originZone',
+                    'zonalReview.reviewer',
+                    'actions.actor',
+                ]);
+            }
+        );
 
         $this->sendNotificationSafely(
             $updatedApplication,
@@ -184,79 +261,124 @@ class ZonalTransferReviewService
         User $reviewer,
         array $validated
     ): TransferApplication {
-        if (!$transferApplication->canReceiveZonalDecision()) {
+        if (
+            ! $transferApplication
+                ->canReceiveZonalDecision()
+        ) {
             throw ValidationException::withMessages([
-                'status' =>
-                    'Only applications under Zonal review can be rejected.',
+                'status' => 'Only applications under Zonal review can be rejected.',
             ]);
         }
 
-        $updatedApplication = DB::transaction(function () use (
-            $transferApplication,
-            $reviewer,
-            $validated
-        ): TransferApplication {
-            $lockedApplication = TransferApplication::query()
-                ->lockForUpdate()
-                ->findOrFail($transferApplication->id);
+        $updatedApplication = DB::transaction(
+            function () use (
+                $transferApplication,
+                $reviewer,
+                $validated
+            ): TransferApplication {
+                $lockedApplication = TransferApplication::query()
+                    ->lockForUpdate()
+                    ->findOrFail(
+                        $transferApplication->id
+                    );
 
-            if (!$lockedApplication->canReceiveZonalDecision()) {
-                throw ValidationException::withMessages([
-                    'status' =>
-                        'This application is no longer awaiting a Zonal decision.',
+                if (
+                    ! $lockedApplication
+                        ->canReceiveZonalDecision()
+                ) {
+                    throw ValidationException::withMessages([
+                        'status' => 'This application is no longer awaiting a Zonal decision.',
+                    ]);
+                }
+
+                $fromStatus = $lockedApplication->status;
+
+                $review = ZonalReview::query()->firstOrNew([
+                    'transfer_application_id' => $lockedApplication->id,
                 ]);
-            }
 
-            $fromStatus = $lockedApplication->status;
+                $oldReviewValues = [
+                    'recommendation' => $review->recommendation,
+                    'decision' => $review->decision,
+                    'remarks' => $review->remarks,
+                    'rejection_reason' => $review->rejection_reason,
+                ];
 
-            $review = ZonalReview::query()->firstOrNew([
-                'transfer_application_id' => $lockedApplication->id,
-            ]);
-
-            $review->fill([
-                'zone_id' => $lockedApplication->origin_zone_id,
-                'reviewer_id' => $reviewer->id,
-                'recommendation' =>
-                    $validated['recommendation'] ?? 'Not Recommended',
-                'decision' => ZonalReview::DECISION_REJECTED,
-                'remarks' => $validated['remarks'] ?? null,
-                'rejection_reason' => $validated['rejection_reason'],
-                'review_started_at' =>
-                    $review->review_started_at ?? now(),
-                'reviewed_at' => now(),
-            ]);
-
-            $review->save();
-
-            $lockedApplication->forceFill([
-                'status' => TransferApplication::STATUS_ZONAL_REJECTED,
-            ])->save();
-
-            $this->recordAction(
-                transferApplication: $lockedApplication,
-                actor: $reviewer,
-                action:
-                    TransferApplicationAction::ACTION_ZONAL_REJECTED,
-                fromStatus: $fromStatus,
-                toStatus: TransferApplication::STATUS_ZONAL_REJECTED,
-                remarks: $validated['rejection_reason'],
-                metadata: [
+                $review->fill([
                     'zone_id' => $lockedApplication->origin_zone_id,
-                    'recommendation' =>
-                        $validated['recommendation']
+                    'reviewer_id' => $reviewer->id,
+                    'recommendation' => $validated['recommendation']
                             ?? 'Not Recommended',
                     'decision' => ZonalReview::DECISION_REJECTED,
-                ],
-            );
+                    'remarks' => $validated['remarks']
+                            ?? null,
+                    'rejection_reason' => $validated['rejection_reason'],
+                    'review_started_at' => $review->review_started_at
+                            ?? now(),
+                    'reviewed_at' => now(),
+                ]);
 
-            return $lockedApplication->fresh([
-                'principalProfile.user',
-                'transferCycle',
-                'originZone',
-                'zonalReview.reviewer',
-                'actions.actor',
-            ]);
-        });
+                $review->save();
+
+                $lockedApplication->forceFill([
+                    'status' => TransferApplication::STATUS_ZONAL_REJECTED,
+                ])->save();
+
+                $this->recordAction(
+                    transferApplication: $lockedApplication,
+                    actor: $reviewer,
+                    action: TransferApplicationAction::ACTION_ZONAL_REJECTED,
+                    fromStatus: $fromStatus,
+                    toStatus: TransferApplication::STATUS_ZONAL_REJECTED,
+                    remarks: $validated['rejection_reason'],
+                    metadata: [
+                        'zone_id' => $lockedApplication->origin_zone_id,
+                        'recommendation' => $validated['recommendation']
+                                ?? 'Not Recommended',
+                        'decision' => ZonalReview::DECISION_REJECTED,
+                    ],
+                );
+
+                $this->auditLogService->workflow(
+                    'transfer_application.zonal_rejected',
+                    $lockedApplication,
+                    $fromStatus,
+                    TransferApplication::STATUS_ZONAL_REJECTED,
+                    [
+                        'description' => sprintf(
+                            'Transfer application %s was rejected at Zonal level.',
+                            $lockedApplication->application_number
+                                ?? $lockedApplication->id
+                        ),
+                        'old_values' => $oldReviewValues,
+                        'new_values' => [
+                            'status' => TransferApplication::STATUS_ZONAL_REJECTED,
+                            'zone_id' => $lockedApplication->origin_zone_id,
+                            'reviewer_id' => $reviewer->id,
+                            'recommendation' => $review->recommendation,
+                            'decision' => $review->decision,
+                            'remarks' => $review->remarks,
+                            'rejection_reason' => $review->rejection_reason,
+                            'reviewed_at' => $review->reviewed_at,
+                        ],
+                        'metadata' => [
+                            'zonal_review_id' => $review->id,
+                            'reviewer_name' => $reviewer->name,
+                            'reviewer_email' => $reviewer->email,
+                        ],
+                        'user' => $reviewer,
+                    ]
+                );
+
+                return $lockedApplication->fresh([
+                    'principalProfile.user',
+                    'transferCycle',
+                    'originZone',
+                    'zonalReview.reviewer',
+                    'actions.actor',
+                ]);
+            }
+        );
 
         $this->sendNotificationSafely(
             $updatedApplication,
@@ -298,14 +420,15 @@ class ZonalTransferReviewService
                 ?->user;
 
             if ($recipient !== null) {
-                $recipient->notify($notification);
+                $recipient->notify(
+                    $notification
+                );
             }
         } catch (Throwable $exception) {
             Log::warning(
                 'Transfer application Zonal notification failed.',
                 [
-                    'transfer_application_id' =>
-                        $transferApplication->id,
+                    'transfer_application_id' => $transferApplication->id,
                     'notification' => $notification::class,
                     'message' => $exception->getMessage(),
                 ]

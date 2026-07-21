@@ -85,8 +85,7 @@ class TransferAppealReviewTest extends TestCase
                     $appeal
                 ),
                 [
-                    'clarification_request' =>
-                        'Please provide documentary proof of the stated medical circumstances.',
+                    'clarification_request' => 'Please provide documentary proof of the stated medical circumstances.',
                 ]
             );
 
@@ -112,10 +111,8 @@ class TransferAppealReviewTest extends TestCase
                     $appeal
                 ),
                 [
-                    'rejection_reason' =>
-                        'The appeal does not provide sufficient grounds to revise the original decision.',
-                    'decision_remarks' =>
-                        'The original Transfer Board decision remains valid.',
+                    'rejection_reason' => 'The appeal does not provide sufficient grounds to revise the original decision.',
+                    'decision_remarks' => 'The original Transfer Board decision remains valid.',
                 ]
             );
 
@@ -142,8 +139,7 @@ class TransferAppealReviewTest extends TestCase
             'principal_profile_id' => $profile->id,
             'status' => $status,
             'submitted_at' => now()->subDay(),
-            'review_started_at' =>
-                $status === TransferAppeal::STATUS_UNDER_REVIEW
+            'review_started_at' => $status === TransferAppeal::STATUS_UNDER_REVIEW
                     ? now()
                     : null,
         ]);

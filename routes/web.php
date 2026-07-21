@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\DivisionController;
 use App\Http\Controllers\Admin\PermissionController;
@@ -453,8 +454,7 @@ Route::middleware([
                     'principal-registry',
                     PrincipalRegistryController::class
                 )->parameters([
-                    'principal-registry' =>
-                        'principal_registry',
+                    'principal-registry' => 'principal_registry',
                 ]);
 
                 /*
@@ -467,8 +467,7 @@ Route::middleware([
                     'principal-profiles',
                     PrincipalProfileController::class
                 )->parameters([
-                    'principal-profiles' =>
-                        'principal_profile',
+                    'principal-profiles' => 'principal_profile',
                 ]);
 
                 /*
@@ -719,6 +718,40 @@ Route::middleware([
                     )
                     ->name(
                         'transfer-documents.show'
+                    );
+
+                /*
+                |--------------------------------------------------------------------------
+                | Audit Logs
+                |--------------------------------------------------------------------------
+                */
+
+                Route::get(
+                    'audit-logs',
+                    [
+                        AuditLogController::class,
+                        'index',
+                    ]
+                )
+                    ->middleware(
+                        'permission:view audit logs'
+                    )
+                    ->name(
+                        'audit-logs.index'
+                    );
+
+                Route::get(
+                    'audit-logs/{auditLog}',
+                    [
+                        AuditLogController::class,
+                        'show',
+                    ]
+                )
+                    ->middleware(
+                        'permission:view audit logs'
+                    )
+                    ->name(
+                        'audit-logs.show'
                     );
             });
 

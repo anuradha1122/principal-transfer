@@ -317,38 +317,30 @@ class TransferApplicationController extends Controller
 
                     'service_grade' => $profile->service_grade,
 
-                    'current_appointment_start_date' =>
-                        $currentAppointment->start_date,
+                    'current_appointment_start_date' => $currentAppointment->start_date,
 
                     'current_school_service_months' => Carbon::parse(
                         $currentAppointment->start_date
                     )->diffInMonths(today()),
 
-                    'transfer_reason' =>
-                        $validated['transfer_reason'],
+                    'transfer_reason' => $validated['transfer_reason'],
 
-                    'reason_details' =>
-                        $validated['reason_details'],
+                    'reason_details' => $validated['reason_details'],
 
-                    'has_medical_reason' =>
-                        $validated['has_medical_reason'],
+                    'has_medical_reason' => $validated['has_medical_reason'],
 
-                    'has_spouse_employment_reason' =>
-                        $validated['has_spouse_employment_reason'],
+                    'has_spouse_employment_reason' => $validated['has_spouse_employment_reason'],
 
-                    'is_mutual_transfer' =>
-                        $validated['is_mutual_transfer'],
+                    'is_mutual_transfer' => $validated['is_mutual_transfer'],
 
-                    'mutual_principal_nic' =>
-                        $validated['is_mutual_transfer']
+                    'mutual_principal_nic' => $validated['is_mutual_transfer']
                             ? (
                                 $validated['mutual_principal_nic']
                                 ?? null
                             )
                             : null,
 
-                    'principal_remarks' =>
-                        $validated['principal_remarks']
+                    'principal_remarks' => $validated['principal_remarks']
                         ?? null,
 
                     'status' => 'Draft',
@@ -520,31 +512,24 @@ class TransferApplicationController extends Controller
                 $transferApplication
             ): void {
                 $transferApplication->update([
-                    'transfer_reason' =>
-                        $validated['transfer_reason'],
+                    'transfer_reason' => $validated['transfer_reason'],
 
-                    'reason_details' =>
-                        $validated['reason_details'],
+                    'reason_details' => $validated['reason_details'],
 
-                    'has_medical_reason' =>
-                        $validated['has_medical_reason'],
+                    'has_medical_reason' => $validated['has_medical_reason'],
 
-                    'has_spouse_employment_reason' =>
-                        $validated['has_spouse_employment_reason'],
+                    'has_spouse_employment_reason' => $validated['has_spouse_employment_reason'],
 
-                    'is_mutual_transfer' =>
-                        $validated['is_mutual_transfer'],
+                    'is_mutual_transfer' => $validated['is_mutual_transfer'],
 
-                    'mutual_principal_nic' =>
-                        $validated['is_mutual_transfer']
+                    'mutual_principal_nic' => $validated['is_mutual_transfer']
                             ? (
                                 $validated['mutual_principal_nic']
                                 ?? null
                             )
                             : null,
 
-                    'principal_remarks' =>
-                        $validated['principal_remarks']
+                    'principal_remarks' => $validated['principal_remarks']
                         ?? null,
 
                     'updated_by' => $request->user()->id,
@@ -640,8 +625,7 @@ class TransferApplicationController extends Controller
                      */
                     if ($lockedApplication->status !== 'Draft') {
                         throw ValidationException::withMessages([
-                            'status' =>
-                                'This application has already been submitted or is no longer editable.',
+                            'status' => 'This application has already been submitted or is no longer editable.',
                         ]);
                     }
 
@@ -656,18 +640,16 @@ class TransferApplicationController extends Controller
 
                     if ($originZoneId === null) {
                         throw ValidationException::withMessages([
-                            'current_school_id' =>
-                                'The current school does not belong to a valid education Zone. Please contact the system administrator.',
+                            'current_school_id' => 'The current school does not belong to a valid education Zone. Please contact the system administrator.',
                         ]);
                     }
 
                     $lockedApplication->update([
                         'origin_zone_id' => $originZoneId,
 
-                        'application_number' =>
-                            $this->generateApplicationNumber(
-                                $lockedApplication
-                            ),
+                        'application_number' => $this->generateApplicationNumber(
+                            $lockedApplication
+                        ),
 
                         'status' => 'Submitted',
 
@@ -769,8 +751,7 @@ class TransferApplicationController extends Controller
 
             'withdrawn_at' => now(),
 
-            'withdrawal_reason' =>
-                $validated['withdrawal_reason'],
+            'withdrawal_reason' => $validated['withdrawal_reason'],
 
             'updated_by' => $request->user()->id,
         ]);
@@ -861,11 +842,9 @@ class TransferApplicationController extends Controller
                 ->create([
                     'preference_order' => $index + 1,
 
-                    'school_id' =>
-                        $preference['school_id'],
+                    'school_id' => $preference['school_id'],
 
-                    'preference_reason' =>
-                        $preference['preference_reason']
+                    'preference_reason' => $preference['preference_reason']
                         ?? null,
                 ]);
         }
@@ -899,8 +878,7 @@ class TransferApplicationController extends Controller
     ): void {
         if ($profile->employment_status !== 'Active') {
             throw ValidationException::withMessages([
-                'transfer_cycle_id' =>
-                    'Only active principals can apply for transfers.',
+                'transfer_cycle_id' => 'Only active principals can apply for transfers.',
             ]);
         }
 
@@ -913,8 +891,7 @@ class TransferApplicationController extends Controller
             < $cycle->minimum_service_years
         ) {
             throw ValidationException::withMessages([
-                'transfer_cycle_id' =>
-                    "A minimum of {$cycle->minimum_service_years} years at the current school is required.",
+                'transfer_cycle_id' => "A minimum of {$cycle->minimum_service_years} years at the current school is required.",
             ]);
         }
     }
@@ -956,26 +933,20 @@ class TransferApplicationController extends Controller
 
             'nic' => $profile->nic,
 
-            'employee_number' =>
-                $profile->employee_number,
+            'employee_number' => $profile->employee_number,
 
-            'service_grade' =>
-                $profile->service_grade,
+            'service_grade' => $profile->service_grade,
 
-            'employment_status' =>
-                $profile->employment_status,
+            'employment_status' => $profile->employment_status,
 
             'current_appointment' => [
                 'id' => $currentAppointment->id,
 
-                'designation' =>
-                    $currentAppointment->designation,
+                'designation' => $currentAppointment->designation,
 
-                'start_date' =>
-                    $currentAppointment->start_date,
+                'start_date' => $currentAppointment->start_date,
 
-                'school' =>
-                    $currentAppointment->school,
+                'school' => $currentAppointment->school,
             ],
         ];
     }

@@ -27,16 +27,13 @@ class TransferOrderPdfService
         $pdf = Pdf::loadView(
             'pdf.transfers.transfer-order',
             [
-                'document' =>
-                    $document,
+                'document' => $document,
 
-                'application' =>
-                    $document->transferApplication,
+                'application' => $document->transferApplication,
 
-                'decision' =>
-                    $document
-                        ->transferApplication
-                        ->transferBoardDecision,
+                'decision' => $document
+                    ->transferApplication
+                    ->transferBoardDecision,
             ]
         )->setPaper(
             'a4',

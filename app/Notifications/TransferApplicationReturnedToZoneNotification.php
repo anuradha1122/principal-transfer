@@ -12,8 +12,7 @@ class TransferApplicationReturnedToZoneNotification extends Notification
 
     public function __construct(
         public TransferApplication $application
-    ) {
-    }
+    ) {}
 
     public function via(object $notifiable): array
     {
@@ -25,17 +24,13 @@ class TransferApplicationReturnedToZoneNotification extends Notification
     public function toArray(object $notifiable): array
     {
         return [
-            'title' =>
-                'Application Returned to Zone',
+            'title' => 'Application Returned to Zone',
 
-            'message' =>
-                "Application {$this->application->application_number} was returned to the Zone for clarification.",
+            'message' => "Application {$this->application->application_number} was returned to the Zone for clarification.",
 
-            'transfer_application_id' =>
-                $this->application->id,
+            'transfer_application_id' => $this->application->id,
 
-            'status' =>
-                $this->application->status,
+            'status' => $this->application->status,
         ];
     }
 }

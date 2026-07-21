@@ -12,9 +12,13 @@ class TransferApplicationAction extends Model
     use HasFactory;
 
     public const ACTION_SUBMITTED = 'submitted';
+
     public const ACTION_WITHDRAWN = 'withdrawn';
+
     public const ACTION_ZONAL_REVIEW_STARTED = 'zonal_review_started';
+
     public const ACTION_ZONAL_APPROVED = 'zonal_approved';
+
     public const ACTION_ZONAL_REJECTED = 'zonal_rejected';
 
     public const ACTION_PROVINCIAL_REVIEW_STARTED =

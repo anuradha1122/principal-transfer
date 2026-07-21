@@ -22,6 +22,10 @@ use Illuminate\Validation\ValidationException;
 
 class TransferAppealService
 {
+    public function __construct(
+        private readonly AuditLogService $auditLogService
+    ) {}
+
     public function createDraft(
         TransferApplication $application,
         User $user,
@@ -35,8 +39,8 @@ class TransferAppealService
             $user,
             $data,
             $documents
-        ) {
-            $appeal = TransferAppeal::create([
+        ): TransferAppeal {
+            $appeal = TransferAppeal::query()->create([
                 'transfer_application_id' => $application->id,
                 'principal_profile_id' => $application->principal_profile_id,
                 'appeal_number' => $this->generateAppealNumber(),
@@ -48,7 +52,11 @@ class TransferAppealService
                 'updated_by' => $user->id,
             ]);
 
-            $this->storeDocuments($appeal, $documents, $user);
+            $this->storeDocuments(
+                $appeal,
+                $documents,
+                $user
+            );
 
             $this->recordAction(
                 $appeal,
@@ -57,6 +65,36 @@ class TransferAppealService
                 TransferAppeal::STATUS_DRAFT,
                 null,
                 $user
+            );
+
+            $this->auditLogService->workflow(
+                'transfer_appeal.draft_created',
+                $appeal,
+                null,
+                TransferAppeal::STATUS_DRAFT,
+                [
+                    'description' => sprintf(
+                        'Transfer appeal %s was created as a draft.',
+                        $appeal->appeal_number
+                    ),
+                    'parent' => $application,
+                    'new_values' => [
+                        'appeal_number' => $appeal->appeal_number,
+                        'appeal_reason' => $appeal->appeal_reason,
+                        'appeal_details' => $appeal->appeal_details,
+                        'requested_outcome' => $appeal->requested_outcome,
+                        'status' => $appeal->status,
+                    ],
+                    'metadata' => [
+                        'uploaded_document_count' => count(
+                            array_filter(
+                                $documents,
+                                fn ($document): bool => $document instanceof UploadedFile
+                            )
+                        ),
+                    ],
+                    'user' => $user,
+                ]
             );
 
             return $appeal->fresh([
@@ -83,7 +121,13 @@ class TransferAppealService
             $user,
             $data,
             $documents
-        ) {
+        ): TransferAppeal {
+            $oldValues = [
+                'appeal_reason' => $appeal->appeal_reason,
+                'appeal_details' => $appeal->appeal_details,
+                'requested_outcome' => $appeal->requested_outcome,
+            ];
+
             $appeal->update([
                 'appeal_reason' => $data['appeal_reason'],
                 'appeal_details' => $data['appeal_details'],
@@ -91,7 +135,11 @@ class TransferAppealService
                 'updated_by' => $user->id,
             ]);
 
-            $this->storeDocuments($appeal, $documents, $user);
+            $this->storeDocuments(
+                $appeal,
+                $documents,
+                $user
+            );
 
             $this->recordAction(
                 $appeal,
@@ -102,7 +150,39 @@ class TransferAppealService
                 $user
             );
 
-            return $appeal->fresh('documents');
+            $this->auditLogService->workflow(
+                'transfer_appeal.draft_updated',
+                $appeal,
+                TransferAppeal::STATUS_DRAFT,
+                TransferAppeal::STATUS_DRAFT,
+                [
+                    'description' => sprintf(
+                        'Transfer appeal %s draft was updated.',
+                        $appeal->appeal_number
+                    ),
+                    'parent' => $appeal->transferApplication,
+                    'old_values' => $oldValues,
+                    'new_values' => [
+                        'appeal_reason' => $appeal->appeal_reason,
+                        'appeal_details' => $appeal->appeal_details,
+                        'requested_outcome' => $appeal->requested_outcome,
+                    ],
+                    'metadata' => [
+                        'uploaded_document_count' => count(
+                            array_filter(
+                                $documents,
+                                fn ($document): bool => $document instanceof UploadedFile
+                            )
+                        ),
+                    ],
+                    'user' => $user,
+                ]
+            );
+
+            return $appeal->fresh([
+                'documents',
+                'transferApplication',
+            ]);
         });
     }
 
@@ -121,29 +201,59 @@ class TransferAppealService
             $appeal->id
         );
 
-        $appeal = DB::transaction(function () use ($appeal, $user) {
-            $fromStatus = $appeal->status;
-
-            $appeal->update([
-                'status' => TransferAppeal::STATUS_SUBMITTED,
-                'submitted_at' => now(),
-                'updated_by' => $user->id,
-            ]);
-
-            $this->recordAction(
+        $appeal = DB::transaction(
+            function () use (
                 $appeal,
-                'Appeal Submitted',
-                $fromStatus,
-                TransferAppeal::STATUS_SUBMITTED,
-                null,
                 $user
-            );
+            ): TransferAppeal {
+                $fromStatus = $appeal->status;
 
-            return $appeal->fresh();
-        });
+                $appeal->update([
+                    'status' => TransferAppeal::STATUS_SUBMITTED,
+                    'submitted_at' => now(),
+                    'updated_by' => $user->id,
+                ]);
+
+                $this->recordAction(
+                    $appeal,
+                    'Appeal Submitted',
+                    $fromStatus,
+                    TransferAppeal::STATUS_SUBMITTED,
+                    null,
+                    $user
+                );
+
+                $this->auditLogService->workflow(
+                    'transfer_appeal.submitted',
+                    $appeal,
+                    $fromStatus,
+                    TransferAppeal::STATUS_SUBMITTED,
+                    [
+                        'description' => sprintf(
+                            'Transfer appeal %s was submitted.',
+                            $appeal->appeal_number
+                        ),
+                        'parent' => $appeal->transferApplication,
+                        'new_values' => [
+                            'status' => TransferAppeal::STATUS_SUBMITTED,
+                            'submitted_at' => $appeal->submitted_at,
+                        ],
+                        'user' => $user,
+                    ]
+                );
+
+                return $appeal->fresh([
+                    'documents',
+                    'transferApplication',
+                    'principalProfile.user',
+                ]);
+            }
+        );
 
         $this->notifyReviewers(
-            new TransferAppealSubmittedNotification($appeal)
+            new TransferAppealSubmittedNotification(
+                $appeal
+            )
         );
 
         return $appeal;
@@ -159,27 +269,59 @@ class TransferAppealService
             ]);
         }
 
-        return DB::transaction(function () use ($appeal, $reviewer) {
-            $fromStatus = $appeal->status;
-
-            $appeal->update([
-                'status' => TransferAppeal::STATUS_UNDER_REVIEW,
-                'review_started_at' => now(),
-                'reviewer_id' => $reviewer->id,
-                'updated_by' => $reviewer->id,
-            ]);
-
-            $this->recordAction(
+        return DB::transaction(
+            function () use (
                 $appeal,
-                'Appeal Review Started',
-                $fromStatus,
-                TransferAppeal::STATUS_UNDER_REVIEW,
-                null,
                 $reviewer
-            );
+            ): TransferAppeal {
+                $fromStatus = $appeal->status;
 
-            return $appeal->fresh();
-        });
+                $appeal->update([
+                    'status' => TransferAppeal::STATUS_UNDER_REVIEW,
+                    'review_started_at' => now(),
+                    'reviewer_id' => $reviewer->id,
+                    'updated_by' => $reviewer->id,
+                ]);
+
+                $this->recordAction(
+                    $appeal,
+                    'Appeal Review Started',
+                    $fromStatus,
+                    TransferAppeal::STATUS_UNDER_REVIEW,
+                    null,
+                    $reviewer
+                );
+
+                $this->auditLogService->workflow(
+                    'transfer_appeal.review_started',
+                    $appeal,
+                    $fromStatus,
+                    TransferAppeal::STATUS_UNDER_REVIEW,
+                    [
+                        'description' => sprintf(
+                            'Review started for transfer appeal %s.',
+                            $appeal->appeal_number
+                        ),
+                        'parent' => $appeal->transferApplication,
+                        'new_values' => [
+                            'status' => TransferAppeal::STATUS_UNDER_REVIEW,
+                            'review_started_at' => $appeal->review_started_at,
+                            'reviewer_id' => $reviewer->id,
+                        ],
+                        'metadata' => [
+                            'reviewer_name' => $reviewer->name,
+                            'reviewer_email' => $reviewer->email,
+                        ],
+                        'user' => $reviewer,
+                    ]
+                );
+
+                return $appeal->fresh([
+                    'transferApplication',
+                    'reviewer',
+                ]);
+            }
+        );
     }
 
     public function returnForClarification(
@@ -189,37 +331,65 @@ class TransferAppealService
     ): TransferAppeal {
         $this->ensureUnderReview($appeal);
 
-        $appeal = DB::transaction(function () use (
-            $appeal,
-            $reviewer,
-            $clarificationRequest
-        ) {
-            $fromStatus = $appeal->status;
-
-            $appeal->update([
-                'status' => TransferAppeal::STATUS_RETURNED,
-                'returned_at' => now(),
-                'clarification_request' => $clarificationRequest,
-                'clarification_response' => null,
-                'reviewer_id' => $reviewer->id,
-                'updated_by' => $reviewer->id,
-            ]);
-
-            $this->recordAction(
+        $appeal = DB::transaction(
+            function () use (
                 $appeal,
-                'Returned for Clarification',
-                $fromStatus,
-                TransferAppeal::STATUS_RETURNED,
-                $clarificationRequest,
-                $reviewer
-            );
+                $reviewer,
+                $clarificationRequest
+            ): TransferAppeal {
+                $fromStatus = $appeal->status;
 
-            return $appeal->fresh();
-        });
+                $appeal->update([
+                    'status' => TransferAppeal::STATUS_RETURNED,
+                    'returned_at' => now(),
+                    'clarification_request' => $clarificationRequest,
+                    'clarification_response' => null,
+                    'reviewer_id' => $reviewer->id,
+                    'updated_by' => $reviewer->id,
+                ]);
+
+                $this->recordAction(
+                    $appeal,
+                    'Returned for Clarification',
+                    $fromStatus,
+                    TransferAppeal::STATUS_RETURNED,
+                    $clarificationRequest,
+                    $reviewer
+                );
+
+                $this->auditLogService->workflow(
+                    'transfer_appeal.returned_for_clarification',
+                    $appeal,
+                    $fromStatus,
+                    TransferAppeal::STATUS_RETURNED,
+                    [
+                        'description' => sprintf(
+                            'Transfer appeal %s was returned for clarification.',
+                            $appeal->appeal_number
+                        ),
+                        'parent' => $appeal->transferApplication,
+                        'new_values' => [
+                            'status' => TransferAppeal::STATUS_RETURNED,
+                            'returned_at' => $appeal->returned_at,
+                            'clarification_request' => $clarificationRequest,
+                        ],
+                        'user' => $reviewer,
+                    ]
+                );
+
+                return $appeal->fresh([
+                    'transferApplication',
+                    'principalProfile.user',
+                    'reviewer',
+                ]);
+            }
+        );
 
         $this->notifyPrincipal(
             $appeal,
-            new TransferAppealReturnedNotification($appeal)
+            new TransferAppealReturnedNotification(
+                $appeal
+            )
         );
 
         return $appeal;
@@ -237,37 +407,77 @@ class TransferAppealService
             ]);
         }
 
-        $appeal = DB::transaction(function () use (
-            $appeal,
-            $user,
-            $response,
-            $documents
-        ) {
-            $fromStatus = $appeal->status;
-
-            $appeal->update([
-                'status' => TransferAppeal::STATUS_RESUBMITTED,
-                'clarification_response' => $response,
-                'resubmitted_at' => now(),
-                'updated_by' => $user->id,
-            ]);
-
-            $this->storeDocuments($appeal, $documents, $user);
-
-            $this->recordAction(
+        $appeal = DB::transaction(
+            function () use (
                 $appeal,
-                'Clarification Submitted and Appeal Resubmitted',
-                $fromStatus,
-                TransferAppeal::STATUS_RESUBMITTED,
+                $user,
                 $response,
-                $user
-            );
+                $documents
+            ): TransferAppeal {
+                $fromStatus = $appeal->status;
 
-            return $appeal->fresh('documents');
-        });
+                $appeal->update([
+                    'status' => TransferAppeal::STATUS_RESUBMITTED,
+                    'clarification_response' => $response,
+                    'resubmitted_at' => now(),
+                    'updated_by' => $user->id,
+                ]);
+
+                $this->storeDocuments(
+                    $appeal,
+                    $documents,
+                    $user
+                );
+
+                $this->recordAction(
+                    $appeal,
+                    'Clarification Submitted and Appeal Resubmitted',
+                    $fromStatus,
+                    TransferAppeal::STATUS_RESUBMITTED,
+                    $response,
+                    $user
+                );
+
+                $this->auditLogService->workflow(
+                    'transfer_appeal.resubmitted',
+                    $appeal,
+                    $fromStatus,
+                    TransferAppeal::STATUS_RESUBMITTED,
+                    [
+                        'description' => sprintf(
+                            'Transfer appeal %s was resubmitted with clarification.',
+                            $appeal->appeal_number
+                        ),
+                        'parent' => $appeal->transferApplication,
+                        'new_values' => [
+                            'status' => TransferAppeal::STATUS_RESUBMITTED,
+                            'clarification_response' => $response,
+                            'resubmitted_at' => $appeal->resubmitted_at,
+                        ],
+                        'metadata' => [
+                            'uploaded_document_count' => count(
+                                array_filter(
+                                    $documents,
+                                    fn ($document): bool => $document instanceof UploadedFile
+                                )
+                            ),
+                        ],
+                        'user' => $user,
+                    ]
+                );
+
+                return $appeal->fresh([
+                    'documents',
+                    'transferApplication',
+                    'principalProfile.user',
+                ]);
+            }
+        );
 
         $this->notifyReviewers(
-            new TransferAppealResubmittedNotification($appeal)
+            new TransferAppealResubmittedNotification(
+                $appeal
+            )
         );
 
         return $appeal;
@@ -280,63 +490,138 @@ class TransferAppealService
     ): TransferAppeal {
         $this->ensureUnderReview($appeal);
 
-        $appeal = DB::transaction(function () use (
-            $appeal,
-            $reviewer,
-            $data
-        ) {
-            $fromStatus = $appeal->status;
-
-            /*
-             * Existing documents are preserved but unpublished. A revised
-             * document must later be generated as a new record/version.
-             */
-            $appeal->transferApplication
-                ->transferDocuments()
-                ->where('is_published', true)
-                ->update([
-                    'is_published' => false,
-                    'published_at' => null,
-                ]);
-
-            $appeal->update([
-                'status' => TransferAppeal::STATUS_APPROVED,
-                'decision_outcome' => TransferAppeal::DECISION_APPROVED,
-                'decision_remarks' => $data['decision_remarks'],
-                'rejection_reason' => null,
-                'revised_school_id' => $data['revised_school_id'] ?? null,
-                'revised_effective_date' => $data['revised_effective_date'] ?? null,
-                'revised_appointment_type' => $data['revised_appointment_type'] ?? null,
-                'revised_decision_reference' => $data['revised_decision_reference'],
-                'reviewer_id' => $reviewer->id,
-                'decided_at' => now(),
-                'updated_by' => $reviewer->id,
-            ]);
-
-            $this->recordAction(
+        $appeal = DB::transaction(
+            function () use (
                 $appeal,
-                'Appeal Approved',
-                $fromStatus,
-                TransferAppeal::STATUS_APPROVED,
-                $data['decision_remarks'],
                 $reviewer,
-                [
+                $data
+            ): TransferAppeal {
+                $fromStatus = $appeal->status;
+
+                /*
+                 * Existing published documents are preserved but unpublished.
+                 * A revised document must later be generated as a new version.
+                 */
+                $publishedDocuments = $appeal
+                    ->transferApplication
+                    ->transferDocuments()
+                    ->where('is_published', true)
+                    ->get();
+
+                $unpublishedDocumentIds = $publishedDocuments
+                    ->pluck('id')
+                    ->values()
+                    ->all();
+
+                $appeal
+                    ->transferApplication
+                    ->transferDocuments()
+                    ->where('is_published', true)
+                    ->update([
+                        'is_published' => false,
+                        'published_at' => null,
+                    ]);
+
+                $appeal->update([
+                    'status' => TransferAppeal::STATUS_APPROVED,
+                    'decision_outcome' => TransferAppeal::DECISION_APPROVED,
+                    'decision_remarks' => $data['decision_remarks'],
+                    'rejection_reason' => null,
                     'revised_school_id' => $data['revised_school_id'] ?? null,
                     'revised_effective_date' => $data['revised_effective_date'] ?? null,
                     'revised_appointment_type' => $data['revised_appointment_type'] ?? null,
                     'revised_decision_reference' => $data['revised_decision_reference'],
-                ]
-            );
+                    'reviewer_id' => $reviewer->id,
+                    'decided_at' => now(),
+                    'updated_by' => $reviewer->id,
+                ]);
 
-            return $appeal->fresh([
-                'revisedSchool',
-                'transferApplication',
-            ]);
-        });
+                $this->recordAction(
+                    $appeal,
+                    'Appeal Approved',
+                    $fromStatus,
+                    TransferAppeal::STATUS_APPROVED,
+                    $data['decision_remarks'],
+                    $reviewer,
+                    [
+                        'revised_school_id' => $data['revised_school_id'] ?? null,
+                        'revised_effective_date' => $data['revised_effective_date'] ?? null,
+                        'revised_appointment_type' => $data['revised_appointment_type'] ?? null,
+                        'revised_decision_reference' => $data['revised_decision_reference'],
+                    ]
+                );
+
+                $this->auditLogService->workflow(
+                    'transfer_appeal.approved',
+                    $appeal,
+                    $fromStatus,
+                    TransferAppeal::STATUS_APPROVED,
+                    [
+                        'description' => sprintf(
+                            'Transfer appeal %s was approved.',
+                            $appeal->appeal_number
+                        ),
+                        'parent' => $appeal->transferApplication,
+                        'new_values' => [
+                            'status' => TransferAppeal::STATUS_APPROVED,
+                            'decision_outcome' => TransferAppeal::DECISION_APPROVED,
+                            'decision_remarks' => $appeal->decision_remarks,
+                            'revised_school_id' => $appeal->revised_school_id,
+                            'revised_effective_date' => $appeal->revised_effective_date,
+                            'revised_appointment_type' => $appeal->revised_appointment_type,
+                            'revised_decision_reference' => $appeal->revised_decision_reference,
+                            'decided_at' => $appeal->decided_at,
+                        ],
+                        'metadata' => [
+                            'unpublished_document_ids' => $unpublishedDocumentIds,
+                            'revised_document_required' => true,
+                        ],
+                        'user' => $reviewer,
+                    ]
+                );
+
+                foreach ($publishedDocuments as $document) {
+                    $this->auditLogService->document(
+                        'transfer_document.unpublished_after_appeal_approval',
+                        $document,
+                        [
+                            'description' => sprintf(
+                                'Transfer document %s was unpublished because appeal %s was approved.',
+                                $document->id,
+                                $appeal->appeal_number
+                            ),
+                            'parent' => $appeal->transferApplication,
+                            'old_values' => [
+                                'is_published' => true,
+                                'published_at' => $document->published_at,
+                            ],
+                            'new_values' => [
+                                'is_published' => false,
+                                'published_at' => null,
+                            ],
+                            'metadata' => [
+                                'transfer_appeal_id' => $appeal->id,
+                                'appeal_number' => $appeal->appeal_number,
+                            ],
+                            'user' => $reviewer,
+                        ]
+                    );
+                }
+
+                return $appeal->fresh([
+                    'revisedSchool',
+                    'transferApplication',
+                    'principalProfile.user',
+                    'reviewer',
+                ]);
+            }
+        );
 
         $this->notifyPrincipal(
             $appeal,
-            new TransferAppealApprovedNotification($appeal)
+            new TransferAppealApprovedNotification(
+                $appeal
+            )
         );
 
         return $appeal;
@@ -349,38 +634,68 @@ class TransferAppealService
     ): TransferAppeal {
         $this->ensureUnderReview($appeal);
 
-        $appeal = DB::transaction(function () use (
-            $appeal,
-            $reviewer,
-            $data
-        ) {
-            $fromStatus = $appeal->status;
-
-            $appeal->update([
-                'status' => TransferAppeal::STATUS_REJECTED,
-                'decision_outcome' => TransferAppeal::DECISION_REJECTED,
-                'decision_remarks' => $data['decision_remarks'] ?? null,
-                'rejection_reason' => $data['rejection_reason'],
-                'reviewer_id' => $reviewer->id,
-                'decided_at' => now(),
-                'updated_by' => $reviewer->id,
-            ]);
-
-            $this->recordAction(
+        $appeal = DB::transaction(
+            function () use (
                 $appeal,
-                'Appeal Rejected',
-                $fromStatus,
-                TransferAppeal::STATUS_REJECTED,
-                $data['rejection_reason'],
-                $reviewer
-            );
+                $reviewer,
+                $data
+            ): TransferAppeal {
+                $fromStatus = $appeal->status;
 
-            return $appeal->fresh();
-        });
+                $appeal->update([
+                    'status' => TransferAppeal::STATUS_REJECTED,
+                    'decision_outcome' => TransferAppeal::DECISION_REJECTED,
+                    'decision_remarks' => $data['decision_remarks'] ?? null,
+                    'rejection_reason' => $data['rejection_reason'],
+                    'reviewer_id' => $reviewer->id,
+                    'decided_at' => now(),
+                    'updated_by' => $reviewer->id,
+                ]);
+
+                $this->recordAction(
+                    $appeal,
+                    'Appeal Rejected',
+                    $fromStatus,
+                    TransferAppeal::STATUS_REJECTED,
+                    $data['rejection_reason'],
+                    $reviewer
+                );
+
+                $this->auditLogService->workflow(
+                    'transfer_appeal.rejected',
+                    $appeal,
+                    $fromStatus,
+                    TransferAppeal::STATUS_REJECTED,
+                    [
+                        'description' => sprintf(
+                            'Transfer appeal %s was rejected.',
+                            $appeal->appeal_number
+                        ),
+                        'parent' => $appeal->transferApplication,
+                        'new_values' => [
+                            'status' => TransferAppeal::STATUS_REJECTED,
+                            'decision_outcome' => TransferAppeal::DECISION_REJECTED,
+                            'decision_remarks' => $appeal->decision_remarks,
+                            'rejection_reason' => $appeal->rejection_reason,
+                            'decided_at' => $appeal->decided_at,
+                        ],
+                        'user' => $reviewer,
+                    ]
+                );
+
+                return $appeal->fresh([
+                    'transferApplication',
+                    'principalProfile.user',
+                    'reviewer',
+                ]);
+            }
+        );
 
         $this->notifyPrincipal(
             $appeal,
-            new TransferAppealRejectedNotification($appeal)
+            new TransferAppealRejectedNotification(
+                $appeal
+            )
         );
 
         return $appeal;
@@ -397,43 +712,124 @@ class TransferAppealService
             ]);
         }
 
-        return DB::transaction(function () use (
-            $appeal,
-            $user,
-            $remarks
-        ) {
-            $fromStatus = $appeal->status;
-
-            $appeal->update([
-                'status' => TransferAppeal::STATUS_WITHDRAWN,
-                'withdrawn_at' => now(),
-                'updated_by' => $user->id,
-            ]);
-
-            $this->recordAction(
+        return DB::transaction(
+            function () use (
                 $appeal,
-                'Appeal Withdrawn',
-                $fromStatus,
-                TransferAppeal::STATUS_WITHDRAWN,
-                $remarks,
-                $user
-            );
+                $user,
+                $remarks
+            ): TransferAppeal {
+                $fromStatus = $appeal->status;
 
-            return $appeal->fresh();
-        });
+                $appeal->update([
+                    'status' => TransferAppeal::STATUS_WITHDRAWN,
+                    'withdrawn_at' => now(),
+                    'updated_by' => $user->id,
+                ]);
+
+                $this->recordAction(
+                    $appeal,
+                    'Appeal Withdrawn',
+                    $fromStatus,
+                    TransferAppeal::STATUS_WITHDRAWN,
+                    $remarks,
+                    $user
+                );
+
+                $this->auditLogService->workflow(
+                    'transfer_appeal.withdrawn',
+                    $appeal,
+                    $fromStatus,
+                    TransferAppeal::STATUS_WITHDRAWN,
+                    [
+                        'description' => sprintf(
+                            'Transfer appeal %s was withdrawn.',
+                            $appeal->appeal_number
+                        ),
+                        'parent' => $appeal->transferApplication,
+                        'new_values' => [
+                            'status' => TransferAppeal::STATUS_WITHDRAWN,
+                            'withdrawn_at' => $appeal->withdrawn_at,
+                        ],
+                        'metadata' => [
+                            'remarks' => $remarks,
+                        ],
+                        'user' => $user,
+                    ]
+                );
+
+                return $appeal->fresh([
+                    'transferApplication',
+                    'principalProfile.user',
+                ]);
+            }
+        );
     }
 
-    public function deleteDraft(TransferAppeal $appeal): void
-    {
+    public function deleteDraft(
+        TransferAppeal $appeal,
+        ?User $user = null
+    ): void {
         if (! $appeal->isDraft()) {
             throw ValidationException::withMessages([
                 'appeal' => 'Only Draft appeals may be deleted.',
             ]);
         }
 
-        DB::transaction(function () use ($appeal) {
+        DB::transaction(function () use (
+            $appeal,
+            $user
+        ): void {
+            $appeal->loadMissing([
+                'documents',
+                'transferApplication',
+            ]);
+
+            $documentMetadata = $appeal->documents
+                ->map(
+                    fn (
+                        TransferAppealDocument $document
+                    ): array => [
+                        'id' => $document->id,
+                        'document_name' => $document->document_name,
+                        'original_name' => $document->original_name,
+                        'mime_type' => $document->mime_type,
+                        'file_size' => $document->file_size,
+                    ]
+                )
+                ->values()
+                ->all();
+
+            $this->auditLogService->workflow(
+                'transfer_appeal.draft_deleted',
+                $appeal,
+                TransferAppeal::STATUS_DRAFT,
+                null,
+                [
+                    'description' => sprintf(
+                        'Transfer appeal %s draft was deleted.',
+                        $appeal->appeal_number
+                    ),
+                    'parent' => $appeal->transferApplication,
+                    'old_values' => [
+                        'appeal_number' => $appeal->appeal_number,
+                        'appeal_reason' => $appeal->appeal_reason,
+                        'appeal_details' => $appeal->appeal_details,
+                        'requested_outcome' => $appeal->requested_outcome,
+                        'status' => $appeal->status,
+                    ],
+                    'metadata' => [
+                        'documents' => $documentMetadata,
+                    ],
+                    'user' => $user,
+                ]
+            );
+
             foreach ($appeal->documents as $document) {
-                Storage::disk($document->disk)->delete($document->file_path);
+                Storage::disk(
+                    $document->disk
+                )->delete(
+                    $document->file_path
+                );
             }
 
             $appeal->delete();
@@ -441,10 +837,49 @@ class TransferAppealService
     }
 
     public function deleteDocument(
-        TransferAppealDocument $document
+        TransferAppealDocument $document,
+        ?User $user = null
     ): void {
-        DB::transaction(function () use ($document) {
-            Storage::disk($document->disk)->delete($document->file_path);
+        DB::transaction(function () use (
+            $document,
+            $user
+        ): void {
+            $document->loadMissing([
+                'transferAppeal.transferApplication',
+            ]);
+
+            $appeal = $document->transferAppeal;
+
+            $this->auditLogService->document(
+                'transfer_appeal.document_deleted',
+                $document,
+                [
+                    'description' => sprintf(
+                        'Supporting document %s was deleted from appeal %s.',
+                        $document->original_name,
+                        $appeal?->appeal_number ?? $document->transfer_appeal_id
+                    ),
+                    'parent' => $appeal?->transferApplication,
+                    'old_values' => [
+                        'document_name' => $document->document_name,
+                        'original_name' => $document->original_name,
+                        'mime_type' => $document->mime_type,
+                        'file_size' => $document->file_size,
+                    ],
+                    'metadata' => [
+                        'transfer_appeal_id' => $document->transfer_appeal_id,
+                        'appeal_number' => $appeal?->appeal_number,
+                    ],
+                    'user' => $user,
+                ]
+            );
+
+            Storage::disk(
+                $document->disk
+            )->delete(
+                $document->file_path
+            );
+
             $document->delete();
         });
     }
@@ -458,17 +893,22 @@ class TransferAppealService
             'transferDocuments',
         ]);
 
-        if (! in_array($application->status, [
-            'Approved',
-            'Rejected',
-            'Waitlisted',
-        ], true)) {
+        if (! in_array(
+            $application->status,
+            [
+                'Approved',
+                'Rejected',
+                'Waitlisted',
+            ],
+            true
+        )) {
             throw ValidationException::withMessages([
                 'transfer_application_id' => 'Only finalized transfer applications may be appealed.',
             ]);
         }
 
-        $publishedDocument = $application->transferDocuments
+        $publishedDocument = $application
+            ->transferDocuments
             ->where('is_published', true)
             ->sortByDesc('published_at')
             ->first();
@@ -479,7 +919,10 @@ class TransferAppealService
             ]);
         }
 
-        $deadlineDays = config('transfer-appeals.deadline_days', 30);
+        $deadlineDays = config(
+            'transfer-appeals.deadline_days',
+            30
+        );
 
         /** @var CarbonInterface|null $publishedAt */
         $publishedAt = $publishedDocument->published_at;
@@ -490,18 +933,32 @@ class TransferAppealService
             ]);
         }
 
-        if (now()->greaterThan($publishedAt->copy()->addDays($deadlineDays))) {
+        if (
+            now()->greaterThan(
+                $publishedAt
+                    ->copy()
+                    ->addDays($deadlineDays)
+            )
+        ) {
             throw ValidationException::withMessages([
                 'transfer_application_id' => 'The deadline for submitting an appeal has passed.',
             ]);
         }
 
         $activeAppealQuery = TransferAppeal::query()
-            ->where('transfer_application_id', $application->id)
-            ->whereIn('status', TransferAppeal::activeStatuses());
+            ->where(
+                'transfer_application_id',
+                $application->id
+            )
+            ->whereIn(
+                'status',
+                TransferAppeal::activeStatuses()
+            );
 
         if ($excludedAppealId) {
-            $activeAppealQuery->whereKeyNot($excludedAppealId);
+            $activeAppealQuery->whereKeyNot(
+                $excludedAppealId
+            );
         }
 
         if ($activeAppealQuery->exists()) {
@@ -511,9 +968,13 @@ class TransferAppealService
         }
     }
 
-    private function ensureUnderReview(TransferAppeal $appeal): void
-    {
-        if ($appeal->status !== TransferAppeal::STATUS_UNDER_REVIEW) {
+    private function ensureUnderReview(
+        TransferAppeal $appeal
+    ): void {
+        if (
+            $appeal->status
+            !== TransferAppeal::STATUS_UNDER_REVIEW
+        ) {
             throw ValidationException::withMessages([
                 'appeal' => 'This action is available only while the appeal is Under Review.',
             ]);
@@ -540,8 +1001,12 @@ class TransferAppealService
         array $documents,
         User $user
     ): void {
-        foreach ($documents as $index => $uploadedFile) {
-            if (! $uploadedFile instanceof UploadedFile) {
+        foreach (
+            $documents as $index => $uploadedFile
+        ) {
+            if (
+                ! $uploadedFile instanceof UploadedFile
+            ) {
                 continue;
             }
 
@@ -550,7 +1015,7 @@ class TransferAppealService
                 'local'
             );
 
-            TransferAppealDocument::create([
+            $document = TransferAppealDocument::query()->create([
                 'transfer_appeal_id' => $appeal->id,
                 'document_name' => 'Supporting Document '.($index + 1),
                 'original_name' => $uploadedFile->getClientOriginalName(),
@@ -560,6 +1025,30 @@ class TransferAppealService
                 'file_size' => $uploadedFile->getSize(),
                 'uploaded_by' => $user->id,
             ]);
+
+            $this->auditLogService->document(
+                'transfer_appeal.document_uploaded',
+                $document,
+                [
+                    'description' => sprintf(
+                        'Supporting document %s was uploaded for appeal %s.',
+                        $document->original_name,
+                        $appeal->appeal_number
+                    ),
+                    'parent' => $appeal->transferApplication,
+                    'new_values' => [
+                        'document_name' => $document->document_name,
+                        'original_name' => $document->original_name,
+                        'mime_type' => $document->mime_type,
+                        'file_size' => $document->file_size,
+                    ],
+                    'metadata' => [
+                        'transfer_appeal_id' => $appeal->id,
+                        'appeal_number' => $appeal->appeal_number,
+                    ],
+                    'user' => $user,
+                ]
+            );
         }
     }
 
@@ -572,7 +1061,7 @@ class TransferAppealService
         User $user,
         ?array $metadata = null
     ): void {
-        TransferAppealAction::create([
+        TransferAppealAction::query()->create([
             'transfer_appeal_id' => $appeal->id,
             'action' => $action,
             'from_status' => $fromStatus,
@@ -589,38 +1078,56 @@ class TransferAppealService
         object $notification
     ): void {
         try {
-            $user = $appeal->principalProfile?->user;
+            $user = $appeal
+                ->principalProfile
+                ?->user;
 
             if ($user) {
                 $user->notify($notification);
             }
         } catch (\Throwable $exception) {
-            Log::warning('Transfer appeal principal notification failed.', [
-                'appeal_id' => $appeal->id,
-                'exception' => $exception->getMessage(),
-            ]);
+            Log::warning(
+                'Transfer appeal principal notification failed.',
+                [
+                    'appeal_id' => $appeal->id,
+                    'exception' => $exception->getMessage(),
+                ]
+            );
         }
     }
 
-    private function notifyReviewers(object $notification): void
-    {
+    private function notifyReviewers(
+        object $notification
+    ): void {
         try {
             $reviewers = User::query()
-                ->whereHas('roles', function ($query) {
-                    $query->whereIn('name', [
-                        'Super Admin',
-                        'Provincial Director',
-                        'Transfer Board Member',
-                    ]);
-                })
+                ->whereHas(
+                    'roles',
+                    function ($query): void {
+                        $query->whereIn(
+                            'name',
+                            [
+                                'Super Admin',
+                                'Provincial Director',
+                                'Transfer Board Member',
+                            ]
+                        );
+                    }
+                )
                 ->where('is_active', true)
                 ->get();
 
-            Notification::send($reviewers, $notification);
+            Notification::send(
+                $reviewers,
+                $notification
+            );
         } catch (\Throwable $exception) {
-            Log::warning('Transfer appeal reviewer notification failed.', [
-                'exception' => $exception->getMessage(),
-            ]);
+            Log::warning(
+                'Transfer appeal reviewer notification failed.',
+                [
+                    'exception' => $exception->getMessage(),
+                ]
+            );
         }
     }
 }

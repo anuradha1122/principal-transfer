@@ -9,8 +9,8 @@ use App\Models\TransferApplication;
 use App\Models\TransferApplicationAction;
 use App\Models\TransferCycle;
 use App\Models\User;
-use App\Models\Zone;
 use App\Models\ZonalReview;
+use App\Models\Zone;
 use App\Notifications\TransferApplicationZonalApprovedNotification;
 use App\Notifications\TransferApplicationZonalRejectedNotification;
 use App\Notifications\TransferApplicationZonalReviewStartedNotification;
@@ -147,8 +147,7 @@ class ZonalTransferReviewTest extends TestCase
 
         $this->assertDatabaseHas('transfer_applications', [
             'id' => $application->id,
-            'status' =>
-                TransferApplication::STATUS_ZONAL_REVIEW,
+            'status' => TransferApplication::STATUS_ZONAL_REVIEW,
         ]);
 
         $this->assertDatabaseHas('zonal_reviews', [
@@ -161,12 +160,9 @@ class ZonalTransferReviewTest extends TestCase
             'transfer_application_actions',
             [
                 'transfer_application_id' => $application->id,
-                'action' =>
-                    TransferApplicationAction::ACTION_ZONAL_REVIEW_STARTED,
-                'from_status' =>
-                    TransferApplication::STATUS_SUBMITTED,
-                'to_status' =>
-                    TransferApplication::STATUS_ZONAL_REVIEW,
+                'action' => TransferApplicationAction::ACTION_ZONAL_REVIEW_STARTED,
+                'from_status' => TransferApplication::STATUS_SUBMITTED,
+                'to_status' => TransferApplication::STATUS_ZONAL_REVIEW,
                 'acted_by' => $this->zonalDirector->id,
             ]
         );
@@ -220,16 +216,14 @@ class ZonalTransferReviewTest extends TestCase
                 ),
                 [
                     'recommendation' => 'Recommended',
-                    'remarks' =>
-                        'The application meets Zonal requirements.',
+                    'remarks' => 'The application meets Zonal requirements.',
                 ]
             )
             ->assertRedirect();
 
         $this->assertDatabaseHas('transfer_applications', [
             'id' => $application->id,
-            'status' =>
-                TransferApplication::STATUS_ZONAL_APPROVED,
+            'status' => TransferApplication::STATUS_ZONAL_APPROVED,
         ]);
 
         $this->assertDatabaseHas('zonal_reviews', [
@@ -243,10 +237,8 @@ class ZonalTransferReviewTest extends TestCase
             'transfer_application_actions',
             [
                 'transfer_application_id' => $application->id,
-                'action' =>
-                    TransferApplicationAction::ACTION_ZONAL_APPROVED,
-                'to_status' =>
-                    TransferApplication::STATUS_ZONAL_APPROVED,
+                'action' => TransferApplicationAction::ACTION_ZONAL_APPROVED,
+                'to_status' => TransferApplication::STATUS_ZONAL_APPROVED,
             ]
         );
 
@@ -286,8 +278,7 @@ class ZonalTransferReviewTest extends TestCase
 
         $this->assertDatabaseHas('transfer_applications', [
             'id' => $application->id,
-            'status' =>
-                TransferApplication::STATUS_ZONAL_REVIEW,
+            'status' => TransferApplication::STATUS_ZONAL_REVIEW,
         ]);
     }
 
@@ -317,16 +308,14 @@ class ZonalTransferReviewTest extends TestCase
                 [
                     'recommendation' => 'Not Recommended',
                     'remarks' => 'Reviewed by the Zone.',
-                    'rejection_reason' =>
-                        'The minimum service requirement was not sufficiently supported.',
+                    'rejection_reason' => 'The minimum service requirement was not sufficiently supported.',
                 ]
             )
             ->assertRedirect();
 
         $this->assertDatabaseHas('transfer_applications', [
             'id' => $application->id,
-            'status' =>
-                TransferApplication::STATUS_ZONAL_REJECTED,
+            'status' => TransferApplication::STATUS_ZONAL_REJECTED,
         ]);
 
         $this->assertDatabaseHas('zonal_reviews', [
@@ -360,8 +349,7 @@ class ZonalTransferReviewTest extends TestCase
 
         $this->assertDatabaseHas('transfer_applications', [
             'id' => $application->id,
-            'status' =>
-                TransferApplication::STATUS_SUBMITTED,
+            'status' => TransferApplication::STATUS_SUBMITTED,
         ]);
     }
 
@@ -441,35 +429,29 @@ class ZonalTransferReviewTest extends TestCase
             'current_school_id' => $school->id,
             'origin_zone_id' => $zone->id,
 
-            'principal_name' =>
-                $profile->full_name
+            'principal_name' => $profile->full_name
                 ?? $this->principalUser->name,
 
-            'nic' =>
-                $profile->nic
+            'nic' => $profile->nic
                 ?? '901234567V',
 
-            'employee_number' =>
-                $profile->employee_number
+            'employee_number' => $profile->employee_number
                 ?? 'EMP0001',
 
             'current_designation' => 'Principal',
 
-            'service_grade' =>
-                $profile->service_grade
+            'service_grade' => $profile->service_grade
                 ?? 'SLPS II',
 
-            'current_appointment_start_date' =>
-                now()
-                    ->subYears(5)
-                    ->toDateString(),
+            'current_appointment_start_date' => now()
+                ->subYears(5)
+                ->toDateString(),
 
             'current_school_service_months' => 60,
 
             'transfer_reason' => 'Long Service',
 
-            'reason_details' =>
-                'Application created for Zonal workflow testing.',
+            'reason_details' => 'Application created for Zonal workflow testing.',
 
             'has_medical_reason' => false,
 

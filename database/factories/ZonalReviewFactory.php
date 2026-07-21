@@ -4,8 +4,8 @@ namespace Database\Factories;
 
 use App\Models\TransferApplication;
 use App\Models\User;
-use App\Models\Zone;
 use App\Models\ZonalReview;
+use App\Models\Zone;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -18,8 +18,7 @@ class ZonalReviewFactory extends Factory
     public function definition(): array
     {
         return [
-            'transfer_application_id' =>
-                TransferApplication::factory(),
+            'transfer_application_id' => TransferApplication::factory(),
 
             'zone_id' => Zone::factory(),
 

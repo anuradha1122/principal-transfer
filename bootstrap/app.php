@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\AttachAuditContext;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -24,6 +25,7 @@ return Application::configure(
                 append: [
                     HandleInertiaRequests::class,
                     AddLinkHeadersForPreloadedAssets::class,
+                    AttachAuditContext::class,
                 ]
             );
 

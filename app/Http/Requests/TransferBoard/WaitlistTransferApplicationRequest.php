@@ -41,11 +41,9 @@ class WaitlistTransferApplicationRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'decision_reference.required' =>
-                'The official decision reference is required.',
+            'decision_reference.required' => 'The official decision reference is required.',
 
-            'waitlist_reason.required' =>
-                'A waitlist reason is required.',
+            'waitlist_reason.required' => 'A waitlist reason is required.',
         ];
     }
 }

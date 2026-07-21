@@ -9,6 +9,10 @@ use Illuminate\Support\Str;
 
 class TransferApplicationPdfService
 {
+    public function __construct(
+        private readonly AuditLogService $auditLogService
+    ) {}
+
     public function generate(
         TransferApplication $application
     ): string {
@@ -19,6 +23,10 @@ class TransferApplicationPdfService
             'currentSchool.division.zone',
             'preferences.school.division.zone',
         ]);
+
+        $oldPath = $application->submitted_pdf_path;
+        $oldGeneratedAt =
+            $application->submitted_pdf_generated_at;
 
         $directory =
             'private/transfer-applications/'
@@ -51,6 +59,45 @@ class TransferApplicationPdfService
             'submitted_pdf_path' => $path,
             'submitted_pdf_generated_at' => now(),
         ])->saveQuietly();
+
+        $event = $oldPath
+            ? 'transfer_application.submitted_pdf_regenerated'
+            : 'transfer_application.submitted_pdf_generated';
+
+        $description = $oldPath
+            ? sprintf(
+                'Submitted application PDF for %s was regenerated.',
+                $application->application_number
+                    ?? $application->id
+            )
+            : sprintf(
+                'Submitted application PDF for %s was generated.',
+                $application->application_number
+                    ?? $application->id
+            );
+
+        $this->auditLogService->document(
+            $event,
+            $application,
+            [
+                'description' => $description,
+                'old_values' => [
+                    'submitted_pdf_generated_at' => $oldGeneratedAt,
+                ],
+                'new_values' => [
+                    'submitted_pdf_generated_at' => $application
+                        ->submitted_pdf_generated_at,
+                    'file_name' => $fileName,
+                ],
+                'metadata' => [
+                    'transfer_cycle_id' => $application->transfer_cycle_id,
+                    'application_number' => $application->application_number,
+                    'storage_disk' => 'local',
+                    'regenerated' => (bool) $oldPath,
+                ],
+                'user' => auth()->user(),
+            ]
+        );
 
         return $path;
     }

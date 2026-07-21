@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ProvincialReview extends Model
 {
-    use HasFactory;
+    use Auditable, HasFactory;
 
     public const DECISION_PENDING =
         'Pending';
@@ -79,5 +80,10 @@ class ProvincialReview extends Model
     {
         return $this->decision
             === self::DECISION_RETURNED_TO_ZONE;
+    }
+
+    public function auditParent(): ?Model
+    {
+        return $this->transferApplication;
     }
 }

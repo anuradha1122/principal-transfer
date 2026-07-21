@@ -30,14 +30,11 @@ class UploadSignedTransferDocumentRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'signed_document.required' =>
-                'Please select a signed PDF document.',
+            'signed_document.required' => 'Please select a signed PDF document.',
 
-            'signed_document.mimes' =>
-                'The signed document must be a PDF file.',
+            'signed_document.mimes' => 'The signed document must be a PDF file.',
 
-            'signed_document.max' =>
-                'The signed document may not exceed 10 MB.',
+            'signed_document.max' => 'The signed document may not exceed 10 MB.',
         ];
     }
 }

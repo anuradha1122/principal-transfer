@@ -14,14 +14,11 @@ class ProvincialReviewFactory extends Factory
     public function definition(): array
     {
         return [
-            'transfer_application_id' =>
-                TransferApplication::factory(),
+            'transfer_application_id' => TransferApplication::factory(),
 
-            'reviewer_id' =>
-                User::factory(),
+            'reviewer_id' => User::factory(),
 
-            'decision' =>
-                ProvincialReview::DECISION_PENDING,
+            'decision' => ProvincialReview::DECISION_PENDING,
 
             'recommendation' => null,
 
@@ -31,8 +28,7 @@ class ProvincialReviewFactory extends Factory
 
             'return_reason' => null,
 
-            'review_started_at' =>
-                now()->subHour(),
+            'review_started_at' => now()->subHour(),
 
             'reviewed_at' => null,
         ];
@@ -42,11 +38,9 @@ class ProvincialReviewFactory extends Factory
     {
         return $this->state(
             fn (): array => [
-                'decision' =>
-                    ProvincialReview::DECISION_APPROVED,
+                'decision' => ProvincialReview::DECISION_APPROVED,
 
-                'recommendation' =>
-                    'Recommended for Transfer Board consideration.',
+                'recommendation' => 'Recommended for Transfer Board consideration.',
 
                 'reviewed_at' => now(),
             ]
@@ -57,11 +51,9 @@ class ProvincialReviewFactory extends Factory
     {
         return $this->state(
             fn (): array => [
-                'decision' =>
-                    ProvincialReview::DECISION_REJECTED,
+                'decision' => ProvincialReview::DECISION_REJECTED,
 
-                'rejection_reason' =>
-                    'Application did not satisfy Provincial requirements.',
+                'rejection_reason' => 'Application did not satisfy Provincial requirements.',
 
                 'reviewed_at' => now(),
             ]

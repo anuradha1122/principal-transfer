@@ -41,11 +41,9 @@ class RejectTransferApplicationRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'decision_reference.required' =>
-                'The official decision reference is required.',
+            'decision_reference.required' => 'The official decision reference is required.',
 
-            'rejection_reason.required' =>
-                'A final rejection reason is required.',
+            'rejection_reason.required' => 'A final rejection reason is required.',
         ];
     }
 }

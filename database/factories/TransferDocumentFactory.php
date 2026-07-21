@@ -15,46 +15,33 @@ class TransferDocumentFactory extends Factory
     public function definition(): array
     {
         return [
-            'transfer_application_id' =>
-                TransferApplication::factory(),
+            'transfer_application_id' => TransferApplication::factory(),
 
-            'document_type' =>
-                TransferDocument::TYPE_DECISION_LETTER,
+            'document_type' => TransferDocument::TYPE_DECISION_LETTER,
 
-            'document_number' =>
-                fake()->unique()->bothify(
-                    'DEC/2026/####'
-                ),
+            'document_number' => fake()->unique()->bothify(
+                'DEC/2026/####'
+            ),
 
-            'issued_date' =>
-                now()->toDateString(),
+            'issued_date' => now()->toDateString(),
 
-            'effective_date' =>
-                null,
+            'effective_date' => null,
 
-            'generated_file_path' =>
-                null,
+            'generated_file_path' => null,
 
-            'signed_file_path' =>
-                null,
+            'signed_file_path' => null,
 
-            'issued_by' =>
-                User::factory(),
+            'issued_by' => User::factory(),
 
-            'generated_at' =>
-                now(),
+            'generated_at' => now(),
 
-            'is_published' =>
-                false,
+            'is_published' => false,
 
-            'published_at' =>
-                null,
+            'published_at' => null,
 
-            'published_by' =>
-                null,
+            'published_by' => null,
 
-            'remarks' =>
-                fake()->optional()->sentence(),
+            'remarks' => fake()->optional()->sentence(),
         ];
     }
 
@@ -62,14 +49,11 @@ class TransferDocumentFactory extends Factory
     {
         return $this->state(
             fn (): array => [
-                'is_published' =>
-                    true,
+                'is_published' => true,
 
-                'published_at' =>
-                    now(),
+                'published_at' => now(),
 
-                'published_by' =>
-                    User::factory(),
+                'published_by' => User::factory(),
             ]
         );
     }

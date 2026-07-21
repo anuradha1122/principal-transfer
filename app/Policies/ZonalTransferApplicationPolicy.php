@@ -90,7 +90,7 @@ class ZonalTransferApplicationPolicy
         User $user,
         TransferApplication $transferApplication
     ): bool {
-        if (!$user->hasRole('Zonal Director')) {
+        if (! $user->hasRole('Zonal Director')) {
             return false;
         }
 

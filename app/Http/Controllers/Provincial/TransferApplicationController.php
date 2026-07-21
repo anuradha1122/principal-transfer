@@ -19,8 +19,7 @@ class TransferApplicationController extends Controller
 {
     public function __construct(
         private readonly ProvincialTransferReviewService $reviewService
-    ) {
-    }
+    ) {}
 
     public function index(
         Request $request
@@ -103,12 +102,11 @@ class TransferApplicationController extends Controller
                                     )
                                     ->orWhereHas(
                                         'currentSchool',
-                                        fn ($schoolQuery) =>
-                                            $schoolQuery->where(
-                                                'name',
-                                                'like',
-                                                "%{$search}%"
-                                            )
+                                        fn ($schoolQuery) => $schoolQuery->where(
+                                            'name',
+                                            'like',
+                                            "%{$search}%"
+                                        )
                                     );
                             }
                         );
@@ -116,28 +114,25 @@ class TransferApplicationController extends Controller
                 )
                 ->when(
                     $filters['status'] ?? null,
-                    fn ($query, string $status) =>
-                        $query->where(
-                            'status',
-                            $status
-                        )
+                    fn ($query, string $status) => $query->where(
+                        'status',
+                        $status
+                    )
                 )
                 ->when(
                     $filters['zone_id'] ?? null,
-                    fn ($query, int $zoneId) =>
-                        $query->where(
-                            'origin_zone_id',
-                            $zoneId
-                        )
+                    fn ($query, int $zoneId) => $query->where(
+                        'origin_zone_id',
+                        $zoneId
+                    )
                 )
                 ->when(
                     $filters['transfer_cycle_id']
                         ?? null,
-                    fn ($query, int $cycleId) =>
-                        $query->where(
-                            'transfer_cycle_id',
-                            $cycleId
-                        )
+                    fn ($query, int $cycleId) => $query->where(
+                        'transfer_cycle_id',
+                        $cycleId
+                    )
                 )
                 ->latest('submitted_at')
                 ->paginate(15)
@@ -146,11 +141,9 @@ class TransferApplicationController extends Controller
         return Inertia::render(
             'Provincial/TransferApplications/Index',
             [
-                'applications' =>
-                    $applications,
+                'applications' => $applications,
 
-                'filters' =>
-                    $filters,
+                'filters' => $filters,
 
                 'statuses' => [
                     TransferApplication::STATUS_ZONAL_APPROVED,
@@ -160,18 +153,17 @@ class TransferApplicationController extends Controller
                     TransferApplication::STATUS_RETURNED_TO_ZONE,
                 ],
 
-                'zones' =>
-                    Zone::query()
-                        ->where(
-                            'is_active',
-                            true
-                        )
-                        ->orderBy('name')
-                        ->get([
-                            'id',
-                            'name',
-                            'code',
-                        ]),
+                'zones' => Zone::query()
+                    ->where(
+                        'is_active',
+                        true
+                    )
+                    ->orderBy('name')
+                    ->get([
+                        'id',
+                        'name',
+                        'code',
+                    ]),
             ]
         );
     }
@@ -226,18 +218,15 @@ class TransferApplicationController extends Controller
         return Inertia::render(
             'Provincial/TransferApplications/Show',
             [
-                'application' =>
-                    $transferApplication,
+                'application' => $transferApplication,
 
                 'can' => [
-                    'start_review' =>
-                        $transferApplication
-                            ->status
+                    'start_review' => $transferApplication
+                        ->status
                         === TransferApplication::STATUS_ZONAL_APPROVED,
 
-                    'decide' =>
-                        $transferApplication
-                            ->status
+                    'decide' => $transferApplication
+                        ->status
                         === TransferApplication::STATUS_PROVINCIAL_REVIEW,
                 ],
             ]

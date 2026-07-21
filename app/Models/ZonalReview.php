@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -9,9 +10,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ZonalReview extends Model
 {
-    use HasFactory;
+    use Auditable, HasFactory;
 
     public const DECISION_APPROVED = 'approved';
+
     public const DECISION_REJECTED = 'rejected';
 
     protected $fillable = [
@@ -62,5 +64,10 @@ class ZonalReview extends Model
     public function scopeRejected(Builder $query): Builder
     {
         return $query->where('decision', self::DECISION_REJECTED);
+    }
+
+    public function auditParent(): ?Model
+    {
+        return $this->transferApplication;
     }
 }

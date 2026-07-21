@@ -17,6 +17,7 @@ class TransferAppealTest extends TestCase
     use RefreshDatabase;
 
     private User $principal;
+
     private PrincipalProfile $profile;
 
     protected function setUp(): void

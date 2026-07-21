@@ -21,8 +21,7 @@ class TransferDocumentController extends Controller
 {
     public function __construct(
         private readonly TransferDocumentService $documentService
-    ) {
-    }
+    ) {}
 
     public function index(
         Request $request
@@ -117,11 +116,10 @@ class TransferDocumentController extends Controller
                     fn (
                         Builder $query,
                         string $type
-                    ): Builder =>
-                        $query->where(
-                            'document_type',
-                            $type
-                        )
+                    ): Builder => $query->where(
+                        'document_type',
+                        $type
+                    )
                 )
                 ->when(
                     ($filters['publication_status']
@@ -129,11 +127,10 @@ class TransferDocumentController extends Controller
                     === 'published',
                     fn (
                         Builder $query
-                    ): Builder =>
-                        $query->where(
-                            'is_published',
-                            true
-                        )
+                    ): Builder => $query->where(
+                        'is_published',
+                        true
+                    )
                 )
                 ->when(
                     ($filters['publication_status']
@@ -141,11 +138,10 @@ class TransferDocumentController extends Controller
                     === 'unpublished',
                     fn (
                         Builder $query
-                    ): Builder =>
-                        $query->where(
-                            'is_published',
-                            false
-                        )
+                    ): Builder => $query->where(
+                        'is_published',
+                        false
+                    )
                 )
                 ->latest('issued_date')
                 ->latest('id')
@@ -155,14 +151,11 @@ class TransferDocumentController extends Controller
         return Inertia::render(
             'Admin/TransferDocuments/Index',
             [
-                'documents' =>
-                    $documents,
+                'documents' => $documents,
 
-                'filters' =>
-                    $filters,
+                'filters' => $filters,
 
-                'documentTypes' =>
-                    TransferDocument::TYPES,
+                'documentTypes' => TransferDocument::TYPES,
             ]
         );
     }
@@ -199,14 +192,11 @@ class TransferDocumentController extends Controller
         return Inertia::render(
             'Admin/TransferDocuments/Create',
             [
-                'applications' =>
-                    $applications,
+                'applications' => $applications,
 
-                'documentTypes' =>
-                    TransferDocument::TYPES,
+                'documentTypes' => TransferDocument::TYPES,
 
-                'defaultIssuedDate' =>
-                    now()->toDateString(),
+                'defaultIssuedDate' => now()->toDateString(),
             ]
         );
     }
@@ -265,8 +255,7 @@ class TransferDocumentController extends Controller
         return Inertia::render(
             'Admin/TransferDocuments/Show',
             [
-                'document' =>
-                    $transferDocument,
+                'document' => $transferDocument,
             ]
         );
     }
@@ -375,8 +364,7 @@ class TransferDocumentController extends Controller
                 $transferDocument
             ),
             [
-                'Content-Type' =>
-                    'application/pdf',
+                'Content-Type' => 'application/pdf',
             ]
         );
     }

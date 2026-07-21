@@ -26,16 +26,13 @@ class AppointmentLetterPdfService
         $pdf = Pdf::loadView(
             'pdf.transfers.appointment-letter',
             [
-                'document' =>
-                    $document,
+                'document' => $document,
 
-                'application' =>
-                    $document->transferApplication,
+                'application' => $document->transferApplication,
 
-                'decision' =>
-                    $document
-                        ->transferApplication
-                        ->transferBoardDecision,
+                'decision' => $document
+                    ->transferApplication
+                    ->transferBoardDecision,
             ]
         )->setPaper(
             'a4',

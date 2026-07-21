@@ -49,10 +49,8 @@ class RejectZonalReviewRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'rejection_reason.required' =>
-                'A rejection reason is required.',
-            'rejection_reason.min' =>
-                'The rejection reason must contain at least 10 characters.',
+            'rejection_reason.required' => 'A rejection reason is required.',
+            'rejection_reason.min' => 'The rejection reason must contain at least 10 characters.',
         ];
     }
 }

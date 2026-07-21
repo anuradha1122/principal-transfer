@@ -15,6 +15,10 @@ use Illuminate\Validation\ValidationException;
 
 class ProvincialTransferReviewService
 {
+    public function __construct(
+        private readonly AuditLogService $auditLogService
+    ) {}
+
     public function startReview(
         TransferApplication $application,
         User $reviewer
@@ -24,8 +28,7 @@ class ProvincialTransferReviewService
                 ->canEnterProvincialReview()
         ) {
             throw ValidationException::withMessages([
-                'status' =>
-                    'Only Zonal-approved applications can enter Provincial review.',
+                'status' => 'Only Zonal-approved applications can enter Provincial review.',
             ]);
         }
 
@@ -34,24 +37,19 @@ class ProvincialTransferReviewService
                 $application,
                 $reviewer
             ): TransferApplication {
-                $fromStatus =
-                    $application->status;
+                $fromStatus = $application->status;
 
                 $review = ProvincialReview::query()
                     ->firstOrCreate(
                         [
-                            'transfer_application_id' =>
-                                $application->id,
+                            'transfer_application_id' => $application->id,
                         ],
                         [
-                            'reviewer_id' =>
-                                $reviewer->id,
+                            'reviewer_id' => $reviewer->id,
 
-                            'decision' =>
-                                ProvincialReview::DECISION_PENDING,
+                            'decision' => ProvincialReview::DECISION_PENDING,
 
-                            'review_started_at' =>
-                                now(),
+                            'review_started_at' => now(),
                         ]
                     );
 
@@ -60,38 +58,56 @@ class ProvincialTransferReviewService
                     !== ProvincialReview::DECISION_PENDING
                 ) {
                     throw ValidationException::withMessages([
-                        'status' =>
-                            'This application already has a completed Provincial decision.',
+                        'status' => 'This application already has a completed Provincial decision.',
                     ]);
                 }
 
                 $review->update([
-                    'reviewer_id' =>
-                        $reviewer->id,
+                    'reviewer_id' => $reviewer->id,
 
-                    'review_started_at' =>
-                        $review->review_started_at
+                    'review_started_at' => $review->review_started_at
                         ?? now(),
                 ]);
 
                 $application->update([
-                    'status' =>
-                        TransferApplication::STATUS_PROVINCIAL_REVIEW,
+                    'status' => TransferApplication::STATUS_PROVINCIAL_REVIEW,
 
-                    'updated_by' =>
-                        $reviewer->id,
+                    'updated_by' => $reviewer->id,
                 ]);
 
                 $this->recordAction(
                     application: $application,
                     actor: $reviewer,
-                    action:
-                        TransferApplicationAction::ACTION_PROVINCIAL_REVIEW_STARTED,
+                    action: TransferApplicationAction::ACTION_PROVINCIAL_REVIEW_STARTED,
                     fromStatus: $fromStatus,
-                    toStatus:
-                        TransferApplication::STATUS_PROVINCIAL_REVIEW,
-                    remarks:
-                        'Provincial review started.'
+                    toStatus: TransferApplication::STATUS_PROVINCIAL_REVIEW,
+                    remarks: 'Provincial review started.'
+                );
+
+                $this->auditLogService->workflow(
+                    'transfer_application.provincial_review_started',
+                    $application,
+                    $fromStatus,
+                    TransferApplication::STATUS_PROVINCIAL_REVIEW,
+                    [
+                        'description' => sprintf(
+                            'Provincial review started for transfer application %s.',
+                            $application->application_number
+                                ?? $application->id
+                        ),
+                        'new_values' => [
+                            'status' => TransferApplication::STATUS_PROVINCIAL_REVIEW,
+                            'reviewer_id' => $reviewer->id,
+                            'review_started_at' => $review->review_started_at,
+                            'decision' => $review->decision,
+                        ],
+                        'metadata' => [
+                            'provincial_review_id' => $review->id,
+                            'reviewer_name' => $reviewer->name,
+                            'reviewer_email' => $reviewer->email,
+                        ],
+                        'user' => $reviewer,
+                    ]
                 );
 
                 $this->notifyPrincipal(
@@ -101,7 +117,13 @@ class ProvincialTransferReviewService
                     )
                 );
 
-                return $application->fresh();
+                return $application->fresh([
+                    'principalProfile.user',
+                    'transferCycle',
+                    'originZone',
+                    'provincialReview.reviewer',
+                    'actions.actor',
+                ]);
             }
         );
     }
@@ -121,8 +143,7 @@ class ProvincialTransferReviewService
                 $reviewer,
                 $data
             ): TransferApplication {
-                $fromStatus =
-                    $application->status;
+                $fromStatus = $application->status;
 
                 $review = ProvincialReview::query()
                     ->where(
@@ -131,48 +152,77 @@ class ProvincialTransferReviewService
                     )
                     ->firstOrFail();
 
+                $oldReviewValues = [
+                    'reviewer_id' => $review->reviewer_id,
+                    'decision' => $review->decision,
+                    'recommendation' => $review->recommendation,
+                    'remarks' => $review->remarks,
+                    'rejection_reason' => $review->rejection_reason,
+                    'return_reason' => $review->return_reason,
+                    'reviewed_at' => $review->reviewed_at,
+                ];
+
                 $review->update([
-                    'reviewer_id' =>
-                        $reviewer->id,
+                    'reviewer_id' => $reviewer->id,
 
-                    'decision' =>
-                        ProvincialReview::DECISION_APPROVED,
+                    'decision' => ProvincialReview::DECISION_APPROVED,
 
-                    'recommendation' =>
-                        $data['recommendation'],
+                    'recommendation' => $data['recommendation'],
 
-                    'remarks' =>
-                        $data['remarks'] ?? null,
+                    'remarks' => $data['remarks'] ?? null,
 
-                    'rejection_reason' =>
-                        null,
+                    'rejection_reason' => null,
 
-                    'return_reason' =>
-                        null,
+                    'return_reason' => null,
 
-                    'reviewed_at' =>
-                        now(),
+                    'reviewed_at' => now(),
                 ]);
 
                 $application->update([
-                    'status' =>
-                        TransferApplication::STATUS_PROVINCIAL_APPROVED,
+                    'status' => TransferApplication::STATUS_PROVINCIAL_APPROVED,
 
-                    'updated_by' =>
-                        $reviewer->id,
+                    'updated_by' => $reviewer->id,
                 ]);
 
                 $this->recordAction(
                     application: $application,
                     actor: $reviewer,
-                    action:
-                        TransferApplicationAction::ACTION_PROVINCIAL_APPROVED,
+                    action: TransferApplicationAction::ACTION_PROVINCIAL_APPROVED,
                     fromStatus: $fromStatus,
-                    toStatus:
-                        TransferApplication::STATUS_PROVINCIAL_APPROVED,
-                    remarks:
-                        $data['remarks']
+                    toStatus: TransferApplication::STATUS_PROVINCIAL_APPROVED,
+                    remarks: $data['remarks']
                         ?? $data['recommendation']
+                );
+
+                $this->auditLogService->workflow(
+                    'transfer_application.provincial_approved',
+                    $application,
+                    $fromStatus,
+                    TransferApplication::STATUS_PROVINCIAL_APPROVED,
+                    [
+                        'description' => sprintf(
+                            'Transfer application %s was approved at Provincial level.',
+                            $application->application_number
+                                ?? $application->id
+                        ),
+                        'old_values' => $oldReviewValues,
+                        'new_values' => [
+                            'status' => TransferApplication::STATUS_PROVINCIAL_APPROVED,
+                            'reviewer_id' => $reviewer->id,
+                            'decision' => $review->decision,
+                            'recommendation' => $review->recommendation,
+                            'remarks' => $review->remarks,
+                            'rejection_reason' => $review->rejection_reason,
+                            'return_reason' => $review->return_reason,
+                            'reviewed_at' => $review->reviewed_at,
+                        ],
+                        'metadata' => [
+                            'provincial_review_id' => $review->id,
+                            'reviewer_name' => $reviewer->name,
+                            'reviewer_email' => $reviewer->email,
+                        ],
+                        'user' => $reviewer,
+                    ]
                 );
 
                 $this->notifyPrincipal(
@@ -182,7 +232,13 @@ class ProvincialTransferReviewService
                     )
                 );
 
-                return $application->fresh();
+                return $application->fresh([
+                    'principalProfile.user',
+                    'transferCycle',
+                    'originZone',
+                    'provincialReview.reviewer',
+                    'actions.actor',
+                ]);
             }
         );
     }
@@ -202,8 +258,7 @@ class ProvincialTransferReviewService
                 $reviewer,
                 $data
             ): TransferApplication {
-                $fromStatus =
-                    $application->status;
+                $fromStatus = $application->status;
 
                 $review = ProvincialReview::query()
                     ->where(
@@ -212,48 +267,77 @@ class ProvincialTransferReviewService
                     )
                     ->firstOrFail();
 
+                $oldReviewValues = [
+                    'reviewer_id' => $review->reviewer_id,
+                    'decision' => $review->decision,
+                    'recommendation' => $review->recommendation,
+                    'remarks' => $review->remarks,
+                    'rejection_reason' => $review->rejection_reason,
+                    'return_reason' => $review->return_reason,
+                    'reviewed_at' => $review->reviewed_at,
+                ];
+
                 $review->update([
-                    'reviewer_id' =>
-                        $reviewer->id,
+                    'reviewer_id' => $reviewer->id,
 
-                    'decision' =>
-                        ProvincialReview::DECISION_REJECTED,
+                    'decision' => ProvincialReview::DECISION_REJECTED,
 
-                    'recommendation' =>
-                        $data['recommendation']
+                    'recommendation' => $data['recommendation']
                         ?? null,
 
-                    'remarks' =>
-                        $data['remarks'] ?? null,
+                    'remarks' => $data['remarks'] ?? null,
 
-                    'rejection_reason' =>
-                        $data['rejection_reason'],
+                    'rejection_reason' => $data['rejection_reason'],
 
-                    'return_reason' =>
-                        null,
+                    'return_reason' => null,
 
-                    'reviewed_at' =>
-                        now(),
+                    'reviewed_at' => now(),
                 ]);
 
                 $application->update([
-                    'status' =>
-                        TransferApplication::STATUS_PROVINCIAL_REJECTED,
+                    'status' => TransferApplication::STATUS_PROVINCIAL_REJECTED,
 
-                    'updated_by' =>
-                        $reviewer->id,
+                    'updated_by' => $reviewer->id,
                 ]);
 
                 $this->recordAction(
                     application: $application,
                     actor: $reviewer,
-                    action:
-                        TransferApplicationAction::ACTION_PROVINCIAL_REJECTED,
+                    action: TransferApplicationAction::ACTION_PROVINCIAL_REJECTED,
                     fromStatus: $fromStatus,
-                    toStatus:
-                        TransferApplication::STATUS_PROVINCIAL_REJECTED,
-                    remarks:
-                        $data['rejection_reason']
+                    toStatus: TransferApplication::STATUS_PROVINCIAL_REJECTED,
+                    remarks: $data['rejection_reason']
+                );
+
+                $this->auditLogService->workflow(
+                    'transfer_application.provincial_rejected',
+                    $application,
+                    $fromStatus,
+                    TransferApplication::STATUS_PROVINCIAL_REJECTED,
+                    [
+                        'description' => sprintf(
+                            'Transfer application %s was rejected at Provincial level.',
+                            $application->application_number
+                                ?? $application->id
+                        ),
+                        'old_values' => $oldReviewValues,
+                        'new_values' => [
+                            'status' => TransferApplication::STATUS_PROVINCIAL_REJECTED,
+                            'reviewer_id' => $reviewer->id,
+                            'decision' => $review->decision,
+                            'recommendation' => $review->recommendation,
+                            'remarks' => $review->remarks,
+                            'rejection_reason' => $review->rejection_reason,
+                            'return_reason' => $review->return_reason,
+                            'reviewed_at' => $review->reviewed_at,
+                        ],
+                        'metadata' => [
+                            'provincial_review_id' => $review->id,
+                            'reviewer_name' => $reviewer->name,
+                            'reviewer_email' => $reviewer->email,
+                        ],
+                        'user' => $reviewer,
+                    ]
                 );
 
                 $this->notifyPrincipal(
@@ -263,7 +347,13 @@ class ProvincialTransferReviewService
                     )
                 );
 
-                return $application->fresh();
+                return $application->fresh([
+                    'principalProfile.user',
+                    'transferCycle',
+                    'originZone',
+                    'provincialReview.reviewer',
+                    'actions.actor',
+                ]);
             }
         );
     }
@@ -283,8 +373,7 @@ class ProvincialTransferReviewService
                 $reviewer,
                 $data
             ): TransferApplication {
-                $fromStatus =
-                    $application->status;
+                $fromStatus = $application->status;
 
                 $review = ProvincialReview::query()
                     ->where(
@@ -293,44 +382,74 @@ class ProvincialTransferReviewService
                     )
                     ->firstOrFail();
 
+                $oldReviewValues = [
+                    'reviewer_id' => $review->reviewer_id,
+                    'decision' => $review->decision,
+                    'recommendation' => $review->recommendation,
+                    'remarks' => $review->remarks,
+                    'rejection_reason' => $review->rejection_reason,
+                    'return_reason' => $review->return_reason,
+                    'reviewed_at' => $review->reviewed_at,
+                ];
+
                 $review->update([
-                    'reviewer_id' =>
-                        $reviewer->id,
+                    'reviewer_id' => $reviewer->id,
 
-                    'decision' =>
-                        ProvincialReview::DECISION_RETURNED_TO_ZONE,
+                    'decision' => ProvincialReview::DECISION_RETURNED_TO_ZONE,
 
-                    'remarks' =>
-                        $data['remarks'] ?? null,
+                    'remarks' => $data['remarks'] ?? null,
 
-                    'rejection_reason' =>
-                        null,
+                    'rejection_reason' => null,
 
-                    'return_reason' =>
-                        $data['return_reason'],
+                    'return_reason' => $data['return_reason'],
 
-                    'reviewed_at' =>
-                        now(),
+                    'reviewed_at' => now(),
                 ]);
 
                 $application->update([
-                    'status' =>
-                        TransferApplication::STATUS_RETURNED_TO_ZONE,
+                    'status' => TransferApplication::STATUS_RETURNED_TO_ZONE,
 
-                    'updated_by' =>
-                        $reviewer->id,
+                    'updated_by' => $reviewer->id,
                 ]);
 
                 $this->recordAction(
                     application: $application,
                     actor: $reviewer,
-                    action:
-                        TransferApplicationAction::ACTION_RETURNED_TO_ZONE,
+                    action: TransferApplicationAction::ACTION_RETURNED_TO_ZONE,
                     fromStatus: $fromStatus,
-                    toStatus:
-                        TransferApplication::STATUS_RETURNED_TO_ZONE,
-                    remarks:
-                        $data['return_reason']
+                    toStatus: TransferApplication::STATUS_RETURNED_TO_ZONE,
+                    remarks: $data['return_reason']
+                );
+
+                $this->auditLogService->workflow(
+                    'transfer_application.returned_to_zone',
+                    $application,
+                    $fromStatus,
+                    TransferApplication::STATUS_RETURNED_TO_ZONE,
+                    [
+                        'description' => sprintf(
+                            'Transfer application %s was returned to the Zone.',
+                            $application->application_number
+                                ?? $application->id
+                        ),
+                        'old_values' => $oldReviewValues,
+                        'new_values' => [
+                            'status' => TransferApplication::STATUS_RETURNED_TO_ZONE,
+                            'reviewer_id' => $reviewer->id,
+                            'decision' => $review->decision,
+                            'remarks' => $review->remarks,
+                            'rejection_reason' => $review->rejection_reason,
+                            'return_reason' => $review->return_reason,
+                            'reviewed_at' => $review->reviewed_at,
+                        ],
+                        'metadata' => [
+                            'provincial_review_id' => $review->id,
+                            'reviewer_name' => $reviewer->name,
+                            'reviewer_email' => $reviewer->email,
+                            'origin_zone_id' => $application->origin_zone_id,
+                        ],
+                        'user' => $reviewer,
+                    ]
                 );
 
                 $this->notifyZoneDirectors(
@@ -347,7 +466,13 @@ class ProvincialTransferReviewService
                     )
                 );
 
-                return $application->fresh();
+                return $application->fresh([
+                    'principalProfile.user',
+                    'transferCycle',
+                    'originZone',
+                    'provincialReview.reviewer',
+                    'actions.actor',
+                ]);
             }
         );
     }
@@ -360,8 +485,7 @@ class ProvincialTransferReviewService
                 ->isUnderProvincialReview()
         ) {
             throw ValidationException::withMessages([
-                'status' =>
-                    'The application is not under Provincial review.',
+                'status' => 'The application is not under Provincial review.',
             ]);
         }
     }
@@ -374,27 +498,20 @@ class ProvincialTransferReviewService
         string $toStatus,
         ?string $remarks = null
     ): void {
-        TransferApplicationAction::create([
-            'transfer_application_id' =>
-                $application->id,
+        TransferApplicationAction::query()->create([
+            'transfer_application_id' => $application->id,
 
-            'action' =>
-                $action,
+            'action' => $action,
 
-            'from_status' =>
-                $fromStatus,
+            'from_status' => $fromStatus,
 
-            'to_status' =>
-                $toStatus,
+            'to_status' => $toStatus,
 
-            'remarks' =>
-                $remarks,
+            'remarks' => $remarks,
 
-            'acted_by' =>
-                $actor->id,
+            'acted_by' => $actor->id,
 
-            'acted_at' =>
-                now(),
+            'acted_at' => now(),
         ]);
     }
 
@@ -409,7 +526,9 @@ class ProvincialTransferReviewService
         $application
             ->principalProfile
             ?->user
-            ?->notify($notification);
+            ?->notify(
+                $notification
+            );
     }
 
     private function notifyZoneDirectors(
@@ -428,8 +547,9 @@ class ProvincialTransferReviewService
             )
             ->get()
             ->each(
-                fn (User $user) =>
-                    $user->notify($notification)
+                fn (User $user) => $user->notify(
+                    $notification
+                )
             );
     }
 }

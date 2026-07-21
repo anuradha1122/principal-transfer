@@ -28,88 +28,79 @@ class DashboardController extends Controller
             'Provincial/Dashboard/Index',
             [
                 'summary' => [
-                    'awaiting_review' =>
-                        (clone $applications)
-                            ->where(
-                                'status',
-                                TransferApplication::STATUS_ZONAL_APPROVED
-                            )
-                            ->count(),
+                    'awaiting_review' => (clone $applications)
+                        ->where(
+                            'status',
+                            TransferApplication::STATUS_ZONAL_APPROVED
+                        )
+                        ->count(),
 
-                    'under_review' =>
-                        (clone $applications)
-                            ->where(
-                                'status',
-                                TransferApplication::STATUS_PROVINCIAL_REVIEW
-                            )
-                            ->count(),
+                    'under_review' => (clone $applications)
+                        ->where(
+                            'status',
+                            TransferApplication::STATUS_PROVINCIAL_REVIEW
+                        )
+                        ->count(),
 
-                    'approved' =>
-                        (clone $applications)
-                            ->where(
-                                'status',
-                                TransferApplication::STATUS_PROVINCIAL_APPROVED
-                            )
-                            ->count(),
+                    'approved' => (clone $applications)
+                        ->where(
+                            'status',
+                            TransferApplication::STATUS_PROVINCIAL_APPROVED
+                        )
+                        ->count(),
 
-                    'rejected' =>
-                        (clone $applications)
-                            ->where(
-                                'status',
-                                TransferApplication::STATUS_PROVINCIAL_REJECTED
-                            )
-                            ->count(),
+                    'rejected' => (clone $applications)
+                        ->where(
+                            'status',
+                            TransferApplication::STATUS_PROVINCIAL_REJECTED
+                        )
+                        ->count(),
 
-                    'returned_to_zone' =>
-                        (clone $applications)
-                            ->where(
-                                'status',
-                                TransferApplication::STATUS_RETURNED_TO_ZONE
-                            )
-                            ->count(),
+                    'returned_to_zone' => (clone $applications)
+                        ->where(
+                            'status',
+                            TransferApplication::STATUS_RETURNED_TO_ZONE
+                        )
+                        ->count(),
                 ],
 
-                'zoneSummary' =>
-                    TransferApplication::query()
-                        ->selectRaw(
-                            'origin_zone_id, COUNT(*) as total'
-                        )
-                        ->whereIn(
-                            'status',
-                            [
-                                TransferApplication::STATUS_ZONAL_APPROVED,
-                                TransferApplication::STATUS_PROVINCIAL_REVIEW,
-                                TransferApplication::STATUS_PROVINCIAL_APPROVED,
-                                TransferApplication::STATUS_PROVINCIAL_REJECTED,
-                                TransferApplication::STATUS_RETURNED_TO_ZONE,
-                            ]
-                        )
-                        ->with(
-                            'originZone:id,name,code'
-                        )
-                        ->groupBy(
-                            'origin_zone_id'
-                        )
-                        ->get()
-                        ->map(
-                            fn (
-                                TransferApplication $application
-                            ): array => [
-                                'zone' =>
-                                    $application
-                                        ->originZone
-                                        ?->name
-                                    ?? 'Unknown Zone',
+                'zoneSummary' => TransferApplication::query()
+                    ->selectRaw(
+                        'origin_zone_id, COUNT(*) as total'
+                    )
+                    ->whereIn(
+                        'status',
+                        [
+                            TransferApplication::STATUS_ZONAL_APPROVED,
+                            TransferApplication::STATUS_PROVINCIAL_REVIEW,
+                            TransferApplication::STATUS_PROVINCIAL_APPROVED,
+                            TransferApplication::STATUS_PROVINCIAL_REJECTED,
+                            TransferApplication::STATUS_RETURNED_TO_ZONE,
+                        ]
+                    )
+                    ->with(
+                        'originZone:id,name,code'
+                    )
+                    ->groupBy(
+                        'origin_zone_id'
+                    )
+                    ->get()
+                    ->map(
+                        fn (
+                            TransferApplication $application
+                        ): array => [
+                            'zone' => $application
+                                ->originZone
+                                ?->name
+                                ?? 'Unknown Zone',
 
-                                'code' =>
-                                    $application
-                                        ->originZone
-                                        ?->code,
+                            'code' => $application
+                                ->originZone
+                                ?->code,
 
-                                'total' =>
-                                    (int) $application->total,
-                            ]
-                        ),
+                            'total' => (int) $application->total,
+                        ]
+                    ),
             ]
         );
     }
