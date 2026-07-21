@@ -30,6 +30,7 @@ use App\Http\Controllers\TransferBoard\TransferAppealController as BoardTransfer
 use App\Http\Controllers\TransferBoard\TransferApplicationController as TransferBoardTransferApplicationController;
 use App\Http\Controllers\Zonal\DashboardController as ZonalDashboardController;
 use App\Http\Controllers\Zonal\TransferApplicationController as ZonalTransferApplicationController;
+use App\Http\Controllers\Admin\ReportController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -753,6 +754,61 @@ Route::middleware([
                     ->name(
                         'audit-logs.show'
                     );
+
+
+                    /*
+            |--------------------------------------------------------------------------
+            | Transfer Reports
+            |--------------------------------------------------------------------------
+            */
+
+            Route::get(
+                'reports',
+                [
+                    ReportController::class,
+                    'index',
+                ]
+            )
+                ->middleware(
+                    'permission:view reports'
+                )
+                ->name(
+                    'reports.index'
+                );
+
+            /*
+            |--------------------------------------------------------------------------
+            | Audit Logs
+            |--------------------------------------------------------------------------
+            */
+
+            Route::get(
+                'audit-logs',
+                [
+                    AuditLogController::class,
+                    'index',
+                ]
+            )
+                ->middleware(
+                    'permission:view audit logs'
+                )
+                ->name(
+                    'audit-logs.index'
+                );
+
+            Route::get(
+                'audit-logs/{auditLog}',
+                [
+                    AuditLogController::class,
+                    'show',
+                ]
+            )
+                ->middleware(
+                    'permission:view audit logs'
+                )
+                ->name(
+                    'audit-logs.show'
+                );
             });
 
         /*

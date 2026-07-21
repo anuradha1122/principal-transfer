@@ -6,6 +6,8 @@ import {
     Gauge,
     Landmark,
     LogOut,
+    BarChart3,
+    ShieldCheck,
     X,
 } from 'lucide-react';
 
@@ -61,6 +63,30 @@ export default function ProvincialSidebar({
             icon: ClipboardCheck,
             visible: can(
                 'view provincial transfer applications'
+            ),
+        },
+        {
+            label: 'Transfer Reports',
+            href: route(
+                'admin.reports.index'
+            ),
+            path:
+                '/admin/reports',
+            icon: BarChart3,
+            visible: can(
+                'view reports'
+            ),
+        },
+        {
+            label: 'Audit Logs',
+            href: route(
+                'admin.audit-logs.index'
+            ),
+            path:
+                '/admin/audit-logs',
+            icon: ShieldCheck,
+            visible: can(
+                'view audit logs'
             ),
         },
     ].filter((item) => item.visible);

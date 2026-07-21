@@ -78,6 +78,14 @@ class TransferApplication extends Model
         self::STATUS_CANCELLED,
     ];
 
+    /**
+     * Return all valid transfer application statuses.
+     */
+    public static function statusOptions(): array
+    {
+        return self::STATUSES;
+    }
+
     protected $fillable = [
         'transfer_cycle_id',
         'principal_profile_id',

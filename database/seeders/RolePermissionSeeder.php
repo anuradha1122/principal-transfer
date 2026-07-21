@@ -352,7 +352,7 @@ class RolePermissionSeeder extends Seeder
             'reject zonal transfer applications',
             'return zonal transfer applications',
             'download zonal transfer application pdfs',
-
+            'view reports',
             'export transfer applications',
         ]);
 

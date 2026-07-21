@@ -7,6 +7,7 @@ import {
     ShieldCheck,
     Scale,
     Files,
+    BarChart3,
     X,
 } from 'lucide-react';
 
@@ -86,6 +87,18 @@ export default function TransferBoardSidebar({
             icon: Scale,
             visible: can(
                 'view transfer appeals'
+            ),
+        },
+        {
+            label: 'Transfer Reports',
+            href: route(
+                'admin.reports.index'
+            ),
+            path:
+                '/admin/reports',
+            icon: BarChart3,
+            visible: can(
+                'view reports'
             ),
         },
     ].filter((item) => item.visible);

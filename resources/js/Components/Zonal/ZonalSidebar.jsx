@@ -5,6 +5,7 @@ import {
     Gauge,
     ListChecks,
     LogOut,
+    BarChart3,
     X,
 } from 'lucide-react';
 
@@ -60,6 +61,18 @@ export default function ZonalSidebar({
             icon: ClipboardCheck,
             visible: can(
                 'view zonal transfer applications',
+            ),
+        },
+        {
+            label: 'Transfer Reports',
+            href: route(
+                'admin.reports.index'
+            ),
+            path:
+                '/admin/reports',
+            icon: BarChart3,
+            visible: can(
+                'view reports'
             ),
         },
     ].filter((item) => item.visible);

@@ -14,6 +14,7 @@ import {
     UserRoundCheck,
     Users,
     Files,
+    BarChart3,
     X,
 } from 'lucide-react';
 
@@ -129,11 +130,28 @@ export default function AdminSidebar({
             ),
         },
         {
-            label: 'Reports',
-            href: '/admin/reports',
-            icon: Gauge,
-            visible: can('view reports'),
-            disabled: true,
+            label: 'Transfer Reports',
+            href: route(
+                'admin.reports.index'
+            ),
+            path:
+                '/admin/reports',
+            icon: BarChart3,
+            visible: can(
+                'view reports'
+            ),
+        },
+        {
+            label: 'Audit Logs',
+            href: route(
+                'admin.audit-logs.index'
+            ),
+            path:
+                '/admin/audit-logs',
+            icon: ShieldCheck,
+            visible: can(
+                'view audit logs'
+            ),
         },
         {
             label: 'System Settings',
