@@ -223,6 +223,17 @@ class RolePermissionSeeder extends Seeder
 
             /*
             |--------------------------------------------------------------------------
+            | Notifications and administrative alerts
+            |--------------------------------------------------------------------------
+            */
+
+            'view notifications',
+            'manage own notifications',
+            'view administrative alerts',
+            'send administrative alerts',
+
+            /*
+            |--------------------------------------------------------------------------
             | Settings and audit
             |--------------------------------------------------------------------------
             */
@@ -335,6 +346,15 @@ class RolePermissionSeeder extends Seeder
             'submit transfer appeals',
             'withdraw transfer appeals',
             'upload transfer appeal documents',
+
+            /*
+            |--------------------------------------------------------------------------
+            | Notifications
+            |--------------------------------------------------------------------------
+            */
+
+            'view notifications',
+            'manage own notifications',
         ]);
 
         /*
@@ -352,8 +372,18 @@ class RolePermissionSeeder extends Seeder
             'reject zonal transfer applications',
             'return zonal transfer applications',
             'download zonal transfer application pdfs',
+
             'view reports',
             'export transfer applications',
+
+            /*
+            |--------------------------------------------------------------------------
+            | Notifications
+            |--------------------------------------------------------------------------
+            */
+
+            'view notifications',
+            'manage own notifications',
         ]);
 
         /*
@@ -400,6 +430,16 @@ class RolePermissionSeeder extends Seeder
             'export reports',
             'export transfer applications',
             'view audit logs',
+
+            /*
+            |--------------------------------------------------------------------------
+            | Notifications and alerts
+            |--------------------------------------------------------------------------
+            */
+
+            'view notifications',
+            'manage own notifications',
+            'view administrative alerts',
         ]);
 
         /*
@@ -445,6 +485,16 @@ class RolePermissionSeeder extends Seeder
 
             'view reports',
             'export transfer applications',
+
+            /*
+            |--------------------------------------------------------------------------
+            | Notifications and alerts
+            |--------------------------------------------------------------------------
+            */
+
+            'view notifications',
+            'manage own notifications',
+            'view administrative alerts',
         ]);
 
         /*
@@ -488,6 +538,15 @@ class RolePermissionSeeder extends Seeder
 
             'view transfer applications',
             'download transfer application pdfs',
+
+            /*
+            |--------------------------------------------------------------------------
+            | Notifications
+            |--------------------------------------------------------------------------
+            */
+
+            'view notifications',
+            'manage own notifications',
         ]);
 
         /*

@@ -8,7 +8,7 @@ import { Head, usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 
 export default function AdminLayout({
-    title,
+    title = 'Principal Transfer System',
     header,
     children,
 }) {
@@ -30,7 +30,8 @@ export default function AdminLayout({
      * 2. Principal
      * 3. Zonal Director
      * 4. Provincial Director
-     * 5. Other administrative roles
+     * 5. Transfer Board Member
+     * 6. Other administrative roles
      */
 
     const isSuperAdmin =
@@ -46,13 +47,17 @@ export default function AdminLayout({
         !isPrincipal;
 
     const isProvincialDirector =
-        roles.includes('Provincial Director') &&
+        roles.includes(
+            'Provincial Director',
+        ) &&
         !isSuperAdmin &&
         !isPrincipal &&
         !isZonalDirector;
 
     const isTransferBoardMember =
-        roles.includes('Transfer Board Member') &&
+        roles.includes(
+            'Transfer Board Member',
+        ) &&
         !isSuperAdmin &&
         !isPrincipal &&
         !isZonalDirector &&
@@ -66,10 +71,16 @@ export default function AdminLayout({
         setSidebarOpen(true);
     };
 
+    /*
+     * Close the mobile sidebar after navigation.
+     */
     useEffect(() => {
         closeSidebar();
     }, [page.url]);
 
+    /*
+     * Close the mobile sidebar when Escape is pressed.
+     */
     useEffect(() => {
         const handleEscape = (event) => {
             if (event.key === 'Escape') {
@@ -90,14 +101,12 @@ export default function AdminLayout({
         };
     }, []);
 
+    /*
+     * Prevent the page behind the mobile sidebar from scrolling.
+     */
     useEffect(() => {
-        if (sidebarOpen) {
-            document.body.style.overflow =
-                'hidden';
-        } else {
-            document.body.style.overflow =
-                '';
-        }
+        document.body.style.overflow =
+            sidebarOpen ? 'hidden' : '';
 
         return () => {
             document.body.style.overflow =
@@ -164,25 +173,25 @@ export default function AdminLayout({
                 <main className="px-4 py-6 sm:px-6 lg:px-8">
                     <div className="mx-auto max-w-7xl">
                         {flash.success && (
-                            <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
+                            <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800 shadow-sm">
                                 {flash.success}
                             </div>
                         )}
 
                         {flash.error && (
-                            <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800">
+                            <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800 shadow-sm">
                                 {flash.error}
                             </div>
                         )}
 
                         {flash.warning && (
-                            <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800">
+                            <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800 shadow-sm">
                                 {flash.warning}
                             </div>
                         )}
 
                         {flash.info && (
-                            <div className="mb-6 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-medium text-blue-800">
+                            <div className="mb-6 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-medium text-blue-800 shadow-sm">
                                 {flash.info}
                             </div>
                         )}

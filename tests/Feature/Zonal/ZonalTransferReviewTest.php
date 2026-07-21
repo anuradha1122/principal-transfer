@@ -11,9 +11,8 @@ use App\Models\TransferCycle;
 use App\Models\User;
 use App\Models\ZonalReview;
 use App\Models\Zone;
-use App\Notifications\TransferApplicationZonalApprovedNotification;
-use App\Notifications\TransferApplicationZonalRejectedNotification;
 use App\Notifications\TransferApplicationZonalReviewStartedNotification;
+use App\Notifications\ZonalDecisionRecordedNotification;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
@@ -40,41 +39,57 @@ class ZonalTransferReviewTest extends TestCase
         Role::findOrCreate('Principal');
         Role::findOrCreate('Zonal Director');
 
-        $this->seed(RolePermissionSeeder::class);
+        $this->seed(
+            RolePermissionSeeder::class
+        );
 
-        $this->assignedZone = Zone::factory()->create([
-            'name' => 'Ratnapura',
-            'code' => 'RAT',
-        ]);
+        $this->assignedZone =
+            Zone::factory()->create([
+                'name' => 'Ratnapura',
+                'code' => 'RAT',
+            ]);
 
-        $this->otherZone = Zone::factory()->create([
-            'name' => 'Kegalle',
-            'code' => 'KEG',
-        ]);
+        $this->otherZone =
+            Zone::factory()->create([
+                'name' => 'Kegalle',
+                'code' => 'KEG',
+            ]);
 
-        $this->zonalDirector = User::factory()->create([
-            'assigned_zone_id' => $this->assignedZone->id,
-            'email_verified_at' => now(),
-        ]);
+        $this->zonalDirector =
+            User::factory()->create([
+                'assigned_zone_id' => $this->assignedZone->id,
 
-        $this->zonalDirector->assignRole('Zonal Director');
+                'email_verified_at' => now(),
+            ]);
 
-        $this->principalUser = User::factory()->create([
-            'email_verified_at' => now(),
-        ]);
+        $this->zonalDirector
+            ->assignRole(
+                'Zonal Director'
+            );
 
-        $this->principalUser->assignRole('Principal');
+        $this->principalUser =
+            User::factory()->create([
+                'email_verified_at' => now(),
+            ]);
+
+        $this->principalUser
+            ->assignRole(
+                'Principal'
+            );
     }
 
     public function test_zonal_director_can_view_application_from_assigned_zone(): void
     {
-        $application = $this->createApplicationForZone(
-            $this->assignedZone,
-            TransferApplication::STATUS_SUBMITTED
-        );
+        $application =
+            $this->createApplicationForZone(
+                $this->assignedZone,
+                TransferApplication::STATUS_SUBMITTED
+            );
 
         $this
-            ->actingAs($this->zonalDirector)
+            ->actingAs(
+                $this->zonalDirector
+            )
             ->get(
                 route(
                     'zonal.transfer-applications.show',
@@ -86,13 +101,16 @@ class ZonalTransferReviewTest extends TestCase
 
     public function test_zonal_director_cannot_view_application_from_other_zone(): void
     {
-        $application = $this->createApplicationForZone(
-            $this->otherZone,
-            TransferApplication::STATUS_SUBMITTED
-        );
+        $application =
+            $this->createApplicationForZone(
+                $this->otherZone,
+                TransferApplication::STATUS_SUBMITTED
+            );
 
         $this
-            ->actingAs($this->zonalDirector)
+            ->actingAs(
+                $this->zonalDirector
+            )
             ->get(
                 route(
                     'zonal.transfer-applications.show',
@@ -104,19 +122,25 @@ class ZonalTransferReviewTest extends TestCase
 
     public function test_super_admin_can_view_application_from_any_zone(): void
     {
-        $superAdmin = User::factory()->create([
-            'email_verified_at' => now(),
-        ]);
+        $superAdmin =
+            User::factory()->create([
+                'email_verified_at' => now(),
+            ]);
 
-        $superAdmin->assignRole('Super Admin');
-
-        $application = $this->createApplicationForZone(
-            $this->otherZone,
-            TransferApplication::STATUS_SUBMITTED
+        $superAdmin->assignRole(
+            'Super Admin'
         );
 
+        $application =
+            $this->createApplicationForZone(
+                $this->otherZone,
+                TransferApplication::STATUS_SUBMITTED
+            );
+
         $this
-            ->actingAs($superAdmin)
+            ->actingAs(
+                $superAdmin
+            )
             ->get(
                 route(
                     'zonal.transfer-applications.show',
@@ -130,13 +154,16 @@ class ZonalTransferReviewTest extends TestCase
     {
         Notification::fake();
 
-        $application = $this->createApplicationForZone(
-            $this->assignedZone,
-            TransferApplication::STATUS_SUBMITTED
-        );
+        $application =
+            $this->createApplicationForZone(
+                $this->assignedZone,
+                TransferApplication::STATUS_SUBMITTED
+            );
 
         $this
-            ->actingAs($this->zonalDirector)
+            ->actingAs(
+                $this->zonalDirector
+            )
             ->post(
                 route(
                     'zonal.transfer-applications.start-review',
@@ -145,24 +172,37 @@ class ZonalTransferReviewTest extends TestCase
             )
             ->assertRedirect();
 
-        $this->assertDatabaseHas('transfer_applications', [
-            'id' => $application->id,
-            'status' => TransferApplication::STATUS_ZONAL_REVIEW,
-        ]);
+        $this->assertDatabaseHas(
+            'transfer_applications',
+            [
+                'id' => $application->id,
 
-        $this->assertDatabaseHas('zonal_reviews', [
-            'transfer_application_id' => $application->id,
-            'zone_id' => $this->assignedZone->id,
-            'reviewer_id' => $this->zonalDirector->id,
-        ]);
+                'status' => TransferApplication::STATUS_ZONAL_REVIEW,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'zonal_reviews',
+            [
+                'transfer_application_id' => $application->id,
+
+                'zone_id' => $this->assignedZone->id,
+
+                'reviewer_id' => $this->zonalDirector->id,
+            ]
+        );
 
         $this->assertDatabaseHas(
             'transfer_application_actions',
             [
                 'transfer_application_id' => $application->id,
+
                 'action' => TransferApplicationAction::ACTION_ZONAL_REVIEW_STARTED,
+
                 'from_status' => TransferApplication::STATUS_SUBMITTED,
+
                 'to_status' => TransferApplication::STATUS_ZONAL_REVIEW,
+
                 'acted_by' => $this->zonalDirector->id,
             ]
         );
@@ -175,13 +215,16 @@ class ZonalTransferReviewTest extends TestCase
 
     public function test_invalid_status_cannot_enter_zonal_review(): void
     {
-        $application = $this->createApplicationForZone(
-            $this->assignedZone,
-            TransferApplication::STATUS_ZONAL_APPROVED
-        );
+        $application =
+            $this->createApplicationForZone(
+                $this->assignedZone,
+                TransferApplication::STATUS_ZONAL_APPROVED
+            );
 
         $this
-            ->actingAs($this->zonalDirector)
+            ->actingAs(
+                $this->zonalDirector
+            )
             ->post(
                 route(
                     'zonal.transfer-applications.start-review',
@@ -195,20 +238,26 @@ class ZonalTransferReviewTest extends TestCase
     {
         Notification::fake();
 
-        $application = $this->createApplicationForZone(
-            $this->assignedZone,
-            TransferApplication::STATUS_ZONAL_REVIEW
-        );
+        $application =
+            $this->createApplicationForZone(
+                $this->assignedZone,
+                TransferApplication::STATUS_ZONAL_REVIEW
+            );
 
         ZonalReview::factory()->create([
             'transfer_application_id' => $application->id,
+
             'zone_id' => $this->assignedZone->id,
+
             'reviewer_id' => $this->zonalDirector->id,
+
             'review_started_at' => now()->subHour(),
         ]);
 
         $this
-            ->actingAs($this->zonalDirector)
+            ->actingAs(
+                $this->zonalDirector
+            )
             ->post(
                 route(
                     'zonal.transfer-applications.approve',
@@ -216,54 +265,90 @@ class ZonalTransferReviewTest extends TestCase
                 ),
                 [
                     'recommendation' => 'Recommended',
+
                     'remarks' => 'The application meets Zonal requirements.',
                 ]
             )
             ->assertRedirect();
 
-        $this->assertDatabaseHas('transfer_applications', [
-            'id' => $application->id,
-            'status' => TransferApplication::STATUS_ZONAL_APPROVED,
-        ]);
+        $this->assertDatabaseHas(
+            'transfer_applications',
+            [
+                'id' => $application->id,
 
-        $this->assertDatabaseHas('zonal_reviews', [
-            'transfer_application_id' => $application->id,
-            'reviewer_id' => $this->zonalDirector->id,
-            'decision' => ZonalReview::DECISION_APPROVED,
-            'recommendation' => 'Recommended',
-        ]);
+                'status' => TransferApplication::STATUS_ZONAL_APPROVED,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'zonal_reviews',
+            [
+                'transfer_application_id' => $application->id,
+
+                'reviewer_id' => $this->zonalDirector->id,
+
+                'decision' => ZonalReview::DECISION_APPROVED,
+
+                'recommendation' => 'Recommended',
+            ]
+        );
 
         $this->assertDatabaseHas(
             'transfer_application_actions',
             [
                 'transfer_application_id' => $application->id,
+
                 'action' => TransferApplicationAction::ACTION_ZONAL_APPROVED,
+
                 'to_status' => TransferApplication::STATUS_ZONAL_APPROVED,
             ]
         );
 
         Notification::assertSentTo(
             $this->principalUser,
-            TransferApplicationZonalApprovedNotification::class
+            ZonalDecisionRecordedNotification::class,
+            function (
+                ZonalDecisionRecordedNotification $notification
+            ): bool {
+                $data =
+                    $notification->toDatabase(
+                        $this->principalUser
+                    );
+
+                return data_get(
+                    $data,
+                    'metadata.decision'
+                ) === 'approved'
+                    && data_get(
+                        $data,
+                        'category'
+                    ) === 'zonal_review';
+            }
         );
     }
 
     public function test_rejection_reason_is_required(): void
     {
-        $application = $this->createApplicationForZone(
-            $this->assignedZone,
-            TransferApplication::STATUS_ZONAL_REVIEW
-        );
+        $application =
+            $this->createApplicationForZone(
+                $this->assignedZone,
+                TransferApplication::STATUS_ZONAL_REVIEW
+            );
 
         ZonalReview::factory()->create([
             'transfer_application_id' => $application->id,
+
             'zone_id' => $this->assignedZone->id,
+
             'reviewer_id' => $this->zonalDirector->id,
+
             'review_started_at' => now()->subHour(),
         ]);
 
         $this
-            ->actingAs($this->zonalDirector)
+            ->actingAs(
+                $this->zonalDirector
+            )
             ->post(
                 route(
                     'zonal.transfer-applications.reject',
@@ -271,35 +356,48 @@ class ZonalTransferReviewTest extends TestCase
                 ),
                 [
                     'recommendation' => 'Not Recommended',
+
                     'rejection_reason' => '',
                 ]
             )
-            ->assertSessionHasErrors('rejection_reason');
+            ->assertSessionHasErrors(
+                'rejection_reason'
+            );
 
-        $this->assertDatabaseHas('transfer_applications', [
-            'id' => $application->id,
-            'status' => TransferApplication::STATUS_ZONAL_REVIEW,
-        ]);
+        $this->assertDatabaseHas(
+            'transfer_applications',
+            [
+                'id' => $application->id,
+
+                'status' => TransferApplication::STATUS_ZONAL_REVIEW,
+            ]
+        );
     }
 
     public function test_zonal_rejection_records_decision_and_notification(): void
     {
         Notification::fake();
 
-        $application = $this->createApplicationForZone(
-            $this->assignedZone,
-            TransferApplication::STATUS_ZONAL_REVIEW
-        );
+        $application =
+            $this->createApplicationForZone(
+                $this->assignedZone,
+                TransferApplication::STATUS_ZONAL_REVIEW
+            );
 
         ZonalReview::factory()->create([
             'transfer_application_id' => $application->id,
+
             'zone_id' => $this->assignedZone->id,
+
             'reviewer_id' => $this->zonalDirector->id,
+
             'review_started_at' => now()->subHour(),
         ]);
 
         $this
-            ->actingAs($this->zonalDirector)
+            ->actingAs(
+                $this->zonalDirector
+            )
             ->post(
                 route(
                     'zonal.transfer-applications.reject',
@@ -307,38 +405,69 @@ class ZonalTransferReviewTest extends TestCase
                 ),
                 [
                     'recommendation' => 'Not Recommended',
+
                     'remarks' => 'Reviewed by the Zone.',
+
                     'rejection_reason' => 'The minimum service requirement was not sufficiently supported.',
                 ]
             )
             ->assertRedirect();
 
-        $this->assertDatabaseHas('transfer_applications', [
-            'id' => $application->id,
-            'status' => TransferApplication::STATUS_ZONAL_REJECTED,
-        ]);
+        $this->assertDatabaseHas(
+            'transfer_applications',
+            [
+                'id' => $application->id,
 
-        $this->assertDatabaseHas('zonal_reviews', [
-            'transfer_application_id' => $application->id,
-            'decision' => ZonalReview::DECISION_REJECTED,
-            'reviewer_id' => $this->zonalDirector->id,
-        ]);
+                'status' => TransferApplication::STATUS_ZONAL_REJECTED,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'zonal_reviews',
+            [
+                'transfer_application_id' => $application->id,
+
+                'decision' => ZonalReview::DECISION_REJECTED,
+
+                'reviewer_id' => $this->zonalDirector->id,
+            ]
+        );
 
         Notification::assertSentTo(
             $this->principalUser,
-            TransferApplicationZonalRejectedNotification::class
+            ZonalDecisionRecordedNotification::class,
+            function (
+                ZonalDecisionRecordedNotification $notification
+            ): bool {
+                $data =
+                    $notification->toDatabase(
+                        $this->principalUser
+                    );
+
+                return data_get(
+                    $data,
+                    'metadata.decision'
+                ) === 'rejected'
+                    && data_get(
+                        $data,
+                        'category'
+                    ) === 'zonal_review';
+            }
         );
     }
 
     public function test_other_zone_cannot_start_review_using_direct_url(): void
     {
-        $application = $this->createApplicationForZone(
-            $this->otherZone,
-            TransferApplication::STATUS_SUBMITTED
-        );
+        $application =
+            $this->createApplicationForZone(
+                $this->otherZone,
+                TransferApplication::STATUS_SUBMITTED
+            );
 
         $this
-            ->actingAs($this->zonalDirector)
+            ->actingAs(
+                $this->zonalDirector
+            )
             ->post(
                 route(
                     'zonal.transfer-applications.start-review',
@@ -347,18 +476,23 @@ class ZonalTransferReviewTest extends TestCase
             )
             ->assertForbidden();
 
-        $this->assertDatabaseHas('transfer_applications', [
-            'id' => $application->id,
-            'status' => TransferApplication::STATUS_SUBMITTED,
-        ]);
+        $this->assertDatabaseHas(
+            'transfer_applications',
+            [
+                'id' => $application->id,
+
+                'status' => TransferApplication::STATUS_SUBMITTED,
+            ]
+        );
     }
 
     public function test_original_snapshot_remains_unchanged_after_review(): void
     {
-        $application = $this->createApplicationForZone(
-            $this->assignedZone,
-            TransferApplication::STATUS_SUBMITTED
-        );
+        $application =
+            $this->createApplicationForZone(
+                $this->assignedZone,
+                TransferApplication::STATUS_SUBMITTED
+            );
 
         $originalName =
             $application->principal_name;
@@ -373,7 +507,9 @@ class ZonalTransferReviewTest extends TestCase
             $application->employee_number;
 
         $this
-            ->actingAs($this->zonalDirector)
+            ->actingAs(
+                $this->zonalDirector
+            )
             ->post(
                 route(
                     'zonal.transfer-applications.start-review',
@@ -409,65 +545,73 @@ class ZonalTransferReviewTest extends TestCase
         Zone $zone,
         string $status
     ): TransferApplication {
-        $division = Division::factory()->create([
-            'zone_id' => $zone->id,
-        ]);
+        $division =
+            Division::factory()->create([
+                'zone_id' => $zone->id,
+            ]);
 
-        $school = School::factory()->create([
-            'division_id' => $division->id,
-        ]);
+        $school =
+            School::factory()->create([
+                'division_id' => $division->id,
+            ]);
 
-        $profile = PrincipalProfile::factory()->create([
-            'user_id' => $this->principalUser->id,
-        ]);
+        $profile =
+            PrincipalProfile::factory()->create([
+                'user_id' => $this->principalUser->id,
+            ]);
 
-        $cycle = TransferCycle::factory()->create();
+        $cycle =
+            TransferCycle::factory()->create();
 
-        return TransferApplication::factory()->create([
-            'principal_profile_id' => $profile->id,
-            'transfer_cycle_id' => $cycle->id,
-            'current_school_id' => $school->id,
-            'origin_zone_id' => $zone->id,
+        return TransferApplication::factory()
+            ->create([
+                'principal_profile_id' => $profile->id,
 
-            'principal_name' => $profile->full_name
-                ?? $this->principalUser->name,
+                'transfer_cycle_id' => $cycle->id,
 
-            'nic' => $profile->nic
-                ?? '901234567V',
+                'current_school_id' => $school->id,
 
-            'employee_number' => $profile->employee_number
-                ?? 'EMP0001',
+                'origin_zone_id' => $zone->id,
 
-            'current_designation' => 'Principal',
+                'principal_name' => $profile->full_name
+                    ?? $this->principalUser->name,
 
-            'service_grade' => $profile->service_grade
-                ?? 'SLPS II',
+                'nic' => $profile->nic
+                    ?? '901234567V',
 
-            'current_appointment_start_date' => now()
-                ->subYears(5)
-                ->toDateString(),
+                'employee_number' => $profile->employee_number
+                    ?? 'EMP0001',
 
-            'current_school_service_months' => 60,
+                'current_designation' => 'Principal',
 
-            'transfer_reason' => 'Long Service',
+                'service_grade' => $profile->service_grade
+                    ?? 'SLPS II',
 
-            'reason_details' => 'Application created for Zonal workflow testing.',
+                'current_appointment_start_date' => now()
+                    ->subYears(5)
+                    ->toDateString(),
 
-            'has_medical_reason' => false,
+                'current_school_service_months' => 60,
 
-            'has_spouse_employment_reason' => false,
+                'transfer_reason' => 'Long Service',
 
-            'is_mutual_transfer' => false,
+                'reason_details' => 'Application created for Zonal workflow testing.',
 
-            'mutual_principal_nic' => null,
+                'has_medical_reason' => false,
 
-            'principal_remarks' => null,
+                'has_spouse_employment_reason' => false,
 
-            'status' => $status,
+                'is_mutual_transfer' => false,
 
-            'submitted_at' => now(),
+                'mutual_principal_nic' => null,
 
-            'declaration_accepted' => true,
-        ]);
+                'principal_remarks' => null,
+
+                'status' => $status,
+
+                'submitted_at' => now(),
+
+                'declaration_accepted' => true,
+            ]);
     }
 }

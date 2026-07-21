@@ -7,23 +7,18 @@ use App\Models\TransferAppealAction;
 use App\Models\TransferAppealDocument;
 use App\Models\TransferApplication;
 use App\Models\User;
-use App\Notifications\TransferAppealApprovedNotification;
-use App\Notifications\TransferAppealRejectedNotification;
-use App\Notifications\TransferAppealResubmittedNotification;
-use App\Notifications\TransferAppealReturnedNotification;
-use App\Notifications\TransferAppealSubmittedNotification;
 use Carbon\CarbonInterface;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 class TransferAppealService
 {
     public function __construct(
-        private readonly AuditLogService $auditLogService
+        private readonly AuditLogService $auditLogService,
+        private readonly WorkflowNotificationService $workflowNotifications
     ) {}
 
     public function createDraft(
@@ -250,10 +245,9 @@ class TransferAppealService
             }
         );
 
-        $this->notifyReviewers(
-            new TransferAppealSubmittedNotification(
-                $appeal
-            )
+        $this->runWorkflowNotificationSafely(
+            $appeal,
+            'submitted'
         );
 
         return $appeal;
@@ -385,11 +379,9 @@ class TransferAppealService
             }
         );
 
-        $this->notifyPrincipal(
+        $this->runWorkflowNotificationSafely(
             $appeal,
-            new TransferAppealReturnedNotification(
-                $appeal
-            )
+            'returned_for_clarification'
         );
 
         return $appeal;
@@ -474,10 +466,9 @@ class TransferAppealService
             }
         );
 
-        $this->notifyReviewers(
-            new TransferAppealResubmittedNotification(
-                $appeal
-            )
+        $this->runWorkflowNotificationSafely(
+            $appeal,
+            'resubmitted'
         );
 
         return $appeal;
@@ -617,11 +608,9 @@ class TransferAppealService
             }
         );
 
-        $this->notifyPrincipal(
+        $this->runWorkflowNotificationSafely(
             $appeal,
-            new TransferAppealApprovedNotification(
-                $appeal
-            )
+            'approved'
         );
 
         return $appeal;
@@ -691,11 +680,9 @@ class TransferAppealService
             }
         );
 
-        $this->notifyPrincipal(
+        $this->runWorkflowNotificationSafely(
             $appeal,
-            new TransferAppealRejectedNotification(
-                $appeal
-            )
+            'rejected'
         );
 
         return $appeal;
@@ -1073,61 +1060,29 @@ class TransferAppealService
         ]);
     }
 
-    private function notifyPrincipal(
+    private function runWorkflowNotificationSafely(
         TransferAppeal $appeal,
-        object $notification
+        string $status
     ): void {
         try {
-            $user = $appeal
-                ->principalProfile
-                ?->user;
-
-            if ($user) {
-                $user->notify($notification);
-            }
+            $this->workflowNotifications
+                ->appealStatusChanged(
+                    $appeal,
+                    $status
+                );
         } catch (\Throwable $exception) {
             Log::warning(
-                'Transfer appeal principal notification failed.',
+                'Transfer appeal workflow notification failed.',
                 [
                     'appeal_id' => $appeal->id,
-                    'exception' => $exception->getMessage(),
+
+                    'status' => $status,
+
+                    'message' => $exception->getMessage(),
                 ]
             );
-        }
-    }
 
-    private function notifyReviewers(
-        object $notification
-    ): void {
-        try {
-            $reviewers = User::query()
-                ->whereHas(
-                    'roles',
-                    function ($query): void {
-                        $query->whereIn(
-                            'name',
-                            [
-                                'Super Admin',
-                                'Provincial Director',
-                                'Transfer Board Member',
-                            ]
-                        );
-                    }
-                )
-                ->where('is_active', true)
-                ->get();
-
-            Notification::send(
-                $reviewers,
-                $notification
-            );
-        } catch (\Throwable $exception) {
-            Log::warning(
-                'Transfer appeal reviewer notification failed.',
-                [
-                    'exception' => $exception->getMessage(),
-                ]
-            );
+            report($exception);
         }
     }
 }

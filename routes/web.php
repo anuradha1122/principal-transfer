@@ -18,6 +18,7 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\ZoneController;
 use App\Http\Controllers\Auth\PrincipalRegistrationController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Principal\AppointmentController as PrincipalSelfAppointmentController;
 use App\Http\Controllers\Principal\ProfileController as PrincipalProfileSelfController;
 use App\Http\Controllers\Principal\TransferAppealController as PrincipalTransferAppealController;
@@ -51,9 +52,6 @@ Route::get('/', function () {
 |--------------------------------------------------------------------------
 | Public Transfer Results
 |--------------------------------------------------------------------------
-|
-| Only published result records are exposed by the controller.
-|
 */
 
 Route::get(
@@ -259,10 +257,6 @@ Route::middleware([
                 'transfer-applications.reject'
             );
 
-        /*
-         * The general show route remains after PDF and action routes.
-         */
-
         Route::get(
             '/transfer-applications/{transferApplication}',
             [
@@ -301,6 +295,95 @@ Route::middleware([
         )->name(
             'dashboard'
         );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Notifications Centre
+        |--------------------------------------------------------------------------
+        |
+        | Static routes remain before dynamic notification routes.
+        |
+        */
+
+        Route::middleware(
+            'permission:manage own notifications'
+        )
+            ->group(function (): void {
+                Route::post(
+                    '/notifications/mark-all-as-read',
+                    [
+                        NotificationController::class,
+                        'markAllAsRead',
+                    ]
+                )->name(
+                    'notifications.mark-all-as-read'
+                );
+
+                Route::delete(
+                    '/notifications/clear-read',
+                    [
+                        NotificationController::class,
+                        'clearRead',
+                    ]
+                )->name(
+                    'notifications.clear-read'
+                );
+
+                Route::post(
+                    '/notifications/{notification}/read',
+                    [
+                        NotificationController::class,
+                        'markAsRead',
+                    ]
+                )->name(
+                    'notifications.read'
+                );
+
+                Route::post(
+                    '/notifications/{notification}/unread',
+                    [
+                        NotificationController::class,
+                        'markAsUnread',
+                    ]
+                )->name(
+                    'notifications.unread'
+                );
+
+                Route::delete(
+                    '/notifications/{notification}',
+                    [
+                        NotificationController::class,
+                        'destroy',
+                    ]
+                )->name(
+                    'notifications.destroy'
+                );
+            });
+
+        Route::middleware(
+            'permission:view notifications'
+        )
+            ->group(function (): void {
+                Route::get(
+                    '/notifications',
+                    [
+                        NotificationController::class,
+                        'index',
+                    ]
+                )->name(
+                    'notifications.index'
+                );
+
+                Route::get(
+                    '/notifications/{notification}',
+                    [
+                        NotificationController::class,
+                        'show',
+                    ]
+                )->name(
+                    'notifications.show'
+                );
+            });
 
         /*
         |--------------------------------------------------------------------------
@@ -591,9 +674,6 @@ Route::middleware([
                 |--------------------------------------------------------------------------
                 | Transfer Documents and Publication
                 |--------------------------------------------------------------------------
-                |
-                | Static and action routes remain above /{transferDocument}.
-                |
                 */
 
                 Route::get(
@@ -724,43 +804,9 @@ Route::middleware([
 
                 /*
                 |--------------------------------------------------------------------------
-                | Audit Logs
+                | Transfer Reports Dashboard
                 |--------------------------------------------------------------------------
                 */
-
-                Route::get(
-                    'audit-logs',
-                    [
-                        AuditLogController::class,
-                        'index',
-                    ]
-                )
-                    ->middleware(
-                        'permission:view audit logs'
-                    )
-                    ->name(
-                        'audit-logs.index'
-                    );
-
-                Route::get(
-                    'audit-logs/{auditLog}',
-                    [
-                        AuditLogController::class,
-                        'show',
-                    ]
-                )
-                    ->middleware(
-                        'permission:view audit logs'
-                    )
-                    ->name(
-                        'audit-logs.show'
-                    );
-
-                /*
-            |--------------------------------------------------------------------------
-            | Transfer Reports
-            |--------------------------------------------------------------------------
-            */
 
                 Route::get(
                     'reports',
@@ -778,43 +824,9 @@ Route::middleware([
 
                 /*
                 |--------------------------------------------------------------------------
-                | Audit Logs
+                | Detailed Transfer Reports
                 |--------------------------------------------------------------------------
                 */
-
-                Route::get(
-                    'audit-logs',
-                    [
-                        AuditLogController::class,
-                        'index',
-                    ]
-                )
-                    ->middleware(
-                        'permission:view audit logs'
-                    )
-                    ->name(
-                        'audit-logs.index'
-                    );
-
-                Route::get(
-                    'audit-logs/{auditLog}',
-                    [
-                        AuditLogController::class,
-                        'show',
-                    ]
-                )
-                    ->middleware(
-                        'permission:view audit logs'
-                    )
-                    ->name(
-                        'audit-logs.show'
-                    );
-
-                /*
-            |--------------------------------------------------------------------------
-            | Detailed Transfer Reports
-            |--------------------------------------------------------------------------
-            */
 
                 Route::prefix('reports')
                     ->name('reports.')
@@ -942,6 +954,40 @@ Route::middleware([
                             'documents.excel'
                         );
                     });
+
+                /*
+                |--------------------------------------------------------------------------
+                | Audit Logs
+                |--------------------------------------------------------------------------
+                */
+
+                Route::get(
+                    'audit-logs',
+                    [
+                        AuditLogController::class,
+                        'index',
+                    ]
+                )
+                    ->middleware(
+                        'permission:view audit logs'
+                    )
+                    ->name(
+                        'audit-logs.index'
+                    );
+
+                Route::get(
+                    'audit-logs/{auditLog}',
+                    [
+                        AuditLogController::class,
+                        'show',
+                    ]
+                )
+                    ->middleware(
+                        'permission:view audit logs'
+                    )
+                    ->name(
+                        'audit-logs.show'
+                    );
             });
 
         /*
@@ -956,12 +1002,6 @@ Route::middleware([
                 'role:Principal'
             )
             ->group(function (): void {
-                /*
-                |--------------------------------------------------------------------------
-                | Principal Dashboard
-                |--------------------------------------------------------------------------
-                */
-
                 Route::get(
                     '/dashboard',
                     function () {
@@ -981,12 +1021,6 @@ Route::middleware([
                 )->name(
                     'dashboard'
                 );
-
-                /*
-                |--------------------------------------------------------------------------
-                | Principal Self-Service Profile
-                |--------------------------------------------------------------------------
-                */
 
                 Route::get(
                     '/profile',
@@ -1017,12 +1051,6 @@ Route::middleware([
                 )->name(
                     'profile.update'
                 );
-
-                /*
-                |--------------------------------------------------------------------------
-                | Principal Self-Service Appointments
-                |--------------------------------------------------------------------------
-                */
 
                 Route::get(
                     '/appointments/create',
@@ -1074,12 +1102,6 @@ Route::middleware([
                     'appointments.destroy'
                 );
 
-                /*
-                |--------------------------------------------------------------------------
-                | Principal Transfer Applications
-                |--------------------------------------------------------------------------
-                */
-
                 Route::get(
                     '/transfer-applications',
                     [
@@ -1093,10 +1115,6 @@ Route::middleware([
                     ->name(
                         'transfer-applications.index'
                     );
-
-                /*
-                 * Keep /create before /{transferApplication}.
-                 */
 
                 Route::get(
                     '/transfer-applications/create',
@@ -1224,12 +1242,6 @@ Route::middleware([
                         'transfer-applications.show'
                     );
 
-                /*
-                |--------------------------------------------------------------------------
-                | Principal Official Transfer Documents
-                |--------------------------------------------------------------------------
-                */
-
                 Route::get(
                     '/transfer-documents',
                     [
@@ -1271,16 +1283,6 @@ Route::middleware([
                     ->name(
                         'transfer-documents.show'
                     );
-
-                /*
-                |--------------------------------------------------------------------------
-                | Principal Transfer Appeals
-                |--------------------------------------------------------------------------
-                |
-                | Static, action, and document routes must remain before the
-                | general /{transferAppeal} show route.
-                |
-                */
 
                 Route::get(
                     '/transfer-appeals',
@@ -1699,12 +1701,6 @@ Route::middleware([
         |--------------------------------------------------------------------------
         | Transfer Appeal Review Routes
         |--------------------------------------------------------------------------
-        |
-        | Provincial Directors, Transfer Board Members, and Super Admins may
-        | review appeals. These routes use the Transfer Board appeal pages and
-        | controller but do not expose the ordinary Board application queue to
-        | Provincial Directors.
-        |
         */
 
         Route::middleware(
@@ -1796,11 +1792,6 @@ Route::middleware([
                     ->name(
                         'transfer-appeals.documents.download'
                     );
-
-                /*
-                 * The general show route must remain after every action and
-                 * supporting-document route.
-                 */
 
                 Route::get(
                     '/transfer-appeals/{transferAppeal}',

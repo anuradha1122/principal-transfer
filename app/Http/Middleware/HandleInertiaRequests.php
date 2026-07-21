@@ -95,6 +95,54 @@ class HandleInertiaRequests extends Middleware
                     ->session()
                     ->get('info'),
             ],
+
+            'notifications' => [
+                'unread_count' => fn () => $request->user()
+                        ? $request
+                            ->user()
+                            ->unreadNotifications()
+                            ->count()
+                        : 0,
+
+                'recent' => fn () => $request->user()
+                        ? $request
+                            ->user()
+                            ->notifications()
+                            ->latest()
+                            ->limit(5)
+                            ->get()
+                            ->map(
+                                fn ($notification): array => [
+                                    'id' => $notification->id,
+
+                                    'title' => data_get(
+                                        $notification->data,
+                                        'title',
+                                        'Notification'
+                                    ),
+
+                                    'message' => data_get(
+                                        $notification->data,
+                                        'message'
+                                    ),
+
+                                    'severity' => data_get(
+                                        $notification->data,
+                                        'severity',
+                                        'info'
+                                    ),
+
+                                    'is_read' => $notification
+                                        ->read_at !== null,
+
+                                    'created_at' => $notification
+                                        ->created_at
+                                        ?->toIso8601String(),
+                                ]
+                            )
+                            ->values()
+                        : [],
+            ],
         ];
     }
 }

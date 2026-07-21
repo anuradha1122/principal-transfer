@@ -84,6 +84,20 @@ export default function PrincipalSidebar({
                 'view own transfer documents',
             ),
         },
+        {
+            label: 'Notifications',
+            href: route(
+                'notifications.index',
+            ),
+            path: '/notifications',
+            icon: Bell,
+            visible: can(
+                'view notifications',
+            ),
+            badge:
+                page?.props?.notifications
+                    ?.unread_count ?? 0,
+        },
     ].filter((item) => item.visible);
 
     const normalizePath = (value) => {
@@ -212,14 +226,16 @@ export default function PrincipalSidebar({
                                     >
                                         <Icon className="h-5 w-5 shrink-0" />
 
-                                        <span className="truncate">
-                                            {
-                                                item.label
-                                            }
+                                        <span className="min-w-0 flex-1 truncate">
+                                            {item.label}
                                         </span>
 
-                                        {active && (
-                                            <span className="ml-auto h-2 w-2 shrink-0 rounded-full bg-white" />
+                                        {item.badge > 0 && (
+                                            <span className="inline-flex min-w-6 items-center justify-center rounded-full bg-rose-600 px-1.5 py-1 text-[10px] font-bold leading-none text-white">
+                                                {item.badge > 99
+                                                    ? '99+'
+                                                    : item.badge}
+                                            </span>
                                         )}
                                     </Link>
                                 );

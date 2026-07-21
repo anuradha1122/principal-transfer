@@ -1,11 +1,12 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
+    BarChart3,
+    Bell,
     ClipboardCheck,
     FileCheck2,
     Gauge,
     ListChecks,
     LogOut,
-    BarChart3,
     X,
 } from 'lucide-react';
 
@@ -37,6 +38,10 @@ export default function ZonalSidebar({
         page?.props?.auth?.assigned_zone ??
         null;
 
+    const unreadNotificationCount =
+        page?.props?.notifications
+            ?.unread_count ?? 0;
+
     const can = (permission) =>
         permissions.includes(permission);
 
@@ -47,17 +52,22 @@ export default function ZonalSidebar({
     const menuItems = [
         {
             label: 'Zonal Dashboard',
-            href: route('zonal.dashboard'),
+            href: route(
+                'zonal.dashboard',
+            ),
             path: '/zonal/dashboard',
             icon: Gauge,
-            visible: can('view zonal dashboard'),
+            visible: can(
+                'view zonal dashboard',
+            ),
         },
         {
             label: 'Transfer Applications',
             href: route(
                 'zonal.transfer-applications.index',
             ),
-            path: '/zonal/transfer-applications',
+            path:
+                '/zonal/transfer-applications',
             icon: ClipboardCheck,
             visible: can(
                 'view zonal transfer applications',
@@ -66,14 +76,26 @@ export default function ZonalSidebar({
         {
             label: 'Transfer Reports',
             href: route(
-                'admin.reports.index'
+                'admin.reports.index',
             ),
-            path:
-                '/admin/reports',
+            path: '/admin/reports',
             icon: BarChart3,
             visible: can(
-                'view reports'
+                'view reports',
             ),
+        },
+        {
+            label: 'Notifications',
+            href: route(
+                'notifications.index',
+            ),
+            path: '/notifications',
+            icon: Bell,
+            visible: can(
+                'view notifications',
+            ),
+            badge:
+                unreadNotificationCount,
         },
     ].filter((item) => item.visible);
 
@@ -98,7 +120,9 @@ export default function ZonalSidebar({
             >
                 <div className="flex h-20 items-center justify-between border-b border-slate-200 px-5">
                     <Link
-                        href={route('zonal.dashboard')}
+                        href={route(
+                            'zonal.dashboard',
+                        )}
                         onClick={onClose}
                         className="flex min-w-0 items-center gap-3"
                     >
@@ -140,7 +164,8 @@ export default function ZonalSidebar({
 
                         {assignedZone?.code && (
                             <p className="mt-1 text-xs text-slate-400">
-                                Code: {assignedZone.code}
+                                Code:{' '}
+                                {assignedZone.code}
                             </p>
                         )}
                     </div>
@@ -151,20 +176,41 @@ export default function ZonalSidebar({
                         {menuItems.map((item) => {
                             const Icon = item.icon;
 
+                            const active =
+                                isActive(item.path);
+
                             return (
                                 <Link
                                     key={item.label}
                                     href={item.href}
                                     onClick={onClose}
                                     className={itemClasses(
-                                        isActive(item.path),
+                                        active,
                                     )}
                                 >
                                     <Icon className="h-5 w-5 shrink-0" />
 
-                                    <span className="truncate">
+                                    <span className="min-w-0 flex-1 truncate">
                                         {item.label}
                                     </span>
+
+                                    {item.badge > 0 && (
+                                        <span
+                                            className={[
+                                                'inline-flex min-w-6 items-center justify-center rounded-full px-1.5 py-1 text-[10px] font-bold leading-none',
+                                                active
+                                                    ? 'bg-white text-blue-700'
+                                                    : 'bg-rose-600 text-white',
+                                            ].join(
+                                                ' ',
+                                            )}
+                                        >
+                                            {item.badge >
+                                            99
+                                                ? '99+'
+                                                : item.badge}
+                                        </span>
+                                    )}
                                 </Link>
                             );
                         })}
@@ -186,7 +232,8 @@ export default function ZonalSidebar({
                         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-950 text-sm font-bold text-white">
                             {user?.name
                                 ?.charAt(0)
-                                ?.toUpperCase() ?? 'Z'}
+                                ?.toUpperCase() ??
+                                'Z'}
                         </div>
 
                         <div className="min-w-0 flex-1">

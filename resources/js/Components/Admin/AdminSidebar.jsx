@@ -15,6 +15,7 @@ import {
     Users,
     Files,
     BarChart3,
+    Bell,
     X,
 } from 'lucide-react';
 
@@ -109,6 +110,20 @@ export default function AdminSidebar({
             href: '/admin/transfer-applications',
             icon: FileText,
             visible: can('view transfer applications'),
+        },
+        {
+            label: 'Notifications',
+            href: route(
+                'notifications.index',
+            ),
+            path: '/notifications',
+            icon: Bell,
+            visible: can(
+                'view notifications',
+            ),
+            badge:
+                page?.props?.notifications
+                    ?.unread_count ?? 0,
         },
         {
             label: 'Transfer Board',

@@ -6,17 +6,17 @@ use App\Models\TransferApplication;
 use App\Models\TransferApplicationAction;
 use App\Models\TransferBoardDecision;
 use App\Models\User;
-use App\Notifications\TransferApplicationApprovedNotification;
 use App\Notifications\TransferApplicationBoardReviewStartedNotification;
-use App\Notifications\TransferApplicationRejectedNotification;
-use App\Notifications\TransferApplicationWaitlistedNotification;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class TransferBoardReviewService
 {
     public function __construct(
-        private readonly AuditLogService $auditLogService
+        private readonly AuditLogService $auditLogService,
+        private readonly WorkflowNotificationService $workflowNotifications
     ) {}
 
     public function startReview(
@@ -29,7 +29,7 @@ class TransferBoardReviewService
             ]);
         }
 
-        return DB::transaction(
+        $updatedApplication = DB::transaction(
             function () use (
                 $application,
                 $reviewer
@@ -107,13 +107,6 @@ class TransferBoardReviewService
                     ]
                 );
 
-                $this->notifyPrincipal(
-                    $application,
-                    new TransferApplicationBoardReviewStartedNotification(
-                        $application
-                    )
-                );
-
                 return $application->fresh([
                     'principalProfile.user',
                     'transferCycle',
@@ -123,6 +116,15 @@ class TransferBoardReviewService
                 ]);
             }
         );
+
+        $this->notifyPrincipalSafely(
+            $updatedApplication,
+            new TransferApplicationBoardReviewStartedNotification(
+                $updatedApplication
+            )
+        );
+
+        return $updatedApplication;
     }
 
     public function approve(
@@ -134,7 +136,7 @@ class TransferBoardReviewService
             $application
         );
 
-        return DB::transaction(
+        $updatedApplication = DB::transaction(
             function () use (
                 $application,
                 $reviewer,
@@ -231,13 +233,6 @@ class TransferBoardReviewService
                     ]
                 );
 
-                $this->notifyPrincipal(
-                    $application,
-                    new TransferApplicationApprovedNotification(
-                        $application
-                    )
-                );
-
                 return $application->fresh([
                     'principalProfile.user',
                     'transferCycle',
@@ -248,6 +243,13 @@ class TransferBoardReviewService
                 ]);
             }
         );
+
+        $this->runWorkflowNotificationSafely(
+            $updatedApplication,
+            'approved'
+        );
+
+        return $updatedApplication;
     }
 
     public function reject(
@@ -259,7 +261,7 @@ class TransferBoardReviewService
             $application
         );
 
-        return DB::transaction(
+        $updatedApplication = DB::transaction(
             function () use (
                 $application,
                 $reviewer,
@@ -355,13 +357,6 @@ class TransferBoardReviewService
                     ]
                 );
 
-                $this->notifyPrincipal(
-                    $application,
-                    new TransferApplicationRejectedNotification(
-                        $application
-                    )
-                );
-
                 return $application->fresh([
                     'principalProfile.user',
                     'transferCycle',
@@ -371,6 +366,13 @@ class TransferBoardReviewService
                 ]);
             }
         );
+
+        $this->runWorkflowNotificationSafely(
+            $updatedApplication,
+            'rejected'
+        );
+
+        return $updatedApplication;
     }
 
     public function waitlist(
@@ -382,7 +384,7 @@ class TransferBoardReviewService
             $application
         );
 
-        return DB::transaction(
+        $updatedApplication = DB::transaction(
             function () use (
                 $application,
                 $reviewer,
@@ -478,13 +480,6 @@ class TransferBoardReviewService
                     ]
                 );
 
-                $this->notifyPrincipal(
-                    $application,
-                    new TransferApplicationWaitlistedNotification(
-                        $application
-                    )
-                );
-
                 return $application->fresh([
                     'principalProfile.user',
                     'transferCycle',
@@ -494,6 +489,13 @@ class TransferBoardReviewService
                 ]);
             }
         );
+
+        $this->runWorkflowNotificationSafely(
+            $updatedApplication,
+            'waitlisted'
+        );
+
+        return $updatedApplication;
     }
 
     private function ensureUnderBoardReview(
@@ -545,19 +547,60 @@ class TransferBoardReviewService
         ]);
     }
 
-    private function notifyPrincipal(
+    private function notifyPrincipalSafely(
         TransferApplication $application,
         object $notification
     ): void {
-        $application->loadMissing(
-            'principalProfile.user'
-        );
-
-        $application
-            ->principalProfile
-            ?->user
-            ?->notify(
-                $notification
+        try {
+            $application->loadMissing(
+                'principalProfile.user'
             );
+
+            $application
+                ->principalProfile
+                ?->user
+                ?->notify(
+                    $notification
+                );
+        } catch (Throwable $exception) {
+            Log::warning(
+                'Transfer Board review-start notification failed.',
+                [
+                    'transfer_application_id' => $application->id,
+
+                    'notification' => $notification::class,
+
+                    'message' => $exception->getMessage(),
+                ]
+            );
+
+            report($exception);
+        }
+    }
+
+    private function runWorkflowNotificationSafely(
+        TransferApplication $application,
+        string $decision
+    ): void {
+        try {
+            $this->workflowNotifications
+                ->transferBoardDecisionRecorded(
+                    $application,
+                    $decision
+                );
+        } catch (Throwable $exception) {
+            Log::warning(
+                'Transfer Board workflow notification failed.',
+                [
+                    'transfer_application_id' => $application->id,
+
+                    'decision' => $decision,
+
+                    'message' => $exception->getMessage(),
+                ]
+            );
+
+            report($exception);
+        }
     }
 }

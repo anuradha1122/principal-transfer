@@ -1,12 +1,12 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
+    BarChart3,
+    Bell,
     Building2,
     ClipboardCheck,
-    FileCheck2,
     Gauge,
     Landmark,
     LogOut,
-    BarChart3,
     ShieldCheck,
     X,
 } from 'lucide-react';
@@ -34,6 +34,10 @@ export default function ProvincialSidebar({
     const user =
         page?.props?.auth?.user ?? null;
 
+    const unreadNotificationCount =
+        page?.props?.notifications
+            ?.unread_count ?? 0;
+
     const can = (permission) =>
         permissions.includes(permission);
 
@@ -45,48 +49,59 @@ export default function ProvincialSidebar({
         {
             label: 'Provincial Dashboard',
             href: route(
-                'provincial.dashboard'
+                'provincial.dashboard',
             ),
             path: '/provincial/dashboard',
             icon: Gauge,
             visible: can(
-                'view provincial dashboard'
+                'view provincial dashboard',
             ),
         },
         {
             label: 'Transfer Applications',
             href: route(
-                'provincial.transfer-applications.index'
+                'provincial.transfer-applications.index',
             ),
             path:
                 '/provincial/transfer-applications',
             icon: ClipboardCheck,
             visible: can(
-                'view provincial transfer applications'
+                'view provincial transfer applications',
             ),
         },
         {
             label: 'Transfer Reports',
             href: route(
-                'admin.reports.index'
+                'admin.reports.index',
             ),
-            path:
-                '/admin/reports',
+            path: '/admin/reports',
             icon: BarChart3,
             visible: can(
-                'view reports'
+                'view reports',
             ),
+        },
+        {
+            label: 'Notifications',
+            href: route(
+                'notifications.index',
+            ),
+            path: '/notifications',
+            icon: Bell,
+            visible: can(
+                'view notifications',
+            ),
+            badge:
+                unreadNotificationCount,
         },
         {
             label: 'Audit Logs',
             href: route(
-                'admin.audit-logs.index'
+                'admin.audit-logs.index',
             ),
-            path:
-                '/admin/audit-logs',
+            path: '/admin/audit-logs',
             icon: ShieldCheck,
             visible: can(
-                'view audit logs'
+                'view audit logs',
             ),
         },
     ].filter((item) => item.visible);
@@ -113,7 +128,7 @@ export default function ProvincialSidebar({
                 <div className="flex h-20 items-center justify-between border-b border-slate-200 px-5">
                     <Link
                         href={route(
-                            'provincial.dashboard'
+                            'provincial.dashboard',
                         )}
                         onClick={onClose}
                         className="flex min-w-0 items-center gap-3"
@@ -170,15 +185,35 @@ export default function ProvincialSidebar({
                                     onClick={onClose}
                                     className={itemClasses(
                                         isActive(
-                                            item.path
-                                        )
+                                            item.path,
+                                        ),
                                     )}
                                 >
                                     <Icon className="h-5 w-5 shrink-0" />
 
-                                    <span>
+                                    <span className="min-w-0 flex-1 truncate">
                                         {item.label}
                                     </span>
+
+                                    {item.badge > 0 && (
+                                        <span
+                                            className={[
+                                                'inline-flex min-w-6 items-center justify-center rounded-full px-1.5 py-1 text-[10px] font-bold leading-none',
+                                                isActive(
+                                                    item.path,
+                                                )
+                                                    ? 'bg-white text-violet-700'
+                                                    : 'bg-rose-600 text-white',
+                                            ].join(
+                                                ' ',
+                                            )}
+                                        >
+                                            {item.badge >
+                                            99
+                                                ? '99+'
+                                                : item.badge}
+                                        </span>
+                                    )}
                                 </Link>
                             );
                         })}
@@ -197,14 +232,14 @@ export default function ProvincialSidebar({
                         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-950 text-sm font-bold text-white">
                             {user?.name
                                 ?.charAt(0)
-                                ?.toUpperCase()
-                                ?? 'P'}
+                                ?.toUpperCase() ??
+                                'P'}
                         </div>
 
                         <div className="min-w-0">
                             <p className="truncate text-sm font-bold text-slate-900">
-                                {user?.name
-                                    ?? 'Provincial Director'}
+                                {user?.name ??
+                                    'Provincial Director'}
                             </p>
 
                             <p className="truncate text-xs text-slate-500">

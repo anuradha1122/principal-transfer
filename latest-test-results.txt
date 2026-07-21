@@ -1,0 +1,60 @@
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\ExampleTest[39m
+  [32;1m✓[39;22m[90m [39m[90mthat true is true[39m
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Feature\Admin\DetailedReportTest[39m
+  [32;1m✓[39;22m[90m [39m[90muser without permission cannot view detailed reports[39m[90m                [39m [90m0.91s[39m  
+  [32;1m✓[39;22m[90m [39m[90mauthorized user can view all detailed report pages[39m[90m                  [39m [90m0.24s[39m  
+  [32;1m✓[39;22m[90m [39m[90mzonal director only sees applications from assigned zone[39m[90m            [39m [90m0.10s[39m  
+  [32;1m✓[39;22m[90m [39m[90mapplication report can filter by status[39m[90m                             [39m [90m0.06s[39m  
+  [32;1m✓[39;22m[90m [39m[90mapplication report can filter by transfer cycle[39m[90m                     [39m [90m0.06s[39m  
+  [32;1m✓[39;22m[90m [39m[90mapplication report can filter by zone[39m[90m                               [39m [90m0.06s[39m  
+  [32;1m✓[39;22m[90m [39m[90mapplication report can filter by date range[39m[90m                         [39m [90m0.06s[39m  
+  [32;1m✓[39;22m[90m [39m[90muser with view permission but without export permission cannot expo[39m[90m…[39m [90m0.04s[39m  
+  [32;1m✓[39;22m[90m [39m[90mauthorized user can download pdf reports with data set "application[39m[90m…[39m [90m0.44s[39m  
+  [32;1m✓[39;22m[90m [39m[90mauthorized user can download pdf reports with data set "decision re[39m[90m…[39m [90m0.31s[39m  
+  [32;1m✓[39;22m[90m [39m[90mauthorized user can download pdf reports with data set "appeal repo[39m[90m…[39m [90m0.30s[39m  
+  [32;1m✓[39;22m[90m [39m[90mauthorized user can download pdf reports with data set "document re[39m[90m…[39m [90m0.30s[39m  
+  [32;1m✓[39;22m[90m [39m[90mauthorized user can download excel reports with data set "applicati[39m[90m…[39m [90m0.23s[39m  
+  [32;1m✓[39;22m[90m [39m[90mauthorized user can download excel reports with data set "decision[39m[90m… [39m [90m0.13s[39m  
+  [32;1m✓[39;22m[90m [39m[90mauthorized user can download excel reports with data set "appeal re[39m[90m…[39m [90m0.10s[39m  
+  [32;1m✓[39;22m[90m [39m[90mauthorized user can download excel reports with data set "document[39m[90m… [39m [90m0.07s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Feature\Admin\OrganizationStructureTest[39m
+  [32;1m✓[39;22m[90m [39m[90msuper admin can create zone[39m[90m                                         [39m [90m0.82s[39m  
+  [32;1m✓[39;22m[90m [39m[90mprincipal cannot manage zones[39m[90m                                       [39m [90m0.72s[39m  
+  [32;1m✓[39;22m[90m [39m[90msuper admin can create division[39m[90m                                     [39m [90m0.71s[39m  
+  [32;1m✓[39;22m[90m [39m[90msuper admin can create school[39m[90m                                       [39m [90m0.95s[39m  
+  [32;1m✓[39;22m[90m [39m[90mzone with divisions cannot be deleted[39m[90m                               [39m [90m1.11s[39m  
+  [32;1m✓[39;22m[90m [39m[90mdivision with schools cannot be deleted[39m[90m                             [39m [90m0.77s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Feature\Admin\PrincipalProfileManagementTest[39m
+  [32;1m✓[39;22m[90m [39m[90msuper admin can view profiles[39m[90m                                       [39m [90m0.75s[39m  
+  [32;1m✓[39;22m[90m [39m[90mprincipal cannot access admin profiles[39m[90m                              [39m [90m0.73s[39m  
+  [32;1m✓[39;22m[90m [39m[90msuper admin can create profile[39m[90m                                      [39m [90m0.79s[39m  
+  [32;1m✓[39;22m[90m [39m[90mnew current appointment closes previous current appointment[39m[90m         [39m [90m0.97s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Feature\Admin\PrincipalRegistryManagementTest[39m
+  [32;1m✓[39;22m[90m [39m[90msuper admin can view registry[39m[90m                                       [39m [90m0.82s[39m  
+  [32;1m✓[39;22m[90m [39m[90mprincipal cannot view registry[39m[90m                                      [39m [90m0.75s[39m  
+  [32;1m✓[39;22m[90m [39m[90msuper admin can create registry record[39m[90m                              [39m [90m0.77s[39m  
+  [32;1m✓[39;22m[90m [39m[90mduplicate normalized nic is rejected[39m[90m                                [39m [90m0.99s[39m  
+  [32;1m✓[39;22m[90m [39m[90mregistered record cannot be deleted[39m[90m                                 [39m [90m0.90s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Feature\Admin\TransferCycleManagementTest[39m
+  [32;1m✓[39;22m[90m [39m[90msuper admin can view transfer cycles[39m[90m                                [39m [90m1.14s[39m  
+  [32;1m✓[39;22m[90m [39m[90msuper admin can create transfer cycle[39m[90m                               [39m [90m1.24s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Feature\Admin\TransferDocumentManagementTest[39m
+  [32;1m✓[39;22m[90m [39m[90mexample[39m[90m                                                             [39m [90m0.03s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Feature\Auth\AuthenticationTest[39m
+  [32;1m✓[39;22m[90m [39m[90mlogin screen can be rendered[39m[90m                                        [39m [90m0.08s[39m  
+  [32;1m✓[39;22m[90m [39m[90musers can authenticate using the login screen[39m[90m                       [39m [90m0.08s[39m  
+  [32;1m✓[39;22m[90m [39m[90musers can not authenticate with invalid password[39m[90m                    [39m [90m0.24s[39m  
+  [32;1m✓[39;22m[90m [39m[90musers can logout[39m[90m                                                    [39m [90m0.04s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Feature\Auth\EmailVerificationTest[39m
+  [32;1m✓[39;22m[90m [39m[90memail verification screen can be rendered[39m[90m                           [39m [90m0.04s[39m  
+  [32;1m✓[39;22m[90m [39m[90memail can be verified[39m[90m                                               [39m [90m0.04s[39m  
+  [32;1m✓[39;22m[90m [39m[90memail is not verified with invalid hash[39m[90m                             [39m [90m0.03s[39m  

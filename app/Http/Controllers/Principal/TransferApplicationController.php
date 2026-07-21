@@ -20,9 +20,16 @@ use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use App\Services\WorkflowNotificationService;
 
 class TransferApplicationController extends Controller
 {
+
+    public function __construct(
+        private readonly WorkflowNotificationService $workflowNotifications
+    ) {
+    }
+
     public function index(
         Request $request
     ): Response {
@@ -556,14 +563,18 @@ class TransferApplicationController extends Controller
     public function submit(
         SubmitTransferApplicationRequest $request,
         TransferApplication $transferApplication,
-        TransferApplicationPdfService $pdfService
+        TransferApplicationPdfService $pdfService,
+        WorkflowNotificationService $workflowNotifications
     ): RedirectResponse {
         $this->authorizeOwnership(
             $request,
             $transferApplication
         );
 
-        if ($transferApplication->status !== 'Draft') {
+        if (
+            $transferApplication->status
+            !== TransferApplication::STATUS_DRAFT
+        ) {
             return redirect()
                 ->route(
                     'principal.transfer-applications.show',
@@ -575,7 +586,15 @@ class TransferApplicationController extends Controller
                 );
         }
 
-        if (! $transferApplication->transferCycle->isApplicationOpen()) {
+        $transferApplication->loadMissing(
+            'transferCycle'
+        );
+
+        if (
+            ! $transferApplication
+                ->transferCycle
+                ->isApplicationOpen()
+        ) {
             return redirect()
                 ->route(
                     'principal.transfer-applications.show',
@@ -587,7 +606,11 @@ class TransferApplicationController extends Controller
                 );
         }
 
-        if ($transferApplication->preferences()->count() < 1) {
+        if (
+            $transferApplication
+                ->preferences()
+                ->count() < 1
+        ) {
             return redirect()
                 ->route(
                     'principal.transfer-applications.edit',
@@ -606,58 +629,100 @@ class TransferApplicationController extends Controller
                     $transferApplication
                 ): void {
                     /*
-                     * Reload and lock the application so two submission
-                     * requests cannot update it simultaneously.
-                     */
-                    $lockedApplication = TransferApplication::query()
-                        ->lockForUpdate()
-                        ->with([
-                            'transferCycle',
-                            'currentSchool.division',
-                        ])
-                        ->findOrFail(
-                            $transferApplication->id
-                        );
+                    * Reload and lock the application so two submission
+                    * requests cannot update it simultaneously.
+                    */
+                    $lockedApplication =
+                        TransferApplication::query()
+                            ->lockForUpdate()
+                            ->with([
+                                'transferCycle',
+                                'currentSchool.division',
+                            ])
+                            ->findOrFail(
+                                $transferApplication->id
+                            );
 
                     /*
-                     * Recheck the status after locking because another
-                     * request may have already submitted it.
-                     */
-                    if ($lockedApplication->status !== 'Draft') {
+                    * Recheck the status after locking because another
+                    * request may have already submitted it.
+                    */
+                    if (
+                        $lockedApplication->status
+                        !== TransferApplication::STATUS_DRAFT
+                    ) {
                         throw ValidationException::withMessages([
-                            'status' => 'This application has already been submitted or is no longer editable.',
+                            'status' =>
+                                'This application has already been submitted or is no longer editable.',
                         ]);
                     }
 
                     /*
-                     * Capture the immutable origin Zone from the current
-                     * School snapshot.
-                     */
-                    $originZoneId = $lockedApplication
-                        ->currentSchool
-                        ?->division
-                        ?->zone_id;
+                    * Recheck the transfer cycle after obtaining the lock.
+                    */
+                    if (
+                        ! $lockedApplication
+                            ->transferCycle
+                            ->isApplicationOpen()
+                    ) {
+                        throw ValidationException::withMessages([
+                            'transfer_cycle_id' =>
+                                'The application period has closed.',
+                        ]);
+                    }
+
+                    /*
+                    * Recheck preferences inside the transaction.
+                    */
+                    if (
+                        $lockedApplication
+                            ->preferences()
+                            ->count() < 1
+                    ) {
+                        throw ValidationException::withMessages([
+                            'preferences' =>
+                                'At least one school preference is required.',
+                        ]);
+                    }
+
+                    /*
+                    * Capture the immutable origin Zone from the current
+                    * School snapshot.
+                    */
+                    $originZoneId =
+                        $lockedApplication
+                            ->currentSchool
+                            ?->division
+                            ?->zone_id;
 
                     if ($originZoneId === null) {
                         throw ValidationException::withMessages([
-                            'current_school_id' => 'The current school does not belong to a valid education Zone. Please contact the system administrator.',
+                            'current_school_id' =>
+                                'The current school does not belong to a valid education Zone. Please contact the system administrator.',
                         ]);
                     }
 
                     $lockedApplication->update([
-                        'origin_zone_id' => $originZoneId,
+                        'origin_zone_id' =>
+                            $originZoneId,
 
-                        'application_number' => $this->generateApplicationNumber(
-                            $lockedApplication
-                        ),
+                        'application_number' =>
+                            $this
+                                ->generateApplicationNumber(
+                                    $lockedApplication
+                                ),
 
-                        'status' => 'Submitted',
+                        'status' =>
+                            TransferApplication::STATUS_SUBMITTED,
 
-                        'submitted_at' => now(),
+                        'submitted_at' =>
+                            now(),
 
-                        'declaration_accepted' => true,
+                        'declaration_accepted' =>
+                            true,
 
-                        'updated_by' => $request->user()->id,
+                        'updated_by' =>
+                            $request->user()->id,
                     ]);
                 }
             );
@@ -672,7 +737,9 @@ class TransferApplicationController extends Controller
                 )
                 ->with(
                     'warning',
-                    collect($exception->errors())
+                    collect(
+                        $exception->errors()
+                    )
                         ->flatten()
                         ->first()
                     ?? 'The application could not be submitted.'
@@ -680,13 +747,38 @@ class TransferApplicationController extends Controller
         }
 
         /*
-         * Reload the submitted application and all PDF-related data.
-         *
-         * PDF generation stays outside the transaction so a PDF error
-         * does not reverse a successful application submission.
-         */
-        $transferApplication->refresh();
+        * Reload the successfully submitted application and required
+        * notification/PDF relationships.
+        */
+        $transferApplication
+            ->refresh()
+            ->loadMissing([
+                'transferCycle',
+                'principalProfile.user',
+                'originZone',
+                'currentSchool.division',
+                'preferences',
+            ]);
 
+        /*
+        * Notify the Principal and assigned Zonal Director.
+        *
+        * Notification failure must not reverse or hide the successful
+        * application submission.
+        */
+        try {
+            $workflowNotifications
+                ->applicationSubmitted(
+                    $transferApplication
+                );
+        } catch (\Throwable $exception) {
+            report($exception);
+        }
+
+        /*
+        * PDF generation stays outside the transaction so a PDF error
+        * does not reverse a successful application submission.
+        */
         try {
             $pdfService->generate(
                 $transferApplication

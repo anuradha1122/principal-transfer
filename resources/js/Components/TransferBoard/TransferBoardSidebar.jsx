@@ -1,13 +1,14 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
+    BarChart3,
+    Bell,
     ClipboardCheck,
+    Files,
     Gavel,
     Gauge,
     LogOut,
-    ShieldCheck,
     Scale,
-    Files,
-    BarChart3,
+    ShieldCheck,
     X,
 } from 'lucide-react';
 
@@ -34,6 +35,10 @@ export default function TransferBoardSidebar({
     const user =
         page?.props?.auth?.user ?? null;
 
+    const unreadNotificationCount =
+        page?.props?.notifications
+            ?.unread_count ?? 0;
+
     const can = (permission) =>
         permissions.includes(permission);
 
@@ -45,61 +50,73 @@ export default function TransferBoardSidebar({
         {
             label: 'Board Dashboard',
             href: route(
-                'transfer-board.dashboard'
+                'transfer-board.dashboard',
             ),
             path: '/transfer-board/dashboard',
             icon: Gauge,
             visible: can(
-                'view transfer board dashboard'
+                'view transfer board dashboard',
             ),
         },
         {
             label: 'Transfer Applications',
             href: route(
-                'transfer-board.transfer-applications.index'
+                'transfer-board.transfer-applications.index',
             ),
             path:
                 '/transfer-board/transfer-applications',
             icon: ClipboardCheck,
             visible: can(
-                'view board transfer applications'
+                'view board transfer applications',
             ),
         },
         {
             label: 'Transfer Documents',
             href: route(
-                'admin.transfer-documents.index'
+                'admin.transfer-documents.index',
             ),
             path:
                 '/admin/transfer-documents',
             icon: Files,
             visible: can(
-                'view transfer documents'
+                'view transfer documents',
             ),
         },
         {
             label: 'Transfer Appeals',
             href: route(
-                'transfer-board.transfer-appeals.index'
+                'transfer-board.transfer-appeals.index',
             ),
             path:
                 '/transfer-board/transfer-appeals',
             icon: Scale,
             visible: can(
-                'view transfer appeals'
+                'view transfer appeals',
             ),
         },
         {
             label: 'Transfer Reports',
             href: route(
-                'admin.reports.index'
+                'admin.reports.index',
             ),
-            path:
-                '/admin/reports',
+            path: '/admin/reports',
             icon: BarChart3,
             visible: can(
-                'view reports'
+                'view reports',
             ),
+        },
+        {
+            label: 'Notifications',
+            href: route(
+                'notifications.index',
+            ),
+            path: '/notifications',
+            icon: Bell,
+            visible: can(
+                'view notifications',
+            ),
+            badge:
+                unreadNotificationCount,
         },
     ].filter((item) => item.visible);
 
@@ -125,7 +142,7 @@ export default function TransferBoardSidebar({
                 <div className="flex h-20 items-center justify-between border-b border-slate-200 px-5">
                     <Link
                         href={route(
-                            'transfer-board.dashboard'
+                            'transfer-board.dashboard',
                         )}
                         onClick={onClose}
                         className="flex min-w-0 items-center gap-3"
@@ -175,22 +192,41 @@ export default function TransferBoardSidebar({
                         {menuItems.map((item) => {
                             const Icon = item.icon;
 
+                            const active =
+                                isActive(item.path);
+
                             return (
                                 <Link
                                     key={item.label}
                                     href={item.href}
                                     onClick={onClose}
                                     className={itemClasses(
-                                        isActive(
-                                            item.path
-                                        )
+                                        active,
                                     )}
                                 >
                                     <Icon className="h-5 w-5 shrink-0" />
 
-                                    <span>
+                                    <span className="min-w-0 flex-1 truncate">
                                         {item.label}
                                     </span>
+
+                                    {item.badge > 0 && (
+                                        <span
+                                            className={[
+                                                'inline-flex min-w-6 items-center justify-center rounded-full px-1.5 py-1 text-[10px] font-bold leading-none',
+                                                active
+                                                    ? 'bg-white text-indigo-700'
+                                                    : 'bg-rose-600 text-white',
+                                            ].join(
+                                                ' ',
+                                            )}
+                                        >
+                                            {item.badge >
+                                            99
+                                                ? '99+'
+                                                : item.badge}
+                                        </span>
+                                    )}
                                 </Link>
                             );
                         })}
@@ -201,6 +237,7 @@ export default function TransferBoardSidebar({
                     <div className="rounded-xl bg-slate-50 p-3">
                         <div className="flex items-center gap-2 text-xs font-semibold text-slate-600">
                             <ShieldCheck className="h-4 w-4" />
+
                             Province-wide Board access
                         </div>
                     </div>
@@ -209,14 +246,14 @@ export default function TransferBoardSidebar({
                         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-950 text-sm font-bold text-white">
                             {user?.name
                                 ?.charAt(0)
-                                ?.toUpperCase()
-                                ?? 'B'}
+                                ?.toUpperCase() ??
+                                'B'}
                         </div>
 
                         <div className="min-w-0">
                             <p className="truncate text-sm font-bold text-slate-900">
-                                {user?.name
-                                    ?? 'Board Member'}
+                                {user?.name ??
+                                    'Board Member'}
                             </p>
 
                             <p className="truncate text-xs text-slate-500">
