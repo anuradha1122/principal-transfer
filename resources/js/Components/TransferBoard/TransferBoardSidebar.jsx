@@ -5,6 +5,8 @@ import {
     Gauge,
     LogOut,
     ShieldCheck,
+    Scale,
+    Files,
     X,
 } from 'lucide-react';
 
@@ -60,6 +62,30 @@ export default function TransferBoardSidebar({
             icon: ClipboardCheck,
             visible: can(
                 'view board transfer applications'
+            ),
+        },
+        {
+            label: 'Transfer Documents',
+            href: route(
+                'admin.transfer-documents.index'
+            ),
+            path:
+                '/admin/transfer-documents',
+            icon: Files,
+            visible: can(
+                'view transfer documents'
+            ),
+        },
+        {
+            label: 'Transfer Appeals',
+            href: route(
+                'transfer-board.transfer-appeals.index'
+            ),
+            path:
+                '/transfer-board/transfer-appeals',
+            icon: Scale,
+            visible: can(
+                'view transfer appeals'
             ),
         },
     ].filter((item) => item.visible);

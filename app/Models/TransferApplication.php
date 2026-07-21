@@ -678,4 +678,9 @@ class TransferApplication extends Model
             )
             ->exists();
     }
+
+    public function transferAppeals(): HasMany
+    {
+        return $this->hasMany(TransferAppeal::class);
+    }
 }

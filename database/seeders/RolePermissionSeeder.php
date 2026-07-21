@@ -187,6 +187,32 @@ class RolePermissionSeeder extends Seeder
 
             /*
             |--------------------------------------------------------------------------
+            | Transfer appeals - Principal
+            |--------------------------------------------------------------------------
+            */
+
+            'view own transfer appeals',
+            'create transfer appeals',
+            'edit draft transfer appeals',
+            'submit transfer appeals',
+            'withdraw transfer appeals',
+            'upload transfer appeal documents',
+
+            /*
+            |--------------------------------------------------------------------------
+            | Transfer appeals - Provincial and Transfer Board review
+            |--------------------------------------------------------------------------
+            */
+
+            'view transfer appeals',
+            'review transfer appeals',
+            'approve transfer appeals',
+            'reject transfer appeals',
+            'return transfer appeals',
+            'download transfer appeal documents',
+
+            /*
+            |--------------------------------------------------------------------------
             | Reports and exports
             |--------------------------------------------------------------------------
             */
@@ -296,6 +322,19 @@ class RolePermissionSeeder extends Seeder
 
             'view own transfer documents',
             'download own transfer documents',
+
+            /*
+            |--------------------------------------------------------------------------
+            | Transfer appeals
+            |--------------------------------------------------------------------------
+            */
+
+            'view own transfer appeals',
+            'create transfer appeals',
+            'edit draft transfer appeals',
+            'submit transfer appeals',
+            'withdraw transfer appeals',
+            'upload transfer appeal documents',
         ]);
 
         /*
@@ -338,6 +377,19 @@ class RolePermissionSeeder extends Seeder
             'upload signed transfer documents',
             'download transfer documents',
 
+            /*
+            |--------------------------------------------------------------------------
+            | Transfer appeals
+            |--------------------------------------------------------------------------
+            */
+
+            'view transfer appeals',
+            'review transfer appeals',
+            'approve transfer appeals',
+            'reject transfer appeals',
+            'return transfer appeals',
+            'download transfer appeal documents',
+
             'export transfer applications',
             'view reports',
             'export reports',
@@ -364,6 +416,19 @@ class RolePermissionSeeder extends Seeder
             'publish transfer results',
             'unpublish transfer results',
             'download transfer documents',
+
+            /*
+            |--------------------------------------------------------------------------
+            | Transfer appeals
+            |--------------------------------------------------------------------------
+            */
+
+            'view transfer appeals',
+            'review transfer appeals',
+            'approve transfer appeals',
+            'reject transfer appeals',
+            'return transfer appeals',
+            'download transfer appeal documents',
 
             'export transfer applications',
             'view reports',

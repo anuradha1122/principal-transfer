@@ -17,6 +17,7 @@ use App\Http\Controllers\Auth\PrincipalRegistrationController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Principal\AppointmentController as PrincipalSelfAppointmentController;
 use App\Http\Controllers\Principal\ProfileController as PrincipalProfileSelfController;
+use App\Http\Controllers\Principal\TransferAppealController as PrincipalTransferAppealController;
 use App\Http\Controllers\Principal\TransferApplicationController as PrincipalTransferApplicationController;
 use App\Http\Controllers\Principal\TransferDocumentController as PrincipalTransferDocumentController;
 use App\Http\Controllers\ProfileController;
@@ -24,6 +25,7 @@ use App\Http\Controllers\Provincial\DashboardController as ProvincialDashboardCo
 use App\Http\Controllers\Provincial\TransferApplicationController as ProvincialTransferApplicationController;
 use App\Http\Controllers\PublicTransferResultController;
 use App\Http\Controllers\TransferBoard\DashboardController as TransferBoardDashboardController;
+use App\Http\Controllers\TransferBoard\TransferAppealController as BoardTransferAppealController;
 use App\Http\Controllers\TransferBoard\TransferApplicationController as TransferBoardTransferApplicationController;
 use App\Http\Controllers\Zonal\DashboardController as ZonalDashboardController;
 use App\Http\Controllers\Zonal\TransferApplicationController as ZonalTransferApplicationController;
@@ -589,7 +591,7 @@ Route::middleware([
                 | Transfer Documents and Publication
                 |--------------------------------------------------------------------------
                 |
-                | Static routes remain above /{transferDocument}.
+                | Static and action routes remain above /{transferDocument}.
                 |
                 */
 
@@ -1047,6 +1049,184 @@ Route::middleware([
                     ->name(
                         'transfer-documents.show'
                     );
+
+                /*
+                |--------------------------------------------------------------------------
+                | Principal Transfer Appeals
+                |--------------------------------------------------------------------------
+                |
+                | Static, action, and document routes must remain before the
+                | general /{transferAppeal} show route.
+                |
+                */
+
+                Route::get(
+                    '/transfer-appeals',
+                    [
+                        PrincipalTransferAppealController::class,
+                        'index',
+                    ]
+                )
+                    ->middleware(
+                        'permission:view own transfer appeals'
+                    )
+                    ->name(
+                        'transfer-appeals.index'
+                    );
+
+                Route::get(
+                    '/transfer-appeals/create',
+                    [
+                        PrincipalTransferAppealController::class,
+                        'create',
+                    ]
+                )
+                    ->middleware(
+                        'permission:create transfer appeals'
+                    )
+                    ->name(
+                        'transfer-appeals.create'
+                    );
+
+                Route::post(
+                    '/transfer-appeals',
+                    [
+                        PrincipalTransferAppealController::class,
+                        'store',
+                    ]
+                )
+                    ->middleware(
+                        'permission:create transfer appeals'
+                    )
+                    ->name(
+                        'transfer-appeals.store'
+                    );
+
+                Route::post(
+                    '/transfer-appeals/{transferAppeal}/submit',
+                    [
+                        PrincipalTransferAppealController::class,
+                        'submit',
+                    ]
+                )
+                    ->middleware(
+                        'permission:submit transfer appeals'
+                    )
+                    ->name(
+                        'transfer-appeals.submit'
+                    );
+
+                Route::post(
+                    '/transfer-appeals/{transferAppeal}/clarify',
+                    [
+                        PrincipalTransferAppealController::class,
+                        'clarify',
+                    ]
+                )
+                    ->middleware(
+                        'permission:submit transfer appeals'
+                    )
+                    ->name(
+                        'transfer-appeals.clarify'
+                    );
+
+                Route::post(
+                    '/transfer-appeals/{transferAppeal}/withdraw',
+                    [
+                        PrincipalTransferAppealController::class,
+                        'withdraw',
+                    ]
+                )
+                    ->middleware(
+                        'permission:withdraw transfer appeals'
+                    )
+                    ->name(
+                        'transfer-appeals.withdraw'
+                    );
+
+                Route::get(
+                    '/transfer-appeals/{transferAppeal}/documents/{document}/download',
+                    [
+                        PrincipalTransferAppealController::class,
+                        'downloadDocument',
+                    ]
+                )
+                    ->middleware(
+                        'permission:view own transfer appeals'
+                    )
+                    ->name(
+                        'transfer-appeals.documents.download'
+                    );
+
+                Route::delete(
+                    '/transfer-appeals/{transferAppeal}/documents/{document}',
+                    [
+                        PrincipalTransferAppealController::class,
+                        'destroyDocument',
+                    ]
+                )
+                    ->middleware(
+                        'permission:edit draft transfer appeals'
+                    )
+                    ->name(
+                        'transfer-appeals.documents.destroy'
+                    );
+
+                Route::get(
+                    '/transfer-appeals/{transferAppeal}/edit',
+                    [
+                        PrincipalTransferAppealController::class,
+                        'edit',
+                    ]
+                )
+                    ->middleware(
+                        'permission:edit draft transfer appeals'
+                    )
+                    ->name(
+                        'transfer-appeals.edit'
+                    );
+
+                Route::put(
+                    '/transfer-appeals/{transferAppeal}',
+                    [
+                        PrincipalTransferAppealController::class,
+                        'update',
+                    ]
+                )
+                    ->middleware(
+                        'permission:edit draft transfer appeals'
+                    )
+                    ->name(
+                        'transfer-appeals.update'
+                    );
+
+                Route::delete(
+                    '/transfer-appeals/{transferAppeal}',
+                    [
+                        PrincipalTransferAppealController::class,
+                        'destroy',
+                    ]
+                )
+                    ->middleware(
+                        'permission:edit draft transfer appeals'
+                    )
+                    ->name(
+                        'transfer-appeals.destroy'
+                    );
+
+                Route::get(
+                    '/transfer-appeals/{transferAppeal}',
+                    [
+                        PrincipalTransferAppealController::class,
+                        'show',
+                    ]
+                )
+                    ->middleware(
+                        'permission:view own transfer appeals'
+                    )
+                    ->name(
+                        'transfer-appeals.show'
+                    );
             });
 
         /*
@@ -1173,7 +1353,7 @@ Route::middleware([
 
         /*
         |--------------------------------------------------------------------------
-        | Transfer Board Routes
+        | Transfer Board Application Routes
         |--------------------------------------------------------------------------
         */
 
@@ -1290,6 +1470,128 @@ Route::middleware([
                     )
                     ->name(
                         'transfer-applications.show'
+                    );
+            });
+
+        /*
+        |--------------------------------------------------------------------------
+        | Transfer Appeal Review Routes
+        |--------------------------------------------------------------------------
+        |
+        | Provincial Directors, Transfer Board Members, and Super Admins may
+        | review appeals. These routes use the Transfer Board appeal pages and
+        | controller but do not expose the ordinary Board application queue to
+        | Provincial Directors.
+        |
+        */
+
+        Route::middleware(
+            'role:Provincial Director|Transfer Board Member|Super Admin'
+        )
+            ->prefix('transfer-board')
+            ->name('transfer-board.')
+            ->group(function (): void {
+                Route::get(
+                    '/transfer-appeals',
+                    [
+                        BoardTransferAppealController::class,
+                        'index',
+                    ]
+                )
+                    ->middleware(
+                        'permission:view transfer appeals'
+                    )
+                    ->name(
+                        'transfer-appeals.index'
+                    );
+
+                Route::post(
+                    '/transfer-appeals/{transferAppeal}/start-review',
+                    [
+                        BoardTransferAppealController::class,
+                        'startReview',
+                    ]
+                )
+                    ->middleware(
+                        'permission:review transfer appeals'
+                    )
+                    ->name(
+                        'transfer-appeals.start-review'
+                    );
+
+                Route::post(
+                    '/transfer-appeals/{transferAppeal}/return',
+                    [
+                        BoardTransferAppealController::class,
+                        'returnForClarification',
+                    ]
+                )
+                    ->middleware(
+                        'permission:return transfer appeals'
+                    )
+                    ->name(
+                        'transfer-appeals.return'
+                    );
+
+                Route::post(
+                    '/transfer-appeals/{transferAppeal}/approve',
+                    [
+                        BoardTransferAppealController::class,
+                        'approve',
+                    ]
+                )
+                    ->middleware(
+                        'permission:approve transfer appeals'
+                    )
+                    ->name(
+                        'transfer-appeals.approve'
+                    );
+
+                Route::post(
+                    '/transfer-appeals/{transferAppeal}/reject',
+                    [
+                        BoardTransferAppealController::class,
+                        'reject',
+                    ]
+                )
+                    ->middleware(
+                        'permission:reject transfer appeals'
+                    )
+                    ->name(
+                        'transfer-appeals.reject'
+                    );
+
+                Route::get(
+                    '/transfer-appeals/{transferAppeal}/documents/{document}/download',
+                    [
+                        BoardTransferAppealController::class,
+                        'downloadDocument',
+                    ]
+                )
+                    ->middleware(
+                        'permission:download transfer appeal documents'
+                    )
+                    ->name(
+                        'transfer-appeals.documents.download'
+                    );
+
+                /*
+                 * The general show route must remain after every action and
+                 * supporting-document route.
+                 */
+
+                Route::get(
+                    '/transfer-appeals/{transferAppeal}',
+                    [
+                        BoardTransferAppealController::class,
+                        'show',
+                    ]
+                )
+                    ->middleware(
+                        'permission:view transfer appeals'
+                    )
+                    ->name(
+                        'transfer-appeals.show'
                     );
             });
     });

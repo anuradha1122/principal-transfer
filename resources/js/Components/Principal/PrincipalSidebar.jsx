@@ -2,6 +2,7 @@ import { Link, usePage } from '@inertiajs/react';
 import {
     FileText,
     Files,
+    Scale,
     GraduationCap,
     LayoutDashboard,
     UserRound,
@@ -57,6 +58,18 @@ export default function PrincipalSidebar({
             icon: FileText,
             visible: can(
                 'view own transfer applications',
+            ),
+        },
+        {
+            label: 'Transfer Appeals',
+            href: route(
+                'principal.transfer-appeals.index',
+            ),
+            path:
+                '/principal/transfer-appeals',
+            icon: Scale,
+            visible: can(
+                'view own transfer appeals',
             ),
         },
         {

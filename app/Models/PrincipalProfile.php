@@ -106,4 +106,9 @@ class PrincipalProfile extends Model
             TransferApplication::class
         );
     }
+
+    public function transferAppeals(): HasMany
+    {
+        return $this->hasMany(TransferAppeal::class);
+    }
 }
