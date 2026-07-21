@@ -509,6 +509,71 @@ export default function Index({
                     </div>
                 </div>
 
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                    <Link
+                        href={route(
+                            'admin.reports.applications',
+                        )}
+                        className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md"
+                    >
+                        <ClipboardList className="h-6 w-6 text-blue-700" />
+                        <h3 className="mt-4 font-bold text-slate-900">
+                            Application Report
+                        </h3>
+                        <p className="mt-2 text-sm text-slate-500">
+                            View and export detailed transfer
+                            applications.
+                        </p>
+                    </Link>
+
+                    <Link
+                        href={route(
+                            'admin.reports.decisions',
+                        )}
+                        className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md"
+                    >
+                        <CheckCircle2 className="h-6 w-6 text-emerald-700" />
+                        <h3 className="mt-4 font-bold text-slate-900">
+                            Decision Report
+                        </h3>
+                        <p className="mt-2 text-sm text-slate-500">
+                            Review final Board decisions and
+                            recommendations.
+                        </p>
+                    </Link>
+
+                    <Link
+                        href={route(
+                            'admin.reports.appeals',
+                        )}
+                        className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md"
+                    >
+                        <Scale className="h-6 w-6 text-violet-700" />
+                        <h3 className="mt-4 font-bold text-slate-900">
+                            Appeal Report
+                        </h3>
+                        <p className="mt-2 text-sm text-slate-500">
+                            View appeal grounds and appeal
+                            outcomes.
+                        </p>
+                    </Link>
+
+                    <Link
+                        href={route(
+                            'admin.reports.documents',
+                        )}
+                        className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md"
+                    >
+                        <FileText className="h-6 w-6 text-amber-700" />
+                        <h3 className="mt-4 font-bold text-slate-900">
+                            Document Report
+                        </h3>
+                        <p className="mt-2 text-sm text-slate-500">
+                            Track generated, signed, and
+                            published documents.
+                        </p>
+                    </Link>
+                </div>
                 <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                     <div className="border-b border-slate-200 bg-slate-50 px-5 py-4">
                         <h2 className="font-bold text-slate-900">

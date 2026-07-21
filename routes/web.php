@@ -2,11 +2,13 @@
 
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\DetailedReportController;
 use App\Http\Controllers\Admin\DivisionController;
 use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\PrincipalAppointmentController;
 use App\Http\Controllers\Admin\PrincipalProfileController;
 use App\Http\Controllers\Admin\PrincipalRegistryController;
+use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\SchoolController;
 use App\Http\Controllers\Admin\TransferApplicationController as AdminTransferApplicationController;
@@ -30,7 +32,6 @@ use App\Http\Controllers\TransferBoard\TransferAppealController as BoardTransfer
 use App\Http\Controllers\TransferBoard\TransferApplicationController as TransferBoardTransferApplicationController;
 use App\Http\Controllers\Zonal\DashboardController as ZonalDashboardController;
 use App\Http\Controllers\Zonal\TransferApplicationController as ZonalTransferApplicationController;
-use App\Http\Controllers\Admin\ReportController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -755,60 +756,192 @@ Route::middleware([
                         'audit-logs.show'
                     );
 
-
-                    /*
+                /*
             |--------------------------------------------------------------------------
             | Transfer Reports
             |--------------------------------------------------------------------------
             */
 
-            Route::get(
-                'reports',
-                [
-                    ReportController::class,
-                    'index',
-                ]
-            )
-                ->middleware(
-                    'permission:view reports'
+                Route::get(
+                    'reports',
+                    [
+                        ReportController::class,
+                        'index',
+                    ]
                 )
-                ->name(
-                    'reports.index'
-                );
+                    ->middleware(
+                        'permission:view reports'
+                    )
+                    ->name(
+                        'reports.index'
+                    );
 
-            /*
+                /*
+                |--------------------------------------------------------------------------
+                | Audit Logs
+                |--------------------------------------------------------------------------
+                */
+
+                Route::get(
+                    'audit-logs',
+                    [
+                        AuditLogController::class,
+                        'index',
+                    ]
+                )
+                    ->middleware(
+                        'permission:view audit logs'
+                    )
+                    ->name(
+                        'audit-logs.index'
+                    );
+
+                Route::get(
+                    'audit-logs/{auditLog}',
+                    [
+                        AuditLogController::class,
+                        'show',
+                    ]
+                )
+                    ->middleware(
+                        'permission:view audit logs'
+                    )
+                    ->name(
+                        'audit-logs.show'
+                    );
+
+                /*
             |--------------------------------------------------------------------------
-            | Audit Logs
+            | Detailed Transfer Reports
             |--------------------------------------------------------------------------
             */
 
-            Route::get(
-                'audit-logs',
-                [
-                    AuditLogController::class,
-                    'index',
-                ]
-            )
-                ->middleware(
-                    'permission:view audit logs'
-                )
-                ->name(
-                    'audit-logs.index'
-                );
+                Route::prefix('reports')
+                    ->name('reports.')
+                    ->middleware(
+                        'permission:view reports'
+                    )
+                    ->group(function (): void {
+                        Route::get(
+                            'applications',
+                            [
+                                DetailedReportController::class,
+                                'applications',
+                            ]
+                        )->name(
+                            'applications'
+                        );
 
-            Route::get(
-                'audit-logs/{auditLog}',
-                [
-                    AuditLogController::class,
-                    'show',
-                ]
-            )
-                ->middleware(
-                    'permission:view audit logs'
-                )
-                ->name(
-                    'audit-logs.show'
-                );
+                        Route::get(
+                            'decisions',
+                            [
+                                DetailedReportController::class,
+                                'decisions',
+                            ]
+                        )->name(
+                            'decisions'
+                        );
+
+                        Route::get(
+                            'appeals',
+                            [
+                                DetailedReportController::class,
+                                'appeals',
+                            ]
+                        )->name(
+                            'appeals'
+                        );
+
+                        Route::get(
+                            'documents',
+                            [
+                                DetailedReportController::class,
+                                'documents',
+                            ]
+                        )->name(
+                            'documents'
+                        );
+
+                        Route::get(
+                            'applications/pdf',
+                            [
+                                DetailedReportController::class,
+                                'applicationsPdf',
+                            ]
+                        )->name(
+                            'applications.pdf'
+                        );
+
+                        Route::get(
+                            'decisions/pdf',
+                            [
+                                DetailedReportController::class,
+                                'decisionsPdf',
+                            ]
+                        )->name(
+                            'decisions.pdf'
+                        );
+
+                        Route::get(
+                            'appeals/pdf',
+                            [
+                                DetailedReportController::class,
+                                'appealsPdf',
+                            ]
+                        )->name(
+                            'appeals.pdf'
+                        );
+
+                        Route::get(
+                            'documents/pdf',
+                            [
+                                DetailedReportController::class,
+                                'documentsPdf',
+                            ]
+                        )->name(
+                            'documents.pdf'
+                        );
+
+                        Route::get(
+                            'applications/excel',
+                            [
+                                DetailedReportController::class,
+                                'applicationsExcel',
+                            ]
+                        )->name(
+                            'applications.excel'
+                        );
+
+                        Route::get(
+                            'decisions/excel',
+                            [
+                                DetailedReportController::class,
+                                'decisionsExcel',
+                            ]
+                        )->name(
+                            'decisions.excel'
+                        );
+
+                        Route::get(
+                            'appeals/excel',
+                            [
+                                DetailedReportController::class,
+                                'appealsExcel',
+                            ]
+                        )->name(
+                            'appeals.excel'
+                        );
+
+                        Route::get(
+                            'documents/excel',
+                            [
+                                DetailedReportController::class,
+                                'documentsExcel',
+                            ]
+                        )->name(
+                            'documents.excel'
+                        );
+                    });
             });
 
         /*
