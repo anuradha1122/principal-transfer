@@ -1,3 +1,4 @@
+import ApplicationLogo from '@/Components/ApplicationLogo';
 import Checkbox from '@/Components/Checkbox';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
@@ -7,7 +8,6 @@ import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, useForm } from '@inertiajs/react';
 import {
     Building2,
-    GraduationCap,
     ShieldCheck,
 } from 'lucide-react';
 
@@ -48,11 +48,13 @@ export default function Register({
             <Head title="Create Principal Account" />
 
             <div className="mb-7 text-center">
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-600 text-white">
-                    <GraduationCap className="h-7 w-7" />
+                <div className="flex justify-center">
+                    <ApplicationLogo
+                        className="h-24 w-24 object-contain"
+                    />
                 </div>
 
-                <h1 className="mt-4 text-2xl font-bold text-slate-900">
+                <h1 className="mt-5 text-2xl font-bold text-slate-900">
                     Create Your Account
                 </h1>
 
@@ -78,6 +80,7 @@ export default function Register({
                         {registry.school && (
                             <p className="mt-1 flex items-center gap-2 text-emerald-700">
                                 <Building2 className="h-4 w-4" />
+
                                 {registry.school.name}
                             </p>
                         )}
@@ -189,6 +192,13 @@ export default function Register({
                                 event.target.value,
                             )
                         }
+                    />
+
+                    <InputError
+                        message={
+                            errors.password_confirmation
+                        }
+                        className="mt-2"
                     />
                 </div>
 

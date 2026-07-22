@@ -1,408 +1,663 @@
+import DashboardHeader from '@/Components/Dashboard/DashboardHeader';
+import DashboardSection from '@/Components/Dashboard/DashboardSection';
+import DashboardStatCard from '@/Components/Dashboard/DashboardStatCard';
+import EmptyDashboardState from '@/Components/Dashboard/EmptyDashboardState';
+import NotificationPreview from '@/Components/Dashboard/NotificationPreview';
+import QuickActionCard from '@/Components/Dashboard/QuickActionCard';
+import StatusSummary from '@/Components/Dashboard/StatusSummary';
 import AdminLayout from '@/Layouts/AdminLayout';
-import { Link, usePage } from '@inertiajs/react';
+import {
+    Head,
+    Link,
+    usePage,
+} from '@inertiajs/react';
 import {
     ArrowRight,
     BadgeCheck,
+    Bell,
     Building2,
-    CheckCircle2,
+    ChartNoAxesCombined,
+    CircleX,
     ClipboardCheck,
     Clock3,
+    FileClock,
     FileSearch,
+    Gauge,
     MapPinned,
+    RotateCcw,
+    School,
     ShieldCheck,
-    XCircle,
 } from 'lucide-react';
 
-function StatisticCard({
-    label,
-    value,
-    description,
-    icon: Icon,
-    iconClassName,
-    iconBackgroundClassName,
-}) {
-    return (
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-            <div className="flex items-start justify-between gap-4">
-                <div>
-                    <p className="text-sm font-semibold text-slate-600">
-                        {label}
-                    </p>
+const badgeClasses = {
+    blue:
+        'bg-blue-50 text-blue-700',
 
-                    <p className="mt-3 text-3xl font-bold text-slate-950">
-                        {value ?? 0}
-                    </p>
+    emerald:
+        'bg-emerald-50 text-emerald-700',
 
-                    <p className="mt-2 text-xs leading-5 text-slate-500">
-                        {description}
-                    </p>
-                </div>
+    amber:
+        'bg-amber-50 text-amber-700',
 
-                <div
-                    className={[
-                        'flex h-12 w-12 shrink-0 items-center justify-center rounded-xl',
-                        iconBackgroundClassName,
-                        iconClassName,
-                    ].join(' ')}
-                >
-                    <Icon className="h-6 w-6" />
-                </div>
-            </div>
-        </div>
-    );
-}
+    red:
+        'bg-red-50 text-red-700',
 
-function WorkflowStep({
-    number,
-    title,
-    description,
-    active = false,
-    completed = false,
-    isLast = false,
-}) {
-    return (
-        <div className="relative flex gap-4">
-            {!isLast && (
-                <div className="absolute left-4 top-9 h-[calc(100%-8px)] w-px bg-slate-200" />
-            )}
-
-            <div
-                className={[
-                    'relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold',
-                    completed
-                        ? 'bg-emerald-600 text-white'
-                        : active
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-slate-100 text-slate-500',
-                ].join(' ')}
-            >
-                {completed ? (
-                    <CheckCircle2 className="h-4 w-4" />
-                ) : (
-                    number
-                )}
-            </div>
-
-            <div className="pb-6">
-                <h4
-                    className={[
-                        'text-sm font-bold',
-                        active
-                            ? 'text-blue-700'
-                            : 'text-slate-900',
-                    ].join(' ')}
-                >
-                    {title}
-                </h4>
-
-                <p className="mt-1 text-xs leading-5 text-slate-500">
-                    {description}
-                </p>
-            </div>
-        </div>
-    );
-}
+    violet:
+        'bg-violet-50 text-violet-700',
+};
 
 export default function Index({
-    zone,
+    zone = {},
     summary = {},
+    statusSummary = [],
+    pendingApplications = [],
+    recentDecisions = [],
+    oldestPending = null,
+    recentNotifications = [],
+    unreadNotificationCount = 0,
+    permissions = {},
 }) {
     const { auth } = usePage().props;
 
-    const statistics = [
-        {
-            label: 'Awaiting Review',
-            value: summary.submitted ?? 0,
-            description:
-                'Submitted applications waiting for Zonal review',
-            icon: ClipboardCheck,
-            iconClassName: 'text-blue-600',
-            iconBackgroundClassName: 'bg-blue-50',
-        },
-        {
-            label: 'Under Review',
-            value: summary.under_review ?? 0,
-            description:
-                'Applications currently being assessed',
-            icon: Clock3,
-            iconClassName: 'text-amber-600',
-            iconBackgroundClassName: 'bg-amber-50',
-        },
-        {
-            label: 'Zonal Approved',
-            value: summary.approved ?? 0,
-            description:
-                'Applications recommended by the Zone',
-            icon: BadgeCheck,
-            iconClassName: 'text-emerald-600',
-            iconBackgroundClassName: 'bg-emerald-50',
-        },
-        {
-            label: 'Zonal Rejected',
-            value: summary.rejected ?? 0,
-            description:
-                'Applications rejected during Zonal review',
-            icon: XCircle,
-            iconClassName: 'text-red-600',
-            iconBackgroundClassName: 'bg-red-50',
-        },
-    ];
-
-    const totalApplications =
-        Number(summary.submitted ?? 0) +
-        Number(summary.under_review ?? 0) +
-        Number(summary.approved ?? 0) +
-        Number(summary.rejected ?? 0);
+    const user =
+        auth?.user ?? {};
 
     return (
-        <AdminLayout
-            title="Zonal Dashboard"
-            header={
-                <div>
-                    <h1 className="text-2xl font-bold text-slate-900">
-                        Zonal Dashboard
-                    </h1>
+        <AdminLayout>
+            <Head title="Zonal Dashboard" />
 
-                    <p className="mt-1 text-sm text-slate-500">
-                        Review and manage principal transfer
-                        applications assigned to your Zone.
+            <div className="space-y-6">
+                <DashboardHeader
+                    eyebrow="Zonal Transfer Management"
+                    title={`${zone.name ?? 'Assigned Zone'} Dashboard`}
+                    description="Review transfer applications, monitor pending workload and record Zonal decisions for your assigned Zone."
+                    userName={
+                        user.name
+                    }
+                    role="Zonal Director"
+                    accent="zonal"
+                    icon={MapPinned}
+                    actionLabel="Review Applications"
+                    actionHref={route(
+                        'zonal.transfer-applications.index',
+                    )}
+                />
+
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                    <DashboardStatCard
+                        title="Zone Applications"
+                        value={
+                            summary.total_applications
+                        }
+                        description={`Applications originating from ${zone.name ?? 'this Zone'}.`}
+                        icon={ClipboardCheck}
+                        tone="blue"
+                    />
+
+                    <DashboardStatCard
+                        title="Awaiting Review"
+                        value={
+                            summary.awaiting_zonal_review
+                        }
+                        description="Applications requiring Zonal review or action."
+                        icon={FileClock}
+                        tone="amber"
+                    />
+
+                    <DashboardStatCard
+                        title="Zonal Approved"
+                        value={
+                            summary.zonal_approved
+                        }
+                        description="Applications approved at the Zonal stage."
+                        icon={BadgeCheck}
+                        tone="emerald"
+                    />
+
+                    <DashboardStatCard
+                        title="Zonal Rejected"
+                        value={
+                            summary.zonal_rejected
+                        }
+                        description="Applications rejected at the Zonal stage."
+                        icon={CircleX}
+                        tone="red"
+                    />
+
+                    <DashboardStatCard
+                        title="Returned to Zone"
+                        value={
+                            summary.returned_to_zone
+                        }
+                        description="Applications returned for further clarification."
+                        icon={RotateCcw}
+                        tone="violet"
+                    />
+
+                    <DashboardStatCard
+                        title="Pending Workflow"
+                        value={
+                            summary.pending_applications
+                        }
+                        description="Applications without a final workflow outcome."
+                        icon={Clock3}
+                        tone="amber"
+                    />
+
+                    <DashboardStatCard
+                        title="Divisions"
+                        value={
+                            zone.division_count
+                        }
+                        description="Education Divisions configured under this Zone."
+                        icon={Building2}
+                        tone="cyan"
+                    />
+
+                    <DashboardStatCard
+                        title="Schools"
+                        value={
+                            zone.school_count
+                        }
+                        description="Schools configured under the assigned Zone."
+                        icon={School}
+                        tone="indigo"
+                    />
+                </div>
+
+                <div className="grid gap-6 xl:grid-cols-3">
+                    <DashboardSection
+                        title="Zone Information"
+                        description="Assigned organizational scope for this account."
+                        icon={MapPinned}
+                        className="xl:col-span-1"
+                    >
+                        <ZoneInformation
+                            zone={zone}
+                        />
+                    </DashboardSection>
+
+                    <DashboardSection
+                        title="Application Status"
+                        description="Distribution of applications across workflow states."
+                        icon={ChartNoAxesCombined}
+                        className="xl:col-span-2"
+                    >
+                        <StatusSummary
+                            items={
+                                statusSummary
+                            }
+                        />
+                    </DashboardSection>
+                </div>
+
+                <div className="grid gap-6 xl:grid-cols-3">
+                    <DashboardSection
+                        title="Pending Review Queue"
+                        description="Oldest applications currently awaiting Zonal attention."
+                        icon={FileSearch}
+                        actionLabel="Open review queue"
+                        actionHref={route(
+                            'zonal.transfer-applications.index',
+                        )}
+                        className="xl:col-span-2"
+                        noPadding
+                    >
+                        <PendingApplicationsTable
+                            applications={
+                                pendingApplications
+                            }
+                        />
+                    </DashboardSection>
+
+                    <DashboardSection
+                        title="Oldest Pending Case"
+                        description="Application waiting the longest within this Zone."
+                        icon={Clock3}
+                        className="xl:col-span-1"
+                    >
+                        {oldestPending ? (
+                            <OldestPendingCard
+                                application={
+                                    oldestPending
+                                }
+                            />
+                        ) : (
+                            <EmptyDashboardState
+                                title="No pending cases"
+                                description="There are no unresolved applications in the current Zone scope."
+                                icon={BadgeCheck}
+                            />
+                        )}
+                    </DashboardSection>
+                </div>
+
+                <DashboardSection
+                    title="Quick Actions"
+                    description="Common Zonal Director tasks."
+                    icon={Gauge}
+                >
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                        {permissions.viewApplications && (
+                            <QuickActionCard
+                                title="Review Applications"
+                                description="Open the Zone application queue."
+                                href={route(
+                                    'zonal.transfer-applications.index',
+                                )}
+                                icon={ClipboardCheck}
+                                tone="amber"
+                            />
+                        )}
+
+                        {permissions.viewReports && (
+                            <QuickActionCard
+                                title="Zone Reports"
+                                description="Review scoped reports and management analytics."
+                                href={route(
+                                    'reports.index',
+                                )}
+                                icon={ChartNoAxesCombined}
+                                tone="blue"
+                            />
+                        )}
+
+                        <QuickActionCard
+                            title="Notifications"
+                            description="Review application and workflow notifications."
+                            href={route(
+                                'notifications.index',
+                            )}
+                            icon={Bell}
+                            tone="violet"
+                        />
+
+                        <QuickActionCard
+                            title="Zone Overview"
+                            description="Review Zone workload and pending decisions."
+                            href={route(
+                                'zonal.dashboard',
+                            )}
+                            icon={MapPinned}
+                            tone="emerald"
+                        />
+                    </div>
+                </DashboardSection>
+
+                <div className="grid gap-6 xl:grid-cols-3">
+                    <DashboardSection
+                        title="Recent Zonal Decisions"
+                        description="Latest approvals and rejections recorded by the Zone."
+                        icon={ShieldCheck}
+                        className="xl:col-span-2"
+                        noPadding
+                    >
+                        <RecentDecisions
+                            decisions={
+                                recentDecisions
+                            }
+                        />
+                    </DashboardSection>
+
+                    <DashboardSection
+                        title="Notifications"
+                        description="Recent workflow updates and review alerts."
+                        icon={Bell}
+                        className="xl:col-span-1"
+                    >
+                        <NotificationPreview
+                            notifications={
+                                recentNotifications
+                            }
+                            unreadCount={
+                                unreadNotificationCount
+                            }
+                        />
+                    </DashboardSection>
+                </div>
+            </div>
+        </AdminLayout>
+    );
+}
+
+function ZoneInformation({
+    zone,
+}) {
+    return (
+        <div className="space-y-4">
+            <div className="rounded-2xl bg-emerald-50 p-5">
+                <MapPinned className="h-7 w-7 text-emerald-700" />
+
+                <h3 className="mt-4 text-xl font-bold text-slate-900">
+                    {zone.name ?? 'Assigned Zone'}
+                </h3>
+
+                {zone.code && (
+                    <p className="mt-1 text-sm font-semibold text-emerald-700">
+                        Zone Code: {zone.code}
+                    </p>
+                )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+                <InfoBox
+                    label="Divisions"
+                    value={
+                        zone.division_count
+                        ?? 0
+                    }
+                />
+
+                <InfoBox
+                    label="Schools"
+                    value={
+                        zone.school_count
+                        ?? 0
+                    }
+                />
+            </div>
+
+            <p className="text-xs leading-5 text-slate-500">
+                All dashboard totals and review queues are restricted to this assigned Zone.
+            </p>
+        </div>
+    );
+}
+
+function PendingApplicationsTable({
+    applications = [],
+}) {
+    if (applications.length === 0) {
+        return (
+            <div className="p-5">
+                <EmptyDashboardState
+                    title="No applications awaiting review"
+                    description="Newly submitted or returned applications will appear here."
+                    icon={BadgeCheck}
+                />
+            </div>
+        );
+    }
+
+    return (
+        <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-slate-200">
+                <thead className="bg-slate-50">
+                    <tr>
+                        <TableHeading>
+                            Application
+                        </TableHeading>
+
+                        <TableHeading>
+                            Principal
+                        </TableHeading>
+
+                        <TableHeading>
+                            Status
+                        </TableHeading>
+
+                        <TableHeading>
+                            Pending
+                        </TableHeading>
+
+                        <TableHeading>
+                            Submitted
+                        </TableHeading>
+                    </tr>
+                </thead>
+
+                <tbody className="divide-y divide-slate-100 bg-white">
+                    {applications.map(
+                        (application) => (
+                            <tr
+                                key={
+                                    application.id
+                                }
+                                className="transition hover:bg-slate-50"
+                            >
+                                <td className="whitespace-nowrap px-5 py-4">
+                                    <Link
+                                        href={
+                                            application.show_url
+                                        }
+                                        className="font-bold text-blue-700 hover:text-blue-900"
+                                    >
+                                        {
+                                            application.application_number
+                                        }
+                                    </Link>
+                                </td>
+
+                                <td className="px-5 py-4">
+                                    <p className="text-sm font-semibold text-slate-900">
+                                        {
+                                            application.principal_name
+                                        }
+                                    </p>
+
+                                    <p className="mt-1 text-xs text-slate-500">
+                                        {
+                                            application.school_name
+                                        }
+                                    </p>
+                                </td>
+
+                                <td className="whitespace-nowrap px-5 py-4">
+                                    <span
+                                        className={[
+                                            'rounded-full px-2.5 py-1 text-xs font-bold',
+                                            badgeClasses[
+                                                application.status_tone
+                                            ]
+                                            ?? badgeClasses.blue,
+                                        ].join(' ')}
+                                    >
+                                        {
+                                            application.status_label
+                                        }
+                                    </span>
+                                </td>
+
+                                <td className="whitespace-nowrap px-5 py-4 text-sm font-bold text-amber-700">
+                                    {
+                                        application.pending_days
+                                    }{' '}
+                                    days
+                                </td>
+
+                                <td className="whitespace-nowrap px-5 py-4 text-xs font-medium text-slate-500">
+                                    {
+                                        application.submitted_at
+                                    }
+                                </td>
+                            </tr>
+                        ),
+                    )}
+                </tbody>
+            </table>
+        </div>
+    );
+}
+
+function OldestPendingCard({
+    application,
+}) {
+    return (
+        <div className="space-y-4">
+            <div className="rounded-2xl bg-amber-50 p-5">
+                <Clock3 className="h-7 w-7 text-amber-700" />
+
+                <Link
+                    href={
+                        application.show_url
+                    }
+                    className="mt-4 block text-lg font-bold text-blue-700 hover:text-blue-900"
+                >
+                    {
+                        application.application_number
+                    }
+                </Link>
+
+                <p className="mt-2 text-sm font-semibold text-slate-900">
+                    {
+                        application.principal_name
+                    }
+                </p>
+
+                <p className="mt-1 text-xs text-slate-500">
+                    {
+                        application.school_name
+                    }
+                </p>
+
+                <div className="mt-4 rounded-xl bg-white p-3">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                        Pending Duration
+                    </p>
+
+                    <p className="mt-1 text-2xl font-bold text-amber-700">
+                        {
+                            application.pending_days
+                        }{' '}
+                        days
                     </p>
                 </div>
-            }
-        >
-            <section className="overflow-hidden rounded-2xl bg-gradient-to-r from-slate-950 via-slate-900 to-blue-950 text-white shadow-lg">
-                <div className="grid gap-8 px-6 py-8 lg:grid-cols-[1fr_auto] lg:items-center lg:px-8">
-                    <div>
-                        <div className="flex items-center gap-2 text-sm font-semibold text-blue-300">
-                            <MapPinned className="h-4 w-4" />
+            </div>
 
-                            <span>
-                                {zone?.name
-                                    ? `${zone.name} Zone`
-                                    : 'Provincial Zone Access'}
-                            </span>
-                        </div>
+            <Link
+                href={
+                    application.show_url
+                }
+                className="inline-flex items-center gap-2 text-sm font-bold text-blue-700 hover:text-blue-900"
+            >
+                Review application
 
-                        <h2 className="mt-3 text-3xl font-bold">
-                            Welcome, {auth?.user?.name}
-                        </h2>
+                <ArrowRight className="h-4 w-4" />
+            </Link>
+        </div>
+    );
+}
 
-                        <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-300">
-                            Review submitted principal transfer
-                            applications, record recommendations
-                            and forward eligible applications to
-                            the Provincial Director.
-                        </p>
+function RecentDecisions({
+    decisions = [],
+}) {
+    if (decisions.length === 0) {
+        return (
+            <div className="p-5">
+                <EmptyDashboardState
+                    title="No recent decisions"
+                    description="Zonal approvals and rejections will appear here."
+                    icon={ShieldCheck}
+                />
+            </div>
+        );
+    }
 
-                        <div className="mt-6 flex flex-wrap gap-3">
-                            <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-xs font-semibold text-slate-100">
-                                <ShieldCheck className="h-4 w-4 text-blue-300" />
-
-                                Zone-restricted access
-                            </div>
-
-                            {zone?.code && (
-                                <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-xs font-semibold text-slate-100">
-                                    <Building2 className="h-4 w-4 text-blue-300" />
-
-                                    Zone Code: {zone.code}
-                                </div>
+    return (
+        <div className="divide-y divide-slate-100">
+            {decisions.map(
+                (decision) => (
+                    <Link
+                        key={
+                            decision.id
+                        }
+                        href={
+                            decision.show_url
+                        }
+                        className="flex items-start gap-4 px-5 py-4 transition hover:bg-slate-50"
+                    >
+                        <div
+                            className={[
+                                'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl',
+                                decision.status_tone
+                                === 'emerald'
+                                    ? 'bg-emerald-50 text-emerald-700'
+                                    : 'bg-red-50 text-red-700',
+                            ].join(' ')}
+                        >
+                            {decision.status_tone
+                            === 'emerald' ? (
+                                <BadgeCheck className="h-5 w-5" />
+                            ) : (
+                                <CircleX className="h-5 w-5" />
                             )}
                         </div>
-                    </div>
 
-                    <div className="rounded-2xl border border-white/10 bg-white/10 px-7 py-6 text-center backdrop-blur-sm">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-200">
-                            Total Applications
-                        </p>
-
-                        <p className="mt-2 text-4xl font-bold">
-                            {totalApplications}
-                        </p>
-
-                        <p className="mt-2 text-xs text-slate-300">
-                            In the current Zonal queue
-                        </p>
-                    </div>
-                </div>
-            </section>
-
-            <div className="mt-6 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-                {statistics.map((statistic) => (
-                    <StatisticCard
-                        key={statistic.label}
-                        {...statistic}
-                    />
-                ))}
-            </div>
-
-            <div className="mt-8 grid gap-6 xl:grid-cols-3">
-                <section className="xl:col-span-2">
-                    <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-                        <div className="flex flex-col gap-4 border-b border-slate-200 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
-                            <div>
-                                <h3 className="text-lg font-bold text-slate-900">
-                                    Transfer Review Queue
-                                </h3>
-
-                                <p className="mt-1 text-sm text-slate-500">
-                                    Open the Zone queue and review
-                                    submitted applications.
+                        <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                <p className="font-bold text-slate-900">
+                                    {
+                                        decision.application_number
+                                    }
                                 </p>
+
+                                <span
+                                    className={[
+                                        'rounded-full px-2.5 py-1 text-xs font-bold',
+                                        badgeClasses[
+                                            decision.status_tone
+                                        ]
+                                        ?? badgeClasses.blue,
+                                    ].join(' ')}
+                                >
+                                    {
+                                        decision.status_label
+                                    }
+                                </span>
                             </div>
 
-                            <Link
-                                href={route(
-                                    'zonal.transfer-applications.index',
-                                )}
-                                className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
-                            >
-                                <FileSearch className="h-5 w-5" />
-
-                                Open Review Queue
-                            </Link>
-                        </div>
-
-                        <div className="grid gap-4 p-6 md:grid-cols-2">
-                            <Link
-                                href={route(
-                                    'zonal.transfer-applications.index',
-                                    {
-                                        status: 'Submitted',
-                                    },
-                                )}
-                                className="group rounded-2xl border border-slate-200 p-5 transition hover:border-blue-200 hover:bg-blue-50/40"
-                            >
-                                <div className="flex items-start justify-between gap-4">
-                                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-                                        <ClipboardCheck className="h-5 w-5" />
-                                    </div>
-
-                                    <ArrowRight className="h-5 w-5 text-slate-300 transition group-hover:translate-x-1 group-hover:text-blue-600" />
-                                </div>
-
-                                <h4 className="mt-5 font-bold text-slate-900">
-                                    Awaiting Review
-                                </h4>
-
-                                <p className="mt-2 text-sm leading-6 text-slate-500">
-                                    View newly submitted
-                                    applications that have not yet
-                                    entered Zonal review.
-                                </p>
-
-                                <span className="mt-4 inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
-                                    {summary.submitted ?? 0}{' '}
-                                    application(s)
-                                </span>
-                            </Link>
-
-                            <Link
-                                href={route(
-                                    'zonal.transfer-applications.index',
-                                    {
-                                        status: 'Zonal Review',
-                                    },
-                                )}
-                                className="group rounded-2xl border border-slate-200 p-5 transition hover:border-amber-200 hover:bg-amber-50/40"
-                            >
-                                <div className="flex items-start justify-between gap-4">
-                                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
-                                        <Clock3 className="h-5 w-5" />
-                                    </div>
-
-                                    <ArrowRight className="h-5 w-5 text-slate-300 transition group-hover:translate-x-1 group-hover:text-amber-600" />
-                                </div>
-
-                                <h4 className="mt-5 font-bold text-slate-900">
-                                    Reviews in Progress
-                                </h4>
-
-                                <p className="mt-2 text-sm leading-6 text-slate-500">
-                                    Continue reviewing applications
-                                    that are already assigned for
-                                    assessment.
-                                </p>
-
-                                <span className="mt-4 inline-flex rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
-                                    {summary.under_review ?? 0}{' '}
-                                    application(s)
-                                </span>
-                            </Link>
-                        </div>
-                    </div>
-                </section>
-
-                <aside className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                    <div className="flex items-center gap-3">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
-                            <ClipboardCheck className="h-5 w-5" />
-                        </div>
-
-                        <div>
-                            <h3 className="font-bold text-slate-900">
-                                Review Workflow
-                            </h3>
+                            <p className="mt-1 text-sm text-slate-600">
+                                {
+                                    decision.principal_name
+                                }
+                            </p>
 
                             <p className="mt-1 text-xs text-slate-500">
-                                Application approval stages
+                                {
+                                    decision.school_name
+                                }
+                            </p>
+
+                            <p className="mt-2 text-[11px] font-semibold text-slate-400">
+                                {
+                                    decision.decided_at
+                                }
                             </p>
                         </div>
-                    </div>
 
-                    <div className="mt-7">
-                        <WorkflowStep
-                            number={1}
-                            title="Principal Submission"
-                            description="The Principal completes and submits the transfer application."
-                            completed
-                        />
+                        <ArrowRight className="mt-3 h-4 w-4 shrink-0 text-slate-300" />
+                    </Link>
+                ),
+            )}
+        </div>
+    );
+}
 
-                        <WorkflowStep
-                            number={2}
-                            title="Zonal Review"
-                            description="The Zonal Director checks the application and records a recommendation."
-                            active
-                        />
+function InfoBox({
+    label,
+    value,
+}) {
+    return (
+        <div className="rounded-xl bg-slate-50 p-3">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                {label}
+            </p>
 
-                        <WorkflowStep
-                            number={3}
-                            title="Provincial Review"
-                            description="Approved Zonal applications proceed to Provincial assessment."
-                        />
+            <p className="mt-1 text-lg font-bold text-slate-900">
+                {Number(
+                    value ?? 0,
+                ).toLocaleString()}
+            </p>
+        </div>
+    );
+}
 
-                        <WorkflowStep
-                            number={4}
-                            title="Transfer Board Decision"
-                            description="The Transfer Board records the final transfer result."
-                            isLast
-                        />
-                    </div>
-                </aside>
-            </div>
-
-            <section className="mt-6 rounded-2xl border border-blue-100 bg-blue-50 p-5">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-blue-600 shadow-sm">
-                        <ShieldCheck className="h-5 w-5" />
-                    </div>
-
-                    <div>
-                        <h3 className="font-bold text-slate-900">
-                            Access restricted to{' '}
-                            {zone?.name
-                                ? `${zone.name} Zone`
-                                : 'the assigned Zone'}
-                        </h3>
-
-                        <p className="mt-1 text-sm leading-6 text-slate-600">
-                            You can only view and review transfer
-                            applications submitted from schools
-                            belonging to your assigned Zone.
-                        </p>
-                    </div>
-                </div>
-            </section>
-        </AdminLayout>
+function TableHeading({
+    children,
+}) {
+    return (
+        <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+            {children}
+        </th>
     );
 }

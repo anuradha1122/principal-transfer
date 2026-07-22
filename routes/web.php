@@ -28,11 +28,13 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Provincial\DashboardController as ProvincialDashboardController;
 use App\Http\Controllers\Provincial\TransferApplicationController as ProvincialTransferApplicationController;
 use App\Http\Controllers\PublicTransferResultController;
+use App\Http\Controllers\Reports\ManagementReportController;
 use App\Http\Controllers\TransferBoard\DashboardController as TransferBoardDashboardController;
 use App\Http\Controllers\TransferBoard\TransferAppealController as BoardTransferAppealController;
 use App\Http\Controllers\TransferBoard\TransferApplicationController as TransferBoardTransferApplicationController;
 use App\Http\Controllers\Zonal\DashboardController as ZonalDashboardController;
 use App\Http\Controllers\Zonal\TransferApplicationController as ZonalTransferApplicationController;
+use App\Http\Controllers\Principal\DashboardController as PrincipalDashboardController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -382,6 +384,33 @@ Route::middleware([
                     ]
                 )->name(
                     'notifications.show'
+                );
+            });
+
+        /*
+        |--------------------------------------------------------------------------
+        | Management Reports and Analytics
+        |--------------------------------------------------------------------------
+        |
+        | Module 15 role-aware report dashboard.
+        | Existing admin.reports.* routes remain unchanged.
+        |
+        */
+
+        Route::prefix('reports')
+            ->name('reports.')
+            ->middleware(
+                'permission:view management reports|view provincial reports|view zonal reports|view transfer board reports|view personal reports'
+            )
+            ->group(function (): void {
+                Route::get(
+                    '/',
+                    [
+                        ManagementReportController::class,
+                        'index',
+                    ]
+                )->name(
+                    'index'
                 );
             });
 
@@ -804,7 +833,7 @@ Route::middleware([
 
                 /*
                 |--------------------------------------------------------------------------
-                | Transfer Reports Dashboard
+                | Legacy Transfer Reports Dashboard
                 |--------------------------------------------------------------------------
                 */
 
@@ -824,7 +853,7 @@ Route::middleware([
 
                 /*
                 |--------------------------------------------------------------------------
-                | Detailed Transfer Reports
+                | Legacy Detailed Transfer Reports
                 |--------------------------------------------------------------------------
                 */
 
@@ -1004,23 +1033,14 @@ Route::middleware([
             ->group(function (): void {
                 Route::get(
                     '/dashboard',
-                    function () {
-                        abort_unless(
-                            request()
-                                ->user()
-                                ->can(
-                                    'view principal dashboard'
-                                ),
-                            403
-                        );
-
-                        return Inertia::render(
-                            'Principal/Dashboard/Index'
-                        );
-                    }
-                )->name(
-                    'dashboard'
-                );
+                    PrincipalDashboardController::class
+                )
+                    ->middleware(
+                        'permission:view principal dashboard'
+                    )
+                    ->name(
+                        'dashboard'
+                    );
 
                 Route::get(
                     '/profile',

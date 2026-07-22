@@ -9,6 +9,7 @@ import {
     LogOut,
     Scale,
     ShieldCheck,
+    ChartNoAxesCombined,
     X,
 } from 'lucide-react';
 
@@ -104,6 +105,18 @@ export default function TransferBoardSidebar({
             visible: can(
                 'view reports',
             ),
+        },
+        {
+            label: 'Reports & Analytics',
+            href: route('reports.index'),
+            path: '/reports',
+            icon: ChartNoAxesCombined,
+            visible:
+                can('view management reports')
+                || can('view provincial reports')
+                || can('view zonal reports')
+                || can('view transfer board reports')
+                || can('view personal reports'),
         },
         {
             label: 'Notifications',

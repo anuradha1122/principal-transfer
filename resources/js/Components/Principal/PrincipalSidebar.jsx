@@ -1,11 +1,14 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
+    Bell,
+    ClipboardCheck,
     FileText,
-    Files,
-    Scale,
-    GraduationCap,
+    History,
     LayoutDashboard,
     UserRound,
+    Scale,
+    Files,
+    GraduationCap,
     X,
 } from 'lucide-react';
 

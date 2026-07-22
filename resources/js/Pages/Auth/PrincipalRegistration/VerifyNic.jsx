@@ -1,12 +1,16 @@
+import ApplicationLogo from '@/Components/ApplicationLogo';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import GuestLayout from '@/Layouts/GuestLayout';
-import { Head, Link, useForm } from '@inertiajs/react';
+import {
+    Head,
+    Link,
+    useForm,
+} from '@inertiajs/react';
 import {
     BadgeCheck,
-    GraduationCap,
     LogIn,
 } from 'lucide-react';
 
@@ -36,8 +40,10 @@ export default function VerifyNic() {
             <Head title="Verify NIC" />
 
             <div className="mb-8 text-center">
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-200">
-                    <GraduationCap className="h-8 w-8" />
+                <div className="flex justify-center">
+                    <ApplicationLogo
+                        className="h-24 w-24 object-contain"
+                    />
                 </div>
 
                 <h1 className="mt-5 text-2xl font-bold text-slate-900">
@@ -104,9 +110,10 @@ export default function VerifyNic() {
             <div className="mt-6 border-t border-slate-200 pt-5 text-center">
                 <Link
                     href={route('login')}
-                    className="inline-flex items-center gap-2 text-sm font-semibold text-blue-600"
+                    className="inline-flex items-center gap-2 text-sm font-semibold text-blue-600 transition hover:text-blue-800"
                 >
                     <LogIn className="h-4 w-4" />
+
                     Already registered? Sign in
                 </Link>
             </div>

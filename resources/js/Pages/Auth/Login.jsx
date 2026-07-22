@@ -4,9 +4,9 @@ import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import GuestLayout from '@/Layouts/GuestLayout';
+import ApplicationLogo from '@/Components/ApplicationLogo';
 import { Head, Link, useForm } from '@inertiajs/react';
 import {
-    GraduationCap,
     LockKeyhole,
     UserPlus,
 } from 'lucide-react';
@@ -41,8 +41,10 @@ export default function Login({
             <Head title="Log in" />
 
             <div className="mb-8 text-center">
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-200">
-                    <GraduationCap className="h-8 w-8" />
+                <div className="flex justify-center">
+                    <ApplicationLogo
+                        className="h-24 w-24 rounded-2xl object-contain"
+                    />
                 </div>
 
                 <h1 className="mt-5 text-2xl font-bold text-slate-900">

@@ -213,13 +213,28 @@ class RolePermissionSeeder extends Seeder
 
             /*
             |--------------------------------------------------------------------------
-            | Reports and exports
+            | Legacy reports and exports
             |--------------------------------------------------------------------------
             */
 
             'view reports',
             'export reports',
             'export transfer applications',
+
+            /*
+            |--------------------------------------------------------------------------
+            | Management reports and analytics
+            |--------------------------------------------------------------------------
+            */
+
+            'view management reports',
+            'view provincial reports',
+            'view zonal reports',
+            'view transfer board reports',
+            'view personal reports',
+
+            'export reports pdf',
+            'export reports excel',
 
             /*
             |--------------------------------------------------------------------------
@@ -349,6 +364,14 @@ class RolePermissionSeeder extends Seeder
 
             /*
             |--------------------------------------------------------------------------
+            | Personal reports
+            |--------------------------------------------------------------------------
+            */
+
+            'view personal reports',
+
+            /*
+            |--------------------------------------------------------------------------
             | Notifications
             |--------------------------------------------------------------------------
             */
@@ -373,8 +396,24 @@ class RolePermissionSeeder extends Seeder
             'return zonal transfer applications',
             'download zonal transfer application pdfs',
 
+            /*
+            |--------------------------------------------------------------------------
+            | Legacy reports
+            |--------------------------------------------------------------------------
+            */
+
             'view reports',
             'export transfer applications',
+
+            /*
+            |--------------------------------------------------------------------------
+            | Zonal reports and exports
+            |--------------------------------------------------------------------------
+            */
+
+            'view zonal reports',
+            'export reports pdf',
+            'export reports excel',
 
             /*
             |--------------------------------------------------------------------------
@@ -422,7 +461,7 @@ class RolePermissionSeeder extends Seeder
 
             /*
             |--------------------------------------------------------------------------
-            | Reports and audit
+            | Legacy reports and audit
             |--------------------------------------------------------------------------
             */
 
@@ -430,6 +469,20 @@ class RolePermissionSeeder extends Seeder
             'export reports',
             'export transfer applications',
             'view audit logs',
+
+            /*
+            |--------------------------------------------------------------------------
+            | Management reports and exports
+            |--------------------------------------------------------------------------
+            */
+
+            'view management reports',
+            'view provincial reports',
+            'view zonal reports',
+            'view transfer board reports',
+
+            'export reports pdf',
+            'export reports excel',
 
             /*
             |--------------------------------------------------------------------------
@@ -479,12 +532,26 @@ class RolePermissionSeeder extends Seeder
 
             /*
             |--------------------------------------------------------------------------
-            | Reports
+            | Legacy reports
             |--------------------------------------------------------------------------
             */
 
             'view reports',
             'export transfer applications',
+
+            /*
+            |--------------------------------------------------------------------------
+            | Management and Board reports
+            |--------------------------------------------------------------------------
+            */
+
+            'view management reports',
+            'view provincial reports',
+            'view zonal reports',
+            'view transfer board reports',
+
+            'export reports pdf',
+            'export reports excel',
 
             /*
             |--------------------------------------------------------------------------

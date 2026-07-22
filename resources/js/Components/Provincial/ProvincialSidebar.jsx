@@ -8,6 +8,7 @@ import {
     Landmark,
     LogOut,
     ShieldCheck,
+    ChartNoAxesCombined,
     X,
 } from 'lucide-react';
 
@@ -92,6 +93,18 @@ export default function ProvincialSidebar({
             ),
             badge:
                 unreadNotificationCount,
+        },
+        {
+            label: 'Reports & Analytics',
+            href: route('reports.index'),
+            path: '/reports',
+            icon: ChartNoAxesCombined,
+            visible:
+                can('view management reports')
+                || can('view provincial reports')
+                || can('view zonal reports')
+                || can('view transfer board reports')
+                || can('view personal reports'),
         },
         {
             label: 'Audit Logs',
