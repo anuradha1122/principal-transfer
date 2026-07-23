@@ -25,6 +25,7 @@ export default function Create({
         principal_remarks: '',
         preferences: [
             {
+                zone_id: '',
                 school_id: '',
                 preference_reason: '',
             },

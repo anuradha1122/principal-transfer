@@ -38,15 +38,31 @@ export default function Edit({
             application.principal_remarks ?? '',
         preferences:
             application.preferences?.map(
-                (preference) => ({
-                    school_id:
-                        preference.school_id,
-                    preference_reason:
-                        preference.preference_reason ??
-                        '',
-                }),
+                (preference) => {
+                    const selectedSchool =
+                        schools.find(
+                            (school) =>
+                                String(school.id) ===
+                                String(
+                                    preference.school_id,
+                                ),
+                        );
+
+                    return {
+                        zone_id:
+                            selectedSchool?.division
+                                ?.zone?.id
+                            ?? '',
+                        school_id:
+                            preference.school_id,
+                        preference_reason:
+                            preference.preference_reason
+                            ?? '',
+                    };
+                },
             ) ?? [
                 {
+                    zone_id: '',
                     school_id: '',
                     preference_reason: '',
                 },

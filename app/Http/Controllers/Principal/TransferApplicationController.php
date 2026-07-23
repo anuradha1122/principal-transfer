@@ -1004,6 +1004,7 @@ class TransferApplicationController extends Controller
                 $currentSchoolId
             )
             ->orderBy('name')
+            ->orderBy('census_number')
             ->get([
                 'id',
                 'division_id',

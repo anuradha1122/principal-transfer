@@ -19,22 +19,53 @@ export default function NotificationBell() {
     const permissions =
         page.props.auth?.permissions ?? [];
 
-    const canView = permissions.includes(
-        'view notifications',
+    const roles =
+        page.props.auth?.roles ?? [];
+
+    const canView =
+        roles.includes('Super Admin') ||
+        permissions.includes(
+            'view notifications',
+        );
+
+    const notificationProps =
+        page.props.notifications ?? {};
+
+    const recentNotifications =
+        Array.isArray(
+            notificationProps.recent,
+        )
+            ? notificationProps.recent
+            : Array.isArray(
+                  notificationProps.items,
+              )
+                ? notificationProps.items
+                : Array.isArray(
+                      notificationProps.notifications,
+                  )
+                    ? notificationProps.notifications
+                    : Array.isArray(
+                          notificationProps,
+                      )
+                        ? notificationProps
+                        : [];
+
+    const unreadCount = Number(
+        notificationProps.unread_count
+            ?? notificationProps.unreadCount
+            ?? 0,
     );
 
-    const notifications =
-        page.props.notifications ?? {
-            unread_count: 0,
-            recent: [],
-        };
+    const [open, setOpen] =
+        useState(false);
 
-    const [open, setOpen] = useState(false);
-
-    const wrapperRef = useRef(null);
+    const wrapperRef =
+        useRef(null);
 
     useEffect(() => {
-        const handleOutsideClick = (event) => {
+        const handleOutsideClick = (
+            event,
+        ) => {
             if (
                 wrapperRef.current &&
                 !wrapperRef.current.contains(
@@ -74,8 +105,10 @@ export default function NotificationBell() {
             {},
             {
                 preserveScroll: true,
-                onSuccess: () =>
-                    setOpen(false),
+                preserveState: true,
+                onSuccess: () => {
+                    setOpen(false);
+                },
             },
         );
     };
@@ -88,22 +121,24 @@ export default function NotificationBell() {
             <button
                 type="button"
                 onClick={() =>
-                    setOpen((current) => !current)
+                    setOpen(
+                        (current) =>
+                            !current,
+                    )
                 }
-                className={`relative inline-flex h-10 w-10 items-center justify-center rounded-xl border transition ${
+                className={[
+                    'relative inline-flex h-10 w-10 items-center justify-center rounded-xl border transition',
                     open
                         ? 'border-blue-300 bg-blue-50 text-blue-700'
-                        : 'border-slate-200 bg-white text-slate-600 hover:border-blue-300 hover:text-blue-700'
-                }`}
+                        : 'border-slate-200 bg-white text-slate-600 hover:border-blue-300 hover:text-blue-700',
+                ].join(' ')}
                 aria-label="Notifications"
                 aria-expanded={open}
             >
                 <Bell className="h-5 w-5" />
 
                 <NotificationBadge
-                    count={
-                        notifications.unread_count
-                    }
+                    count={unreadCount}
                     className="absolute -right-1.5 -top-1.5"
                 />
             </button>
@@ -117,23 +152,22 @@ export default function NotificationBell() {
                             </h2>
 
                             <p className="text-xs text-slate-500">
-                                {
-                                    notifications.unread_count
-                                }{' '}
+                                {unreadCount}{' '}
                                 unread
                             </p>
                         </div>
 
                         <div className="flex items-center gap-1">
-                            {notifications.unread_count >
+                            {unreadCount >
                                 0 && (
                                 <button
                                     type="button"
                                     onClick={
                                         markAllAsRead
                                     }
-                                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 hover:bg-white hover:text-blue-700"
+                                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition hover:bg-white hover:text-blue-700"
                                     title="Mark all as read"
+                                    aria-label="Mark all notifications as read"
                                 >
                                     <CheckCheck className="h-4 w-4" />
                                 </button>
@@ -142,9 +176,12 @@ export default function NotificationBell() {
                             <button
                                 type="button"
                                 onClick={() =>
-                                    setOpen(false)
+                                    setOpen(
+                                        false,
+                                    )
                                 }
-                                className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 hover:bg-white hover:text-slate-800"
+                                className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition hover:bg-white hover:text-slate-800"
+                                aria-label="Close notifications"
                             >
                                 <X className="h-4 w-4" />
                             </button>
@@ -152,7 +189,7 @@ export default function NotificationBell() {
                     </div>
 
                     <div className="max-h-[28rem] divide-y divide-slate-100 overflow-y-auto">
-                        {notifications.recent.length ===
+                        {recentNotifications.length ===
                         0 ? (
                             <div className="px-6 py-12 text-center">
                                 <Inbox className="mx-auto h-9 w-9 text-slate-300" />
@@ -162,13 +199,16 @@ export default function NotificationBell() {
                                 </p>
 
                                 <p className="mt-1 text-xs text-slate-500">
-                                    New workflow updates will
+                                    New workflow
+                                    updates will
                                     appear here.
                                 </p>
                             </div>
                         ) : (
-                            notifications.recent.map(
-                                (notification) => (
+                            recentNotifications.map(
+                                (
+                                    notification,
+                                ) => (
                                     <NotificationItem
                                         key={
                                             notification.id
@@ -188,9 +228,13 @@ export default function NotificationBell() {
                             href={route(
                                 'notifications.index',
                             )}
+                            onClick={() =>
+                                setOpen(false)
+                            }
                             className="flex w-full items-center justify-center rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
                         >
-                            View all notifications
+                            View all
+                            notifications
                         </Link>
                     </div>
                 </div>
